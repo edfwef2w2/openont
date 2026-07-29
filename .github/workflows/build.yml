@@ -1,5 +1,8 @@
 name: Build Images
 
+# When triggered by Build Smoke, reuse Smoke's run title (e.g. "ci: simplify job names").
+run-name: ${{ github.event.workflow_run.display_title || github.ref_name }}
+
 on:
   workflow_dispatch:
     inputs:

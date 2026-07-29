@@ -69,6 +69,7 @@ Only two workflows under `.github/workflows/`:
 | **Build Images** | `build.yml` | after Smoke succeeds on `main`/`master` (**all** targets); or manual / tag `v*` |
 
 Auto chain: **Build Smoke (success on main/master) → Build Images (`all`)**.  
+Chained Images runs use the same title as Smoke (usually the commit message).  
 Manual targets: `x86_64`, `armsr_armv8`, or `all`.
 ## License
 

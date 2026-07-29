@@ -1,5 +1,8 @@
 name: Build Smoke
 
+# Title shown in Actions (e.g. commit message). Build Images copies this when chained.
+run-name: ${{ github.event.pull_request.title || github.event.head_commit.message || 'Build Smoke' }}
+
 on:
   push:
     branches: [main, master]
