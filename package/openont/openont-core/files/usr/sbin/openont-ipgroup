@@ -1,0 +1,32 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+. /usr/lib/openont/ipgroup.sh
+
+usage() {
+	cat <<EOF
+Usage: openont-ipgroup <command> [args]
+
+  list|show
+  set <id> <name> <comment> <ip/cidr> [ip/cidr ...]
+  del <id>
+  status-json
+EOF
+}
+
+cmd="${1:-}"
+[ -n "$cmd" ] && shift
+
+case "$cmd" in
+	list|show)
+		for id in $(openont_ipgroup_list_ids); do
+			name=$(uci -q get "openont.$id.name")
+			refs=$(openont_ipgroup_refs "$id")
+			echo "$id  name=${name:-$id}  refs=$refs  entries=$(openont_ipgroup_get_entries "$id")"
+		done
+		;;
+	set) openont_ipgroup_set "$@" ;;
+	del|delete) openont_ipgroup_del "$@" ;;
+	status-json) openont_ipgroup_status_json ;;
+	-h|--help|help|"") usage; [ -n "$cmd" ] || exit 1 ;;
+	*) echo "unknown: $cmd" >&2; usage; exit 1 ;;
+esac

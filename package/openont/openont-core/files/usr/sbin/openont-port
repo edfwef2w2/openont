@@ -1,0 +1,55 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+. /usr/lib/openont/port.sh
+
+usage() {
+	cat <<EOF
+Usage: openont-port <command> [args]
+
+Commands:
+  list|show
+  set <lanN|wanN> <eth...> [proto]
+      lan:  openont-port set lan1 eth0 eth1
+      wan:  openont-port set wan1 eth2 [dhcp|pppoe|static]
+  add <lanN> <eth>
+  del-port <lanN> <eth>
+  del <lanN|wanN>
+  status-json
+EOF
+}
+
+cmd="${1:-}"
+[ -n "$cmd" ] && shift
+
+case "$cmd" in
+	list|show)
+		openont_port_status_json | if command -v jsonfilter >/dev/null 2>&1; then
+			# human summary
+			. /usr/lib/openont/port.sh
+			printf "%-10s %-12s %s\n" "NETDEV" "ROLE" "LINK"
+			for d in $(openont_list_physical); do
+				role=$(openont_netdev_owner "$d" || true)
+				case "$role" in br-*) role=${role#br-} ;; esac
+				link=down
+				[ -f "/sys/class/net/$d/operstate" ] && grep -qx up "/sys/class/net/$d/operstate" && link=up
+				printf "%-10s %-12s %s\n" "$d" "${role:--}" "$link"
+			done
+			echo
+			echo "Roles:"
+			for role in $(uci -q show network 2>/dev/null | sed -n "s/^network\.\(\(lan\|wan\)[0-9]*\)=interface/\1/p" | sort); do
+				ports=$(openont_role_ports "$role")
+				proto=$(uci -q get "network.$role.proto")
+				printf "  %s proto=%s ports=%s\n" "$role" "$proto" "$ports"
+			done
+		else
+			openont_port_status_json
+		fi
+		;;
+	set) openont_port_set "$@" ;;
+	add) openont_port_add "$@" ;;
+	del-port) openont_port_del_port "$@" ;;
+	del|delete) openont_port_del "$@" ;;
+	status-json) openont_port_status_json ;;
+	-h|--help|help|"") usage; [ -n "$cmd" ] || exit 1 ;;
+	*) echo "unknown: $cmd" >&2; usage; exit 1 ;;
+esac

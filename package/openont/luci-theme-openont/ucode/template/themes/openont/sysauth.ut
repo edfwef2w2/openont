@@ -1,0 +1,19 @@
+{#
+ # OpenONT login page
+-#}
+{% include('themes/openont/header') %}
+<div class="o-login-wrap">
+	<div class="o-login-box">
+		<h1>OpenONT</h1>
+		<p class="o-login-sub">管理登录</p>
+		<form method="post" action="{{ REQUEST_URI }}">
+			{% if error %}<div class="o-alert">{{ error }}</div>{% endif %}
+			<label>用户名</label>
+			<input type="text" name="luci_username" value="{{ duser }}" autocomplete="username" />
+			<label>密码</label>
+			<input type="password" name="luci_password" autocomplete="current-password" />
+			<input type="submit" value="登录" class="o-btn o-btn-primary" />
+		</form>
+	</div>
+</div>
+{% include('themes/openont/footer') %}

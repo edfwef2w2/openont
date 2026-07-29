@@ -1,0 +1,41 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+. /usr/lib/openont/nat.sh
+
+usage() {
+	cat <<EOF
+Usage: openont-nat <command> [args]
+
+Port map:
+  portmap-list
+  portmap-add <name> <dest_ip> <dest_port> <proto> <src_dport> [src_group] [enabled]
+  portmap-del <name>
+  portmap-enable <name>
+  portmap-disable <name>
+
+DMZ:
+  dmz-list
+  dmz-add <name> <dest_ip> [enabled] [excl_proto] [excl_port]
+  dmz-del <name>
+  dmz-enable <name>
+  dmz-disable <name>
+EOF
+}
+
+cmd="${1:-}"
+[ -n "$cmd" ] && shift
+
+case "$cmd" in
+	portmap-list) openont_nat_list_json portmap ;;
+	portmap-add) openont_nat_portmap_add "$@" ;;
+	portmap-del) openont_nat_del "$@" ;;
+	portmap-enable) openont_nat_set_enabled "$1" 1 ;;
+	portmap-disable) openont_nat_set_enabled "$1" 0 ;;
+	dmz-list) openont_nat_list_json dmz ;;
+	dmz-add) openont_nat_dmz_add "$@" ;;
+	dmz-del) openont_nat_del "$@" ;;
+	dmz-enable) openont_nat_set_enabled "$1" 1 ;;
+	dmz-disable) openont_nat_set_enabled "$1" 0 ;;
+	-h|--help|help|"") usage; [ -n "$cmd" ] || exit 1 ;;
+	*) echo "unknown: $cmd" >&2; usage; exit 1 ;;
+esac

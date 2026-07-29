@@ -1,0 +1,62 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+
+. /lib/functions.sh
+
+# Hostname
+uci -q batch <<-EOF
+	set system.@system[0].hostname='OpenONT'
+	commit system
+EOF
+
+# Clear auto-generated lan/wan from board scripts; keep loopback only.
+# Users bind NICs via openont-port on the console.
+if [ ! -f /etc/openont/.ports_initialized ]; then
+	mkdir -p /etc/openont
+	for s in $(uci -q show network 2>/dev/null | sed -n "s/^network\.\([^=]*\)=interface/\1/p"); do
+		case "$s" in
+			loopback) continue ;;
+			lan|wan|wan6|lan6|*_dev) uci -q delete "network.$s" ;;
+			lan[0-9]*|wan[0-9]*) ;;
+			*)
+				# Drop legacy single lan/wan style and unnamed leftovers from board.d
+				proto=$(uci -q get "network.$s.proto")
+				dev=$(uci -q get "network.$s.device")
+				case "$s" in
+					lan|wan) uci -q delete "network.$s" ;;
+				esac
+				;;
+		esac
+	done
+
+	# Explicitly remove classic defaults if present
+	uci -q delete network.lan
+	uci -q delete network.wan
+	uci -q delete network.wan6
+
+	# Drop bridge devices created for lan
+	i=0
+	while uci -q get "network.@device[$i]" >/dev/null 2>&1; do
+		name=$(uci -q get "network.@device[$i].name")
+		case "$name" in
+			br-lan)
+				uci -q delete "network.@device[$i]"
+				# indices shift; restart scan
+				i=0
+				continue
+				;;
+		esac
+		i=$((i + 1))
+	done
+
+	uci -q commit network
+	touch /etc/openont/.ports_initialized
+fi
+
+# Default theme
+uci -q batch <<-EOF
+	set luci.main.mediaurlbase='/luci-static/openont'
+	commit luci
+EOF
+
+exit 0

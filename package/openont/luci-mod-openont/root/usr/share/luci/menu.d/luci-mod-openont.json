@@ -1,0 +1,81 @@
+{
+	"admin/openont": {
+		"title": "系统概况",
+		"order": 1,
+		"action": {
+			"type": "firstchild",
+			"recurse": true
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/openont/overview": {
+		"title": "概览",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "openont/overview"
+		}
+	},
+	"admin/status/overview": {
+		"title": "Overview",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "openont/overview"
+		}
+	},
+	"admin/network/openont-ports": {
+		"title": "网口绑定",
+		"order": 5,
+		"action": {
+			"type": "view",
+			"path": "openont/ports"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/network/openont-portmap": {
+		"title": "端口映射",
+		"order": 60,
+		"action": {
+			"type": "view",
+			"path": "openont/portmap"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/network/openont-dmz": {
+		"title": "DMZ主机",
+		"order": 61,
+		"action": {
+			"type": "view",
+			"path": "openont/dmz"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/network/openont-ipgroup": {
+		"title": "IP分组",
+		"order": 62,
+		"action": {
+			"type": "view",
+			"path": "openont/ipgroup"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/network/firewall/forwards": {
+		"title": "Port Forwards",
+		"order": 99,
+		"action": {
+			"type": "view",
+			"path": "openont/portmap"
+		}
+	}
+}

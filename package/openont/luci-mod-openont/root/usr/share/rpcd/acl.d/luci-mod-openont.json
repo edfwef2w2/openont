@@ -1,0 +1,28 @@
+{
+	"luci-mod-openont": {
+		"description": "Grant access to OpenONT management",
+		"read": {
+			"ubus": {
+				"openont": [
+					"status", "overview", "history",
+					"port_status", "port_set", "port_add", "port_del_port", "port_del",
+					"ipgroup_list", "ipgroup_set", "ipgroup_del",
+					"portmap_list", "portmap_add", "portmap_del", "portmap_enable", "portmap_disable",
+					"dmz_list", "dmz_add", "dmz_del", "dmz_enable", "dmz_disable"
+				]
+			},
+			"uci": [ "network", "dhcp", "firewall", "system", "openont" ]
+		},
+		"write": {
+			"ubus": {
+				"openont": [
+					"port_set", "port_add", "port_del_port", "port_del",
+					"ipgroup_set", "ipgroup_del",
+					"portmap_add", "portmap_del", "portmap_enable", "portmap_disable",
+					"dmz_add", "dmz_del", "dmz_enable", "dmz_disable"
+				]
+			},
+			"uci": [ "network", "dhcp", "firewall", "openont" ]
+		}
+	}
+}

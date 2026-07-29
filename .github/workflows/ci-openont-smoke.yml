@@ -1,0 +1,60 @@
+name: OpenONT smoke
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required paths
+        run: |
+          set -e
+          test -f package/openont/openont-core/Makefile
+          test -f package/openont/openont-core/files/usr/lib/openont/port.sh
+          test -f package/openont/openont-core/files/usr/lib/openont/nat.sh
+          test -f package/openont/openont-core/files/usr/lib/openont/ipgroup.sh
+          test -f package/openont/openont-core/files/usr/sbin/openont-port
+          test -f package/openont/openont-core/files/usr/sbin/openont-nat
+          test -f package/openont/openont-core/files/usr/sbin/openont-ipgroup
+          test -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/overview.js
+          test -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ports.js
+          test -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/portmap.js
+          test -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dmz.js
+          test -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ipgroup.js
+          test -f package/openont/luci-theme-openont/htdocs/luci-static/openont/cascade.css
+          test -f configs/openont.common.config
+          test -f scripts/openont/apply-config.sh
+          test ! -d samples
+          echo "paths ok"
+
+      - name: Shell syntax check
+        run: |
+          set -e
+          for f in \
+            package/openont/openont-core/files/usr/lib/openont/*.sh \
+            package/openont/openont-core/files/usr/sbin/openont-* \
+            package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont \
+            package/openont/luci-mod-openont/root/usr/sbin/openont-statsd \
+            package/openont/openont-base/files/etc/uci-defaults/* \
+            scripts/openont/apply-config.sh
+          do
+            echo "sh -n $f"
+            sh -n "$f"
+          done
+          echo "syntax ok"
+
+      - name: No samples tree
+        run: |
+          if [ -d samples ]; then
+            echo "samples must be removed before merge" >&2
+            exit 1
+          fi

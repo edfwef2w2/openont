@@ -1,0 +1,95 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# Sample interface rates and coarse protocol counters.
+
+STATS_DIR="/tmp/openont-stats"
+HIST_FILE="$STATS_DIR/history.jsonl"
+RATES_FILE="$STATS_DIR/rates.json"
+INTERVAL=5
+# keep ~1 day of samples at 5s => 17280 lines; trim to 1 day
+MAX_AGE=86400
+
+mkdir -p "$STATS_DIR"
+
+list_wan_devs() {
+	local s dev
+	for s in $(uci -q show network 2>/dev/null | sed -n "s/^network\.\(wan[0-9]*\)=interface/\1/p"); do
+		dev=$(uci -q get "network.$s.device")
+		[ -n "$dev" ] && echo "$dev"
+	done
+}
+
+sum_stat() {
+	local which="$1"
+	local sum=0 dev f
+	local devs
+	devs=$(list_wan_devs)
+	if [ -z "$devs" ]; then
+		for f in /sys/class/net/*/statistics/${which}_bytes; do
+			dev=${f#/sys/class/net/}
+			dev=${dev%%/*}
+			case "$dev" in lo|ifb*|teql*) continue ;; esac
+			sum=$((sum + $(cat "$f" 2>/dev/null || echo 0)))
+		done
+	else
+		for dev in $devs; do
+			f="/sys/class/net/$dev/statistics/${which}_bytes"
+			[ -f "$f" ] && sum=$((sum + $(cat "$f")))
+		done
+	fi
+	echo "$sum"
+}
+
+conn_proto_counts() {
+	local tcp=0 udp=0 other=0
+	if [ -f /proc/net/nf_conntrack ]; then
+		tcp=$(grep -c ' tcp ' /proc/net/nf_conntrack 2>/dev/null || echo 0)
+		udp=$(grep -c ' udp ' /proc/net/nf_conntrack 2>/dev/null || echo 0)
+		other=$(grep -cE ' (icmp|unknown|gre|sctp) ' /proc/net/nf_conntrack 2>/dev/null || echo 0)
+	elif [ -f /proc/net/ip_conntrack ]; then
+		tcp=$(grep -c ' tcp ' /proc/net/ip_conntrack 2>/dev/null || echo 0)
+		udp=$(grep -c ' udp ' /proc/net/ip_conntrack 2>/dev/null || echo 0)
+		other=0
+	fi
+	echo "$tcp $udp $other"
+}
+
+prev_rx=$(sum_stat rx)
+prev_tx=$(sum_stat tx)
+prev_t=$(date +%s)
+
+while true; do
+	sleep "$INTERVAL"
+	now=$(date +%s)
+	rx=$(sum_stat rx)
+	tx=$(sum_stat tx)
+	dt=$((now - prev_t))
+	[ "$dt" -lt 1 ] && dt=1
+	drx=$((rx - prev_rx))
+	dtx=$((tx - prev_tx))
+	[ "$drx" -lt 0 ] && drx=0
+	[ "$dtx" -lt 0 ] && dtx=0
+	rx_bps=$((drx / dt))
+	tx_bps=$((dtx / dt))
+	prev_rx=$rx
+	prev_tx=$tx
+	prev_t=$now
+
+	set -- $(conn_proto_counts)
+	tcp=$1; udp=$2; other=$3
+
+	printf '{"rx_bps":%s,"tx_bps":%s}\n' "$rx_bps" "$tx_bps" > "$RATES_FILE"
+	printf '{"t":%s,"rx_bps":%s,"tx_bps":%s,"tcp":%s,"udp":%s,"other":%s}\n' \
+		"$now" "$rx_bps" "$tx_bps" "$tcp" "$udp" "$other" >> "$HIST_FILE"
+
+	# trim old lines
+	if [ -f "$HIST_FILE" ]; then
+		cutoff=$((now - MAX_AGE))
+		tmp="$HIST_FILE.tmp"
+		while read -r line; do
+			t=$(echo "$line" | sed -n 's/.*"t":\([0-9]*\).*/\1/p')
+			[ -n "$t" ] && [ "$t" -ge "$cutoff" ] && echo "$line"
+		done < "$HIST_FILE" > "$tmp"
+		mv "$tmp" "$HIST_FILE"
+	fi
+done

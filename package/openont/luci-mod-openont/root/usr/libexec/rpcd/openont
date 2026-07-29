@@ -1,0 +1,280 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# Unified OpenONT RPC — same backend as CLI tools.
+
+. /usr/share/libubox/jshn.sh 2>/dev/null || true
+. /usr/lib/openont/common.sh 2>/dev/null || true
+. /usr/lib/openont/port.sh 2>/dev/null || true
+. /usr/lib/openont/nat.sh 2>/dev/null || true
+. /usr/lib/openont/ipgroup.sh 2>/dev/null || true
+
+# --- stats (overview) kept compact ---
+STATS_DIR="/tmp/openont-stats"
+HIST_FILE="$STATS_DIR/history.jsonl"
+
+read_cpu_pair() {
+	local a b c d e f g h i j
+	read _ a b c d e f g h i j < /proc/stat
+	echo "$d $((a+b+c+d+e+f+g+h+i+j))"
+}
+
+cpu_percent() {
+	local i1 t1 i2 t2
+	set -- $(read_cpu_pair); i1=$1; t1=$2
+	sleep 0.15
+	set -- $(read_cpu_pair); i2=$1; t2=$2
+	local dt=$((t2-t1)) di=$((i2-i1))
+	[ "$dt" -gt 0 ] || { echo 0; return; }
+	echo $((100*(dt-di)/dt))
+}
+
+mem_percent() {
+	local total avail
+	total=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
+	avail=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
+	[ "${total:-0}" -gt 0 ] || { echo 0; return; }
+	echo $((100 - 100 * ${avail:-0} / total))
+}
+
+uptime_human() {
+	local sec days hours mins
+	sec=$(cut -d. -f1 /proc/uptime)
+	days=$((sec/86400)); hours=$(((sec%86400)/3600)); mins=$(((sec%3600)/60))
+	[ "$days" -gt 0 ] && echo "${days}天${hours}时${mins}分" || echo "${hours}时${mins}分"
+}
+
+read_rates() {
+	[ -f "$STATS_DIR/rates.json" ] && cat "$STATS_DIR/rates.json" || echo '{"rx_bps":0,"tx_bps":0}'
+}
+
+list_role() {
+	uci -q show network 2>/dev/null | sed -n "s/^network\.\($1[0-9]*\)=interface/\1/p" | sort
+}
+
+rpc_status() {
+	local rates rx tx
+	rates=$(read_rates)
+	rx=$(echo "$rates" | jsonfilter -e '@.rx_bps' 2>/dev/null || echo 0)
+	tx=$(echo "$rates" | jsonfilter -e '@.tx_bps' 2>/dev/null || echo 0)
+	json_init
+	json_add_int cpu "$(cpu_percent)"
+	json_add_int mem "$(mem_percent)"
+	json_add_int rx_bps "$rx"
+	json_add_int tx_bps "$tx"
+	json_dump
+}
+
+rpc_overview() {
+	# reuse port status for interfaces detail
+	local rates rx tx wan_ok=0 wan_n=0 lan_n=0
+	rates=$(read_rates)
+	rx=$(echo "$rates" | jsonfilter -e '@.rx_bps' 2>/dev/null || echo 0)
+	tx=$(echo "$rates" | jsonfilter -e '@.tx_bps' 2>/dev/null || echo 0)
+	for _ in $(list_role wan); do wan_n=$((wan_n+1)); done
+	for _ in $(list_role lan); do lan_n=$((lan_n+1)); done
+	for r in $(list_role wan); do
+		ubus call network.interface."$r" status 2>/dev/null | grep -q '"up": true' && wan_ok=1
+	done
+	[ "$wan_ok" -eq 0 ] && ip route 2>/dev/null | grep -q '^default ' && wan_ok=1
+
+	local hosts conns rem start limit used
+	hosts=$(grep -c . /tmp/dhcp.leases 2>/dev/null || echo 0)
+	[ "$hosts" -eq 0 ] && hosts=$(ip -4 neigh show 2>/dev/null | grep -c lladdr || echo 0)
+	conns=$(cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null || echo 0)
+	start=100; limit=150
+	for r in $(list_role lan); do
+		s=$(uci -q get "dhcp.$r.start"); l=$(uci -q get "dhcp.$r.limit")
+		[ -n "$s" ] && start=$s
+		[ -n "$l" ] && limit=$l
+		break
+	done
+	used=$(grep -c . /tmp/dhcp.leases 2>/dev/null || echo 0)
+	rem=$((limit-used)); [ "$rem" -lt 0 ] && rem=0
+
+	# ports payload from lib
+	ports_json=$(openont_port_status_json 2>/dev/null || echo '{}')
+
+	json_init
+	json_add_string hostname "$(uci -q get system.@system[0].hostname 2>/dev/null || echo OpenONT)"
+	json_add_boolean wan_connected "$wan_ok"
+	json_add_string uptime "$(uptime_human)"
+	json_add_int rx_bps "$rx"
+	json_add_int tx_bps "$tx"
+	json_add_int hosts "$hosts"
+	json_add_int connections "$conns"
+	json_add_int wired "$hosts"
+	json_add_int wan_enabled "$wan_n"
+	json_add_int lan_enabled "$lan_n"
+	json_add_int dhcp_remaining "$rem"
+	json_add_int cpu "$(cpu_percent)"
+	json_add_int mem "$(mem_percent)"
+	json_add_string ports_raw "$ports_json"
+	# also structured interfaces from roles
+	json_add_array interfaces
+	for role in $(list_role wan) $(list_role lan); do
+		dev=$(uci -q get "network.$role.device")
+		proto=$(uci -q get "network.$role.proto")
+		ports=$(openont_role_ports "$role" 2>/dev/null)
+		up=0
+		ubus call network.interface."$role" status 2>/dev/null | grep -q '"up": true' && up=1
+		ip=$(ubus call network.interface."$role" status 2>/dev/null | jsonfilter -e '@["ipv4-address"][0].address' 2>/dev/null)
+		json_add_object
+		json_add_string name "$role"
+		json_add_string device "$dev"
+		json_add_string proto "$proto"
+		json_add_boolean up "$up"
+		json_add_string ip "$ip"
+		json_add_string ports "$ports"
+		json_close_object
+	done
+	json_close_array
+	json_dump
+}
+
+rpc_history() {
+	local window="${1:-30}"
+	case "$window" in 30|60|1440) ;; *) window=30 ;; esac
+	local now cutoff tcp=0 udp=0 other=0
+	now=$(date +%s)
+	cutoff=$((now - window * 60))
+	json_init
+	json_add_int window "$window"
+	json_add_array points
+	if [ -f "$HIST_FILE" ]; then
+		while read -r line; do
+			t=$(echo "$line" | jsonfilter -e '@.t' 2>/dev/null)
+			[ -n "$t" ] && [ "$t" -ge "$cutoff" ] 2>/dev/null || continue
+			json_add_object
+			json_add_int t "$t"
+			json_add_int rx_bps "$(echo "$line" | jsonfilter -e '@.rx_bps' 2>/dev/null || echo 0)"
+			json_add_int tx_bps "$(echo "$line" | jsonfilter -e '@.tx_bps' 2>/dev/null || echo 0)"
+			json_add_int tcp "$(echo "$line" | jsonfilter -e '@.tcp' 2>/dev/null || echo 0)"
+			json_add_int udp "$(echo "$line" | jsonfilter -e '@.udp' 2>/dev/null || echo 0)"
+			json_add_int other "$(echo "$line" | jsonfilter -e '@.other' 2>/dev/null || echo 0)"
+			json_close_object
+			tcp=$((tcp + $(echo "$line" | jsonfilter -e '@.tcp' 2>/dev/null || echo 0)))
+			udp=$((udp + $(echo "$line" | jsonfilter -e '@.udp' 2>/dev/null || echo 0)))
+			other=$((other + $(echo "$line" | jsonfilter -e '@.other' 2>/dev/null || echo 0)))
+		done < "$HIST_FILE"
+	fi
+	json_close_array
+	json_add_object protocols
+	json_add_int tcp "$tcp"
+	json_add_int udp "$udp"
+	json_add_int other "$other"
+	json_close_object
+	json_dump
+}
+
+# Generic exec helpers returning CLI text as JSON
+rpc_call_wrap() {
+	local out
+	out=$("$@" 2>&1)
+	rc=$?
+	if [ $rc -eq 0 ]; then
+		# if already json
+		case "$out" in
+			\{*) printf '%s\n' "$out" ;;
+			*) openont_ok "$out" ;;
+		esac
+	else
+		openont_err "$out"
+	fi
+}
+
+case "$1" in
+	list)
+		json_init
+		for m in status overview history \
+			port_status port_set port_add port_del_port port_del \
+			ipgroup_list ipgroup_set ipgroup_del \
+			portmap_list portmap_add portmap_del portmap_enable portmap_disable \
+			dmz_list dmz_add dmz_del dmz_enable dmz_disable
+		do
+			json_add_object "$m"
+			json_close_object
+		done
+		json_dump
+		;;
+	call)
+		input=$(cat)
+		get() { echo "$input" | jsonfilter -e "@.$1" 2>/dev/null; }
+		case "$2" in
+			status) rpc_status ;;
+			overview) rpc_overview ;;
+			history)
+				rpc_history "$(get window)"
+				;;
+			port_status)
+				openont_port_status_json
+				;;
+			port_set)
+				role=$(get role); ports=$(get ports); proto=$(get proto)
+				# ports may be space-separated string
+				if [ -n "$proto" ]; then
+					rpc_call_wrap openont_port_set "$role" $ports "$proto"
+				else
+					rpc_call_wrap openont_port_set "$role" $ports
+				fi
+				;;
+			port_add)
+				rpc_call_wrap openont_port_add "$(get role)" "$(get netdev)"
+				;;
+			port_del_port)
+				rpc_call_wrap openont_port_del_port "$(get role)" "$(get netdev)"
+				;;
+			port_del)
+				rpc_call_wrap openont_port_del "$(get role)"
+				;;
+			ipgroup_list)
+				openont_ipgroup_status_json
+				;;
+			ipgroup_set)
+				id=$(get id); name=$(get name); comment=$(get comment)
+				entries=$(get entries)
+				# entries as space-separated from json array join on client
+				rpc_call_wrap openont_ipgroup_set "$id" "$name" "$comment" $entries
+				;;
+			ipgroup_del)
+				rpc_call_wrap openont_ipgroup_del "$(get id)"
+				;;
+			portmap_list)
+				openont_nat_list_json portmap
+				;;
+			portmap_add)
+				rpc_call_wrap openont_nat_portmap_add \
+					"$(get name)" "$(get dest_ip)" "$(get dest_port)" \
+					"$(get proto)" "$(get src_dport)" "$(get src_group)" "$(get enabled)"
+				;;
+			portmap_del)
+				rpc_call_wrap openont_nat_del "$(get name)"
+				;;
+			portmap_enable)
+				rpc_call_wrap openont_nat_set_enabled "$(get name)" 1
+				;;
+			portmap_disable)
+				rpc_call_wrap openont_nat_set_enabled "$(get name)" 0
+				;;
+			dmz_list)
+				openont_nat_list_json dmz
+				;;
+			dmz_add)
+				rpc_call_wrap openont_nat_dmz_add \
+					"$(get name)" "$(get dest_ip)" "$(get enabled)" \
+					"$(get excl_proto)" "$(get excl_port)"
+				;;
+			dmz_del)
+				rpc_call_wrap openont_nat_del "$(get name)"
+				;;
+			dmz_enable)
+				rpc_call_wrap openont_nat_set_enabled "$(get name)" 1
+				;;
+			dmz_disable)
+				rpc_call_wrap openont_nat_set_enabled "$(get name)" 0
+				;;
+			*)
+				echo '{"ok":false,"error":"unknown method"}'
+				;;
+		esac
+		;;
+esac

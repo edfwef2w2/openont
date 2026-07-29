@@ -1,0 +1,93 @@
+{#
+ # OpenONT theme header
+-#}
+{%
+	import { getuid, getgid } from 'fs';
+	import { cursor } from 'uci';
+	import { nodeinfo } from 'luci.version';
+
+	const boardinfo = ubus.call('system', 'board');
+	const sysinfo = ubus.call('system', 'info');
+
+	http.prepare_content('application/xhtml+xml; charset=UTF-8');
+-%}
+<!DOCTYPE html>
+<html lang="{{ dispatcher.lang }}">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{{ striptags(boardinfo?.hostname ?? 'OpenONT') }} - {{ striptags(entitytitle ?? category ?? 'LuCI') }}</title>
+		<link rel="stylesheet" href="{{ media }}/cascade.css" />
+		<script src="{{ resource }}/luci.js"></script>
+		<script>
+			L = new LuCI({{
+				mediaurlbase: media,
+				resourcebase: resource,
+				scriptname: dispatcher.scriptname,
+				documentroot: dispatcher.docroot,
+				requestpath: path,
+				dispatchpath: node_url,
+				pollinterval: +uci.get('luci', 'main', 'pollinterval') || 5,
+				sessionid: ctx?.authsession,
+				token: ctx?.token,
+				nodespec: node
+			}});
+		</script>
+	</head>
+	<body class="openont-body lang_{{ dispatcher.lang }}">
+		<header class="o-header">
+			<div class="o-header-logo">
+				<a href="{{ url('admin/openont/overview') }}">
+					<span class="o-logo-mark">OpenONT</span>
+				</a>
+				<div class="o-header-edition">
+					<span>{{ striptags(boardinfo?.hostname ?? 'OpenONT') }}</span>
+					<br />
+					<span class="o-ver">{{ striptags(nodeinfo?.distversion ?? '') }}</span>
+				</div>
+			</div>
+			<ul class="o-header-tools" id="o-header-stats">
+				<li data-stat="cpu">CPU: —</li>
+				<li data-stat="mem">内存: —</li>
+				<li data-stat="up">上行: —</li>
+				<li data-stat="down">下行: —</li>
+			</ul>
+			<ul class="o-header-user">
+				<li><a href="{{ url('admin/system/admin') }}">账号</a></li>
+				<li><a href="{{ url('admin/logout') }}">退出</a></li>
+			</ul>
+		</header>
+		<div class="o-layout">
+			<nav class="o-nav1" id="o-nav1">
+				<ul>
+					<li><a href="{{ url('admin/openont/overview') }}" class="{{ path?.[2] == 'openont' ? 'current' : '' }}"><span class="ico ico-home"></span><strong>系统概况</strong></a></li>
+					<li><a href="{{ url('admin/status') }}" class="{{ path?.[2] == 'status' ? 'current' : '' }}"><span class="ico ico-status"></span><strong>状态监控</strong></a></li>
+					<li><a href="{{ url('admin/system') }}" class="{{ path?.[2] == 'system' ? 'current' : '' }}"><span class="ico ico-sys"></span><strong>系统设置</strong></a></li>
+					<li><a href="{{ url('admin/network/openont-ports') }}" class="{{ path?.[3] == 'openont-ports' || path?.[3] == 'openont-portmap' || path?.[3] == 'openont-dmz' || path?.[3] == 'openont-ipgroup' ? 'current' : '' }}"><span class="ico ico-net"></span><strong>网络设置</strong></a></li>
+					<li><a href="{{ url('admin/network/sqm') }}" class=""><span class="ico ico-qos"></span><strong>流控分流</strong></a></li>
+					<li><a href="{{ url('admin/network/firewall') }}" class=""><span class="ico ico-fw"></span><strong>安全设置</strong></a></li>
+				</ul>
+			</nav>
+			<aside class="o-nav2">
+				<div class="o-nav2-top">
+					<p class="o-nav2-title">{{ striptags(category ?? entitytitle ?? '') }}</p>
+				</div>
+				<ul class="o-nav2-list" id="o-tabmenu">
+					{% if tree?.children %}
+						{% for c in tree.children %}
+							{% if !c.satisfied || c.hidden %}{% continue %}{% endif %}
+							<li>
+								<a class="{{ c.name == path?.[3] ? 'active' : '' }}" href="{{ c.url }}">{{ striptags(translate(c.title)) }}</a>
+							</li>
+						{% endfor %}
+					{% endif %}
+				</ul>
+			</aside>
+			<main class="o-section">
+				<div class="o-section-top">
+					<div class="o-breadcrumb">{{ striptags(entitytitle ?? category ?? '') }}</div>
+				</div>
+				<div class="o-section-body" id="maincontent">
+					{% if !ctx?.authsession && node?.path?.[0] != 'admin' %}
+					{% else %}
+					{% endif %}
