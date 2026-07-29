@@ -1,14 +1,5 @@
 name: Build Smoke
 
-# Build Images reuses this exact display_title when chained.
-run-name: >-
-  ${{ github.ref_name }} · ${{
-    github.event_name == 'pull_request'
-      && github.event.pull_request.title
-      || github.event.head_commit.message
-      || github.event_name
-  }}
-
 on:
   push:
     branches: [main, master]
@@ -24,7 +15,6 @@ concurrency:
 
 jobs:
   smoke:
-    name: ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
