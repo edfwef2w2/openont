@@ -355,3 +355,81 @@ msgstr "暂无数据（采样中）"
 
 msgid "Sampling…"
 msgstr "采样中…"
+
+msgid "Flow Offload"
+msgstr "流卸载"
+
+msgid "Off"
+msgstr "关闭"
+
+msgid "Software only"
+msgstr "仅软件"
+
+msgid "Software + hardware"
+msgstr "软件 + 硬件"
+
+msgid "Detect"
+msgstr "探测"
+
+msgid "Architecture"
+msgstr "架构"
+
+msgid "Software offload"
+msgstr "软件流卸载"
+
+msgid "Hardware offload"
+msgstr "硬件流卸载"
+
+msgid "Available"
+msgstr "可用"
+
+msgid "Not available"
+msgstr "不可用"
+
+msgid "Current"
+msgstr "当前"
+
+msgid "Recommended"
+msgstr "推荐"
+
+msgid "Select mode"
+msgstr "选择模式"
+
+msgid "Apply"
+msgstr "应用"
+
+msgid "Apply recommended"
+msgstr "应用推荐"
+
+msgid "Applying reloads the firewall and may briefly interrupt traffic."
+msgstr "应用将重载防火墙，可能短暂中断流量。"
+
+msgid "PPPoE Dial"
+msgstr "PPPoE 拨号"
+
+msgid "Refresh"
+msgstr "刷新"
+
+msgid "Interface"
+msgstr "接口"
+
+msgid "Connecting"
+msgstr "连接中"
+
+msgid "L3 device"
+msgstr "L3 设备"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Dial"
+msgstr "拨号"
+
+msgid "Hang up"
+msgstr "挂断"
+
+msgid "Redial"
+msgstr "重拨"
+
+msgid "No PPPoE interface found. Bind a WAN with PPPoE first: openont-port set wan1 eth0 pppoe"
+msgstr "未找到 PPPoE 接口。请先绑定 WAN：openont-port set wan1 eth0 pppoe"

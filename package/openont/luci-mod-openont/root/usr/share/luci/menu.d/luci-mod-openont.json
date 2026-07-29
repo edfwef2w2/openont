@@ -37,6 +37,28 @@
 			"acl": [ "luci-mod-openont" ]
 		}
 	},
+	"admin/network/openont-pppoe": {
+		"title": "PPPoE Dial",
+		"order": 6,
+		"action": {
+			"type": "view",
+			"path": "openont/pppoe"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/network/openont-offload": {
+		"title": "Flow Offload",
+		"order": 7,
+		"action": {
+			"type": "view",
+			"path": "openont/offload"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
 	"admin/network/openont-portmap": {
 		"title": "Port Mapping",
 		"order": 60,

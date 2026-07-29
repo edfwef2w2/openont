@@ -31,14 +31,20 @@ jobs:
             package/openont/openont-core/files/usr/lib/openont/port.sh
             package/openont/openont-core/files/usr/lib/openont/nat.sh
             package/openont/openont-core/files/usr/lib/openont/ipgroup.sh
+            package/openont/openont-core/files/usr/lib/openont/offload.sh
+            package/openont/openont-core/files/usr/lib/openont/pppoe.sh
             package/openont/openont-core/files/usr/sbin/openont-port
             package/openont/openont-core/files/usr/sbin/openont-nat
             package/openont/openont-core/files/usr/sbin/openont-ipgroup
+            package/openont/openont-core/files/usr/sbin/openont-offload
+            package/openont/openont-core/files/usr/sbin/openont-pppoe
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/overview.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ports.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/portmap.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dmz.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ipgroup.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/offload.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/pppoe.js
             package/openont/luci-mod-openont/po/zh_Hans/openont.po
             package/openont/luci-mod-openont/po/templates/openont.pot
             package/openont/luci-theme-openont/htdocs/luci-static/openont/cascade.css

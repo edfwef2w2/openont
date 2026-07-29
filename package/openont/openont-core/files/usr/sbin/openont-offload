@@ -1,0 +1,26 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+. /usr/lib/openont/offload.sh
+
+usage() {
+	cat <<EOF
+Usage: openont-offload <command> [args]
+
+  detect              Probe capabilities and recommend mode
+  status              Current mode + capabilities
+  recommend           Print recommended mode only
+  set <mode>          Apply mode: off | software | hardware
+EOF
+}
+
+cmd="${1:-}"
+[ -n "$cmd" ] && shift
+
+case "$cmd" in
+	detect) openont_offload_detect_json ;;
+	status) openont_offload_status_json ;;
+	recommend) openont_offload_recommend ;;
+	set) openont_offload_set "$@" ;;
+	-h|--help|help|"") usage; [ -n "$cmd" ] || exit 1 ;;
+	*) echo "unknown: $cmd" >&2; usage; exit 1 ;;
+esac

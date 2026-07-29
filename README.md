@@ -32,13 +32,40 @@ Default LAN address after bind: `192.168.1.1/24`.
 
 ## Port map / DMZ / IP groups
 
-Web: **端口映射** / **DMZ主机** / **IP分组**
+Web: **Port Mapping** / **DMZ Host** / **IP Groups**
 
 ```sh
 openont-ipgroup set office office "desk" 192.168.50.0/24 10.0.0.5
 openont-nat portmap-add web 192.168.1.10 80 tcp 8080 office 1
 openont-nat portmap-list
 openont-nat dmz-add dmz1 192.168.1.50 1
+```
+
+## Flow offload (three modes)
+
+Web: **Network → Flow Offload**
+
+Modes: `off` | `software` | `hardware` (software+hardware). Detects platform capability (x86 typically software-only).
+
+```sh
+openont-offload detect
+openont-offload recommend
+openont-offload set software    # or off | hardware
+openont-offload status
+```
+
+First boot applies the recommended mode once.
+
+## PPPoE dial / redial
+
+Web: **Network → PPPoE Dial**
+
+```sh
+openont-port set wan1 eth0 pppoe   # configure first
+openont-pppoe status
+openont-pppoe dial wan1
+openont-pppoe hangup wan1
+openont-pppoe redial wan1
 ```
 
 ## Build

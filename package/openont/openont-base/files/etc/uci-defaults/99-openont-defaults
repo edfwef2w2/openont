@@ -59,4 +59,12 @@ uci -q batch <<-EOF
 	commit luci
 EOF
 
+# Apply recommended flow offload once (software/hardware based on platform).
+if [ ! -f /etc/openont/.offload_initialized ] && [ -x /usr/sbin/openont-offload ]; then
+	mkdir -p /etc/openont
+	rec=$(/usr/sbin/openont-offload recommend 2>/dev/null || echo software)
+	/usr/sbin/openont-offload set "$rec" >/dev/null 2>&1 || true
+	touch /etc/openont/.offload_initialized
+fi
+
 exit 0

@@ -7,6 +7,8 @@
 . /usr/lib/openont/port.sh 2>/dev/null || true
 . /usr/lib/openont/nat.sh 2>/dev/null || true
 . /usr/lib/openont/ipgroup.sh 2>/dev/null || true
+. /usr/lib/openont/offload.sh 2>/dev/null || true
+. /usr/lib/openont/pppoe.sh 2>/dev/null || true
 
 # --- stats (overview) kept compact ---
 STATS_DIR="/tmp/openont-stats"
@@ -182,7 +184,9 @@ case "$1" in
 			port_status port_set port_add port_del_port port_del \
 			ipgroup_list ipgroup_set ipgroup_del \
 			portmap_list portmap_add portmap_del portmap_enable portmap_disable \
-			dmz_list dmz_add dmz_del dmz_enable dmz_disable
+			dmz_list dmz_add dmz_del dmz_enable dmz_disable \
+			offload_detect offload_status offload_set \
+			pppoe_status pppoe_dial pppoe_hangup pppoe_redial
 		do
 			json_add_object "$m"
 			json_close_object
@@ -264,6 +268,24 @@ case "$1" in
 				;;
 			dmz_disable)
 				rpc_call_wrap openont_nat_set_enabled "$(get name)" 0
+				;;
+			offload_detect|offload_status)
+				openont_offload_detect_json
+				;;
+			offload_set)
+				rpc_call_wrap openont_offload_set "$(get mode)"
+				;;
+			pppoe_status)
+				openont_pppoe_status_json "$(get iface)"
+				;;
+			pppoe_dial)
+				rpc_call_wrap openont_pppoe_dial "$(get iface)"
+				;;
+			pppoe_hangup)
+				rpc_call_wrap openont_pppoe_hangup "$(get iface)"
+				;;
+			pppoe_redial)
+				rpc_call_wrap openont_pppoe_redial "$(get iface)"
 				;;
 			*)
 				echo '{"ok":false,"error":"unknown method"}'

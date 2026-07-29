@@ -353,3 +353,81 @@ msgstr ""
 
 msgid "Sampling…"
 msgstr ""
+
+msgid "Flow Offload"
+msgstr ""
+
+msgid "Off"
+msgstr ""
+
+msgid "Software only"
+msgstr ""
+
+msgid "Software + hardware"
+msgstr ""
+
+msgid "Detect"
+msgstr ""
+
+msgid "Architecture"
+msgstr ""
+
+msgid "Software offload"
+msgstr ""
+
+msgid "Hardware offload"
+msgstr ""
+
+msgid "Available"
+msgstr ""
+
+msgid "Not available"
+msgstr ""
+
+msgid "Current"
+msgstr ""
+
+msgid "Recommended"
+msgstr ""
+
+msgid "Select mode"
+msgstr ""
+
+msgid "Apply"
+msgstr ""
+
+msgid "Apply recommended"
+msgstr ""
+
+msgid "Applying reloads the firewall and may briefly interrupt traffic."
+msgstr ""
+
+msgid "PPPoE Dial"
+msgstr ""
+
+msgid "Refresh"
+msgstr ""
+
+msgid "Interface"
+msgstr ""
+
+msgid "Connecting"
+msgstr ""
+
+msgid "L3 device"
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "Dial"
+msgstr ""
+
+msgid "Hang up"
+msgstr ""
+
+msgid "Redial"
+msgstr ""
+
+msgid "No PPPoE interface found. Bind a WAN with PPPoE first: openont-port set wan1 eth0 pppoe"
+msgstr ""

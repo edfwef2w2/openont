@@ -1,0 +1,26 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+. /usr/lib/openont/pppoe.sh
+
+usage() {
+	cat <<EOF
+Usage: openont-pppoe <command> [args]
+
+  list|status [iface]   Show PPPoE interface status (JSON)
+  dial <iface>          Bring interface up
+  hangup <iface>        Bring interface down
+  redial <iface>        Hang up then dial
+EOF
+}
+
+cmd="${1:-}"
+[ -n "$cmd" ] && shift
+
+case "$cmd" in
+	list|status) openont_pppoe_status_json "$@" ;;
+	dial) openont_pppoe_dial "$@" ;;
+	hangup|down) openont_pppoe_hangup "$@" ;;
+	redial) openont_pppoe_redial "$@" ;;
+	-h|--help|help|"") usage; [ -n "$cmd" ] || exit 1 ;;
+	*) echo "unknown: $cmd" >&2; usage; exit 1 ;;
+esac

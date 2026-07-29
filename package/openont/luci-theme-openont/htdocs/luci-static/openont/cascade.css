@@ -350,3 +350,13 @@ header.fixed-header, .mainmenu, .modemenu { }
 }
 .colorG { color: var(--o-green); }
 .colorR { color: var(--o-red); }
+
+.o-mode-group { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 12px; }
+.o-mode-option {
+	display: flex; align-items: center; gap: 8px;
+	padding: 8px 10px; border: 1px solid var(--o-border); border-radius: 2px;
+	background: #fafbfc; cursor: pointer;
+}
+.o-mode-option input:checked + span { font-weight: 600; color: var(--o-blue2); }
+.o-mode-option input { margin: 0; }
+.o-ops .o-btn { margin: 2px; padding: 4px 10px; }
