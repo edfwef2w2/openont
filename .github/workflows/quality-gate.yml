@@ -1,4 +1,4 @@
-name: Test
+name: Quality Gate
 
 on:
   push:
@@ -10,12 +10,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: openont-test-${{ github.ref }}
+  group: openont-quality-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Lint and package checks
+  quality-gate:
+    name: Integrity & static validation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
