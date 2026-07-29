@@ -1,4 +1,4 @@
-name: Quality Gate
+name: Build Smoke
 
 on:
   push:
@@ -10,12 +10,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: openont-quality-${{ github.ref }}
+  group: openont-smoke-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  quality-gate:
-    name: Integrity & static validation
+  smoke:
+    name: Smoke checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

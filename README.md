@@ -65,8 +65,8 @@ Only two workflows under `.github/workflows/`:
 
 | Workflow | File | When |
 |----------|------|------|
-| **Quality Gate** | `quality-gate.yml` | push / PR — integrity, shell syntax, i18n checks |
-| **Build images** | `build.yml` | manual (`workflow_dispatch`) or tag `v*` — full firmware images |
+| **Build Smoke** | `build-smoke.yml` | push / PR — paths, shell syntax, i18n checks |
+| **Build Images** | `build.yml` | manual (`workflow_dispatch`) or tag `v*` — full firmware images |
 
 Build targets: `x86_64`, `armsr_armv8`, or `all` (manual input).
 ## License
