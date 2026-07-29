@@ -6,7 +6,7 @@ on:
       target:
         description: Target to build
         required: true
-        default: x86_64
+        default: all
         type: choice
         options:
           - x86_64
@@ -15,29 +15,55 @@ on:
   push:
     tags:
       - "v*"
+  # After Build Smoke succeeds on main/master, build all images.
+  workflow_run:
+    workflows:
+      - Build Smoke
+    types:
+      - completed
 
 permissions:
   contents: read
 
 concurrency:
-  group: openont-build-${{ github.ref }}-${{ github.event.inputs.target || 'tag' }}
+  group: openont-build-${{ github.event.workflow_run.head_branch || github.ref }}-${{ github.event.inputs.target || 'all' }}
   cancel-in-progress: true
 
 jobs:
   prepare:
     name: Resolve targets
     runs-on: ubuntu-latest
+    # Skip failed/cancelled smoke; only auto-build for main/master.
+    if: |
+      github.event_name != 'workflow_run' || (
+        github.event.workflow_run.conclusion == 'success' &&
+        (
+          github.event.workflow_run.head_branch == 'main' ||
+          github.event.workflow_run.head_branch == 'master'
+        )
+      )
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
+      ref: ${{ steps.set.outputs.ref }}
     steps:
       - id: set
         run: |
           set -euo pipefail
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             t="${{ github.event.inputs.target }}"
-          else
+            ref="${{ github.sha }}"
+          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
             t="all"
+            ref="${{ github.event.workflow_run.head_sha }}"
+          else
+            # tag push
+            t="all"
+            ref="${{ github.sha }}"
           fi
+
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
           case "$t" in
             x86_64)
               echo 'matrix={"include":[{"name":"x86_64","target":"x86_64"}]}' >> "$GITHUB_OUTPUT"
@@ -66,6 +92,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ needs.prepare.outputs.ref }}
 
       - name: Install build dependencies
         run: |

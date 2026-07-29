@@ -66,9 +66,10 @@ Only two workflows under `.github/workflows/`:
 | Workflow | File | When |
 |----------|------|------|
 | **Build Smoke** | `build-smoke.yml` | push / PR — paths, shell syntax, i18n checks |
-| **Build Images** | `build.yml` | manual (`workflow_dispatch`) or tag `v*` — full firmware images |
+| **Build Images** | `build.yml` | after Smoke succeeds on `main`/`master` (**all** targets); or manual / tag `v*` |
 
-Build targets: `x86_64`, `armsr_armv8`, or `all` (manual input).
+Auto chain: **Build Smoke (success on main/master) → Build Images (`all`)**.  
+Manual targets: `x86_64`, `armsr_armv8`, or `all`.
 ## License
 
 Same as OpenWrt (primarily GPL-2.0). See `COPYING`.
