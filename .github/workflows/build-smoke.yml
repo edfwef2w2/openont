@@ -1,5 +1,14 @@
 name: Build Smoke
 
+# Shown in Actions list; Build Images reuses display_title via workflow_run.
+run-name: >-
+  Smoke · ${{ github.ref_name }} · ${{
+    github.event_name == 'pull_request'
+      && github.event.pull_request.title
+      || github.event.head_commit.message
+      || github.event_name
+  }} · ${{ github.sha }}
+
 on:
   push:
     branches: [main, master]
@@ -15,7 +24,7 @@ concurrency:
 
 jobs:
   smoke:
-    name: Smoke checks
+    name: Smoke · ${{ github.ref_name }} · ${{ github.sha }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
