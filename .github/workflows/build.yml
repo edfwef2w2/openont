@@ -28,10 +28,7 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  # Same branch/target still serializes; do not cancel a running full build.
-  group: openont-build-${{ github.event.workflow_run.head_branch || github.ref }}-${{ github.event.inputs.target || 'all' }}
-  cancel-in-progress: false
+# No concurrency group: multiple Images runs (and matrix targets) may run in parallel.
 
 jobs:
   prepare:

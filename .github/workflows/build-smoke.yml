@@ -12,9 +12,7 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: openont-smoke-${{ github.ref }}
-  cancel-in-progress: false
+# No concurrency group: multiple Smoke runs may execute in parallel.
 
 jobs:
   smoke:
