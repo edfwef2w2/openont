@@ -47,25 +47,25 @@
 				</div>
 			</div>
 			<ul class="o-header-tools" id="o-header-stats">
-				<li data-stat="cpu">CPU: —</li>
-				<li data-stat="mem">内存: —</li>
-				<li data-stat="up">上行: —</li>
-				<li data-stat="down">下行: —</li>
+				<li data-stat="cpu" data-label="{{ translate('CPU') }}">{{ translate('CPU') }}: —</li>
+				<li data-stat="mem" data-label="{{ translate('Memory') }}">{{ translate('Memory') }}: —</li>
+				<li data-stat="up" data-label="{{ translate('Upload') }}">{{ translate('Upload') }}: —</li>
+				<li data-stat="down" data-label="{{ translate('Download') }}">{{ translate('Download') }}: —</li>
 			</ul>
 			<ul class="o-header-user">
-				<li><a href="{{ url('admin/system/admin') }}">账号</a></li>
-				<li><a href="{{ url('admin/logout') }}">退出</a></li>
+				<li><a href="{{ url('admin/system/admin') }}">{{ translate('Account') }}</a></li>
+				<li><a href="{{ url('admin/logout') }}">{{ translate('Logout') }}</a></li>
 			</ul>
 		</header>
 		<div class="o-layout">
 			<nav class="o-nav1" id="o-nav1">
 				<ul>
-					<li><a href="{{ url('admin/openont/overview') }}" class="{{ path?.[2] == 'openont' ? 'current' : '' }}"><span class="ico ico-home"></span><strong>系统概况</strong></a></li>
-					<li><a href="{{ url('admin/status') }}" class="{{ path?.[2] == 'status' ? 'current' : '' }}"><span class="ico ico-status"></span><strong>状态监控</strong></a></li>
-					<li><a href="{{ url('admin/system') }}" class="{{ path?.[2] == 'system' ? 'current' : '' }}"><span class="ico ico-sys"></span><strong>系统设置</strong></a></li>
-					<li><a href="{{ url('admin/network/openont-ports') }}" class="{{ path?.[3] == 'openont-ports' || path?.[3] == 'openont-portmap' || path?.[3] == 'openont-dmz' || path?.[3] == 'openont-ipgroup' ? 'current' : '' }}"><span class="ico ico-net"></span><strong>网络设置</strong></a></li>
-					<li><a href="{{ url('admin/network/sqm') }}" class=""><span class="ico ico-qos"></span><strong>流控分流</strong></a></li>
-					<li><a href="{{ url('admin/network/firewall') }}" class=""><span class="ico ico-fw"></span><strong>安全设置</strong></a></li>
+					<li><a href="{{ url('admin/openont/overview') }}" class="{{ path?.[2] == 'openont' ? 'current' : '' }}"><span class="ico ico-home"></span><strong>{{ translate('System Overview') }}</strong></a></li>
+					<li><a href="{{ url('admin/status') }}" class="{{ path?.[2] == 'status' ? 'current' : '' }}"><span class="ico ico-status"></span><strong>{{ translate('Status') }}</strong></a></li>
+					<li><a href="{{ url('admin/system') }}" class="{{ path?.[2] == 'system' ? 'current' : '' }}"><span class="ico ico-sys"></span><strong>{{ translate('System') }}</strong></a></li>
+					<li><a href="{{ url('admin/network/openont-ports') }}" class="{{ path?.[3] == 'openont-ports' || path?.[3] == 'openont-portmap' || path?.[3] == 'openont-dmz' || path?.[3] == 'openont-ipgroup' ? 'current' : '' }}"><span class="ico ico-net"></span><strong>{{ translate('Network') }}</strong></a></li>
+					<li><a href="{{ url('admin/network/sqm') }}" class=""><span class="ico ico-qos"></span><strong>{{ translate('QoS') }}</strong></a></li>
+					<li><a href="{{ url('admin/network/firewall') }}" class=""><span class="ico ico-fw"></span><strong>{{ translate('Firewall') }}</strong></a></li>
 				</ul>
 			</nav>
 			<aside class="o-nav2">
@@ -88,6 +88,3 @@
 					<div class="o-breadcrumb">{{ striptags(entitytitle ?? category ?? '') }}</div>
 				</div>
 				<div class="o-section-body" id="maincontent">
-					{% if !ctx?.authsession && node?.path?.[0] != 'admin' %}
-					{% else %}
-					{% endif %}

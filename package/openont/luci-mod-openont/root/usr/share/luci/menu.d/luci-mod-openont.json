@@ -1,6 +1,6 @@
 {
 	"admin/openont": {
-		"title": "系统概况",
+		"title": "System Overview",
 		"order": 1,
 		"action": {
 			"type": "firstchild",
@@ -11,7 +11,7 @@
 		}
 	},
 	"admin/openont/overview": {
-		"title": "概览",
+		"title": "Overview",
 		"order": 1,
 		"action": {
 			"type": "view",
@@ -27,7 +27,7 @@
 		}
 	},
 	"admin/network/openont-ports": {
-		"title": "网口绑定",
+		"title": "Port Binding",
 		"order": 5,
 		"action": {
 			"type": "view",
@@ -38,7 +38,7 @@
 		}
 	},
 	"admin/network/openont-portmap": {
-		"title": "端口映射",
+		"title": "Port Mapping",
 		"order": 60,
 		"action": {
 			"type": "view",
@@ -49,7 +49,7 @@
 		}
 	},
 	"admin/network/openont-dmz": {
-		"title": "DMZ主机",
+		"title": "DMZ Host",
 		"order": 61,
 		"action": {
 			"type": "view",
@@ -60,7 +60,7 @@
 		}
 	},
 	"admin/network/openont-ipgroup": {
-		"title": "IP分组",
+		"title": "IP Groups",
 		"order": 62,
 		"action": {
 			"type": "view",

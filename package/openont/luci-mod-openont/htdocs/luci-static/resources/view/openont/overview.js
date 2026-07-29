@@ -32,6 +32,14 @@ function rateParts(bps) {
 	return { v: (v >= 10 || i === 0 ? v.toFixed(0) : v.toFixed(2)), u: u[i] };
 }
 
+function fmtUptime(sec) {
+	sec = parseInt(sec, 10) || 0;
+	var d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60);
+	if (d > 0)
+		return _('%d day(s) %d hour(s) %d min').format(d, h, m);
+	return _('%d hour(s) %d min').format(h, m);
+}
+
 return view.extend({
 	handleSaveApply: null,
 	handleSave: null,
@@ -57,15 +65,17 @@ return view.extend({
 		var row1 = E('div', { class: 'o-row' });
 
 		var profileCls = 'o-card o-profile' + (ov.wan_connected ? '' : ' offline');
-		var stateText = ov.wan_connected ? '已连接' : '未连接';
+		var stateText = ov.wan_connected ? _('Connected') : _('Disconnected');
 		row1.appendChild(E('div', { class: 'o-col o-col-3' }, [
 			E('div', { class: profileCls, id: 'o-profile' }, [
 				E('p', { class: 'name' }, [ ov.hostname || 'OpenONT' ]),
 				E('p', { class: 'state' }, [
 					E('span', { id: 'o-wan-state' }, [ stateText ]), ' ',
-					E('small', {}, [ '外网' ])
+					E('small', {}, [ _('WAN') ])
 				]),
-				E('p', { class: 'uptime', id: 'o-uptime' }, [ '已运行: ' + (ov.uptime || '—') ])
+				E('p', { class: 'uptime', id: 'o-uptime' }, [
+					_('Uptime') + ': ' + fmtUptime(ov.uptime_sec)
+				])
 			])
 		]));
 
@@ -73,35 +83,35 @@ return view.extend({
 		var rx = rateParts(ov.rx_bps);
 		row1.appendChild(E('div', { class: 'o-col o-col-3' }, [
 			E('div', { class: 'o-card' }, [
-				E('div', { class: 'o-card-title' }, [ '速率状态' ]),
+				E('div', { class: 'o-card-title' }, [ _('Rate status') ]),
 				E('div', { class: 'o-rate-line up' }, [
 					E('span', { class: 'val', id: 'o-tx-val' }, [ tx.v ]),
 					E('span', { class: 'unit', id: 'o-tx-unit' }, [ tx.u ]),
-					E('span', { style: 'margin-left:8px;color:#888;font-size:12px' }, [ '上行' ])
+					E('span', { style: 'margin-left:8px;color:#888;font-size:12px' }, [ _('Upload') ])
 				]),
 				E('div', { class: 'o-rate-line down' }, [
 					E('span', { class: 'val', id: 'o-rx-val' }, [ rx.v ]),
 					E('span', { class: 'unit', id: 'o-rx-unit' }, [ rx.u ]),
-					E('span', { style: 'margin-left:8px;color:#888;font-size:12px' }, [ '下行' ])
+					E('span', { style: 'margin-left:8px;color:#888;font-size:12px' }, [ _('Download') ])
 				])
 			])
 		]));
 
 		row1.appendChild(E('div', { class: 'o-col o-col-6' }, [
 			E('div', { class: 'o-card' }, [
-				E('div', { class: 'o-card-title' }, [ '物理连接' ]),
+				E('div', { class: 'o-card-title' }, [ _('Physical connections') ]),
 				E('div', { class: 'o-stat-grid' }, [
 					E('div', {}, [
 						E('div', { class: 'num', id: 'o-hosts' }, [ String(ov.hosts || 0) ]),
-						E('div', { class: 'lbl' }, [ '连接设备' ])
+						E('div', { class: 'lbl' }, [ _('Hosts') ])
 					]),
 					E('div', {}, [
 						E('div', { class: 'num', id: 'o-conns' }, [ String(ov.connections || 0) ]),
-						E('div', { class: 'lbl' }, [ '连接数' ])
+						E('div', { class: 'lbl' }, [ _('Connections') ])
 					]),
 					E('div', {}, [
 						E('div', { class: 'num', id: 'o-wired' }, [ String(ov.wired || 0) ]),
-						E('div', { class: 'lbl' }, [ '有线' ])
+						E('div', { class: 'lbl' }, [ _('Wired') ])
 					])
 				])
 			])
@@ -112,19 +122,19 @@ return view.extend({
 		/* Row 2: interface status (no AC) */
 		var row2 = E('div', { class: 'o-row' });
 		var ifCard = E('div', { class: 'o-card' }, [
-			E('div', { class: 'o-card-title' }, [ '接口状态' ]),
+			E('div', { class: 'o-card-title' }, [ _('Interface status') ]),
 			E('div', { class: 'o-if-summary' }, [
 				E('div', { class: 'item' }, [
 					E('div', { class: 'num', id: 'o-wan-n' }, [ String(ov.wan_enabled || 0) ]),
-					E('div', { class: 'lbl' }, [ 'WAN 已启用' ])
+					E('div', { class: 'lbl' }, [ _('WAN enabled') ])
 				]),
 				E('div', { class: 'item' }, [
 					E('div', { class: 'num', id: 'o-lan-n' }, [ String(ov.lan_enabled || 0) ]),
-					E('div', { class: 'lbl' }, [ 'LAN 已启用' ])
+					E('div', { class: 'lbl' }, [ _('LAN enabled') ])
 				]),
 				E('div', { class: 'item' }, [
 					E('div', { class: 'num', id: 'o-dhcp-rem' }, [ String(ov.dhcp_remaining || 0) ]),
-					E('div', { class: 'lbl' }, [ 'DHCP 池剩余' ])
+					E('div', { class: 'lbl' }, [ _('DHCP pool free') ])
 				])
 			]),
 			E('ul', { class: 'o-if-list', id: 'o-if-list' })
@@ -137,9 +147,9 @@ return view.extend({
 		var row3 = E('div', { class: 'o-row' });
 
 		var pieSelect = E('select', { class: 'o-select', id: 'o-pie-window' }, [
-			E('option', { value: '30', selected: 'selected' }, [ '近30分钟' ]),
-			E('option', { value: '60' }, [ '近1小时' ]),
-			E('option', { value: '1440' }, [ '近1天' ])
+			E('option', { value: '30', selected: 'selected' }, [ _('Last 30 minutes') ]),
+			E('option', { value: '60' }, [ _('Last 1 hour') ]),
+			E('option', { value: '1440' }, [ _('Last 1 day') ])
 		]);
 		pieSelect.addEventListener('change', function () {
 			self._pieWindow = parseInt(pieSelect.value, 10) || 30;
@@ -149,7 +159,7 @@ return view.extend({
 		row3.appendChild(E('div', { class: 'o-col o-col-4' }, [
 			E('div', { class: 'o-card' }, [
 				E('div', { class: 'o-card-title' }, [
-					E('span', { id: 'o-pie-title' }, [ '近30分钟协议流量分布' ]),
+					E('span', { id: 'o-pie-title' }, [ _('Protocol traffic (last 30 minutes)') ]),
 					pieSelect
 				]),
 				E('div', { class: 'o-chart-box', id: 'o-pie-box' }, [
@@ -161,8 +171,8 @@ return view.extend({
 		row3.appendChild(E('div', { class: 'o-col o-col-8' }, [
 			E('div', { class: 'o-card' }, [
 				E('div', { class: 'o-card-title' }, [
-					E('span', {}, [ '近5分钟上下行速率' ]),
-					E('span', { style: 'font-size:11px;color:#999;font-weight:400' }, [ '自动刷新 5s' ])
+					E('span', {}, [ _('Upload / download rate (last 5 minutes)') ]),
+					E('span', { style: 'font-size:11px;color:#999;font-weight:400' }, [ _('Auto refresh 5s') ])
 				]),
 				E('div', { class: 'o-chart-box sm' }, [
 					E('canvas', { id: 'o-rate-up-canvas', width: 640, height: 140 })
@@ -198,8 +208,8 @@ return view.extend({
 		ul.innerHTML = '';
 		if (!list.length) {
 			ul.appendChild(E('li', {}, [
-				E('div', { class: 'name' }, [ '无绑定' ]),
-				E('div', { class: 'meta' }, [ '控制台: openont-port set lan1 eth0' ])
+				E('div', { class: 'name' }, [ _('No binding') ]),
+				E('div', { class: 'meta' }, [ 'openont-port set lan1 eth0' ])
 			]));
 			return;
 		}
@@ -208,16 +218,16 @@ return view.extend({
 			var li = E('li', { class: up ? 'up' : 'down' }, [
 				E('div', { class: 'name' }, [ ifc.name || '?' ]),
 				E('div', { class: 'meta' }, [
-					(ifc.ports || ifc.device || '') + (up ? ' · 已连接' : ' · 断开')
+					(ifc.ports || ifc.device || '') + ' · ' + (up ? _('Connected') : _('Disconnected'))
 				]),
 				E('div', { class: 'o-popover' }, [
-					E('dl', {}, [ E('dt', {}, [ '角色' ]), E('dd', {}, [ ifc.name || '' ]) ]),
-					E('dl', {}, [ E('dt', {}, [ '设备' ]), E('dd', {}, [ ifc.device || '—' ]) ]),
-					E('dl', {}, [ E('dt', {}, [ '绑定 eth' ]), E('dd', {}, [ ifc.ports || ifc.device || '—' ]) ]),
-					E('dl', {}, [ E('dt', {}, [ '链路' ]), E('dd', {}, [
-						E('span', { class: up ? 'colorG' : 'colorR' }, [ up ? '已连接' : '断开' ])
+					E('dl', {}, [ E('dt', {}, [ _('Role') ]), E('dd', {}, [ ifc.name || '' ]) ]),
+					E('dl', {}, [ E('dt', {}, [ _('Device') ]), E('dd', {}, [ ifc.device || '—' ]) ]),
+					E('dl', {}, [ E('dt', {}, [ _('Bound eth') ]), E('dd', {}, [ ifc.ports || ifc.device || '—' ]) ]),
+					E('dl', {}, [ E('dt', {}, [ _('Link') ]), E('dd', {}, [
+						E('span', { class: up ? 'colorG' : 'colorR' }, [ up ? _('Connected') : _('Disconnected') ])
 					]) ]),
-					E('dl', {}, [ E('dt', {}, [ '协议' ]), E('dd', {}, [ ifc.proto || '—' ]) ]),
+					E('dl', {}, [ E('dt', {}, [ _('Protocol') ]), E('dd', {}, [ ifc.proto || '—' ]) ]),
 					E('dl', {}, [ E('dt', {}, [ 'IP' ]), E('dd', {}, [ ifc.ip || '—' ]) ])
 				])
 			]);
@@ -232,9 +242,9 @@ return view.extend({
 			el.className = 'o-card o-profile' + (ov.wan_connected ? '' : ' offline');
 		}
 		el = document.getElementById('o-wan-state');
-		if (el) el.textContent = ov.wan_connected ? '已连接' : '未连接';
+		if (el) el.textContent = ov.wan_connected ? _('Connected') : _('Disconnected');
 		el = document.getElementById('o-uptime');
-		if (el) el.textContent = '已运行: ' + (ov.uptime || '—');
+		if (el) el.textContent = _('Uptime') + ': ' + fmtUptime(ov.uptime_sec);
 
 		var tx = rateParts(ov.tx_bps), rx = rateParts(ov.rx_bps);
 		el = document.getElementById('o-tx-val'); if (el) el.textContent = tx.v;
@@ -278,7 +288,11 @@ return view.extend({
 	_refreshHistory: function () {
 		var self = this;
 		var w = this._pieWindow || 30;
-		var titles = { 30: '近30分钟协议流量分布', 60: '近1小时协议流量分布', 1440: '近1天协议流量分布' };
+		var titles = {
+			30: _('Protocol traffic (last 30 minutes)'),
+			60: _('Protocol traffic (last 1 hour)'),
+			1440: _('Protocol traffic (last 1 day)')
+		};
 		var titleEl = document.getElementById('o-pie-title');
 		if (titleEl) titleEl.textContent = titles[w] || titles[30];
 		return callHistory(w).then(function (h) {
@@ -311,14 +325,14 @@ return view.extend({
 		var parts = [
 			{ label: 'TCP', value: Number(proto.tcp || 0), color: '#0088cc' },
 			{ label: 'UDP', value: Number(proto.udp || 0), color: '#2db84d' },
-			{ label: '其他', value: Number(proto.other || 0), color: '#e6a23c' }
+			{ label: _('Other'), value: Number(proto.other || 0), color: '#e6a23c' }
 		];
 		var total = parts.reduce(function (s, p) { return s + p.value; }, 0);
 		if (total <= 0) {
 			ctx.fillStyle = '#999';
 			ctx.font = '13px sans-serif';
 			ctx.textAlign = 'center';
-			ctx.fillText('暂无数据（采样中）', w / 2, h / 2);
+			ctx.fillText(_('No data yet (sampling)'), w / 2, h / 2);
 			return;
 		}
 
@@ -350,8 +364,8 @@ return view.extend({
 	},
 
 	_drawRateCharts: function () {
-		this._drawLine('o-rate-up-canvas', this._rateWindow, 'tx', '#e6a23c', '上行');
-		this._drawLine('o-rate-down-canvas', this._rateWindow, 'rx', '#0088cc', '下行');
+		this._drawLine('o-rate-up-canvas', this._rateWindow, 'tx', '#e6a23c', _('Upload'));
+		this._drawLine('o-rate-down-canvas', this._rateWindow, 'rx', '#0088cc', _('Download'));
 	},
 
 	_drawLine: function (id, pts, key, color, label) {
@@ -388,7 +402,7 @@ return view.extend({
 		if (!pts || pts.length < 2) {
 			ctx.fillStyle = '#aaa';
 			ctx.textAlign = 'center';
-			ctx.fillText('采样中…', w / 2, h / 2);
+			ctx.fillText(_('Sampling…'), w / 2, h / 2);
 			return;
 		}
 

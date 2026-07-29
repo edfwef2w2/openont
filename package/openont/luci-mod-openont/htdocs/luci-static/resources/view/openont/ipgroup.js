@@ -26,16 +26,16 @@ return view.extend({
 			var idIn = E('input', { class: 'o-input', value: g.id || '' });
 			var nameIn = E('input', { class: 'o-input', value: g.name || '' });
 			var cmtIn = E('input', { class: 'o-input', value: g.comment || '' });
-			var entIn = E('textarea', { class: 'o-input', rows: 6, placeholder: '每行一个 IP 或 CIDR' }, [
+			var entIn = E('textarea', { class: 'o-input', rows: 6, placeholder: _('One IP or CIDR per line') }, [
 				(g.entries || []).join('\n')
 			]);
 			var err = E('div', { class: 'o-alert', style: 'display:none' });
-			editBox.appendChild(E('div', { class: 'o-card-title' }, [ g.id ? '编辑 IP 分组' : '添加 IP 分组' ]));
+			editBox.appendChild(E('div', { class: 'o-card-title' }, [ g.id ? _('Edit IP group') : _('Add IP group') ]));
 			editBox.appendChild(err);
 			editBox.appendChild(E('div', { class: 'o-form-row' }, [ E('label', {}, [ 'ID' ]), idIn ]));
-			editBox.appendChild(E('div', { class: 'o-form-row' }, [ E('label', {}, [ '名称' ]), nameIn ]));
-			editBox.appendChild(E('div', { class: 'o-form-row' }, [ E('label', {}, [ '备注' ]), cmtIn ]));
-			editBox.appendChild(E('div', { class: 'o-form-row' }, [ E('label', {}, [ '成员' ]), entIn ]));
+			editBox.appendChild(E('div', { class: 'o-form-row' }, [ E('label', {}, [ _('Name') ]), nameIn ]));
+			editBox.appendChild(E('div', { class: 'o-form-row' }, [ E('label', {}, [ _('Comment') ]), cmtIn ]));
+			editBox.appendChild(E('div', { class: 'o-form-row' }, [ E('label', {}, [ _('Members') ]), entIn ]));
 			editBox.appendChild(E('div', { class: 'o-form-actions' }, [
 				E('button', {
 					class: 'o-btn o-btn-primary',
@@ -45,30 +45,32 @@ return view.extend({
 						callSet(id, nameIn.value.trim() || id, cmtIn.value.trim(), entries).then(function (res) {
 							if (res && res.ok === false) {
 								err.style.display = '';
-								err.textContent = res.error || '失败';
+								err.textContent = res.error || _('Failed');
 							} else location.reload();
 						});
 					}
-				}, [ '保存' ]),
-				E('button', { class: 'o-btn', click: function () { editBox.style.display = 'none'; } }, [ '取消' ])
+				}, [ _('Save') ]),
+				E('button', { class: 'o-btn', click: function () { editBox.style.display = 'none'; } }, [ _('Cancel') ])
 			]));
 			editBox.appendChild(E('p', { class: 'o-muted' }, [ 'CLI: openont-ipgroup set <id> <name> <comment> <ip>…' ]));
 		}
 
 		root.appendChild(E('div', { class: 'o-toolbar' }, [
-			E('h3', { style: 'margin:0;flex:1' }, [ '允许访问 IP 分组' ]),
-			E('button', { class: 'o-btn o-btn-primary', click: function () { showEdit(null); } }, [ '添加' ])
+			E('h3', { style: 'margin:0;flex:1' }, [ _('Allow-access IP groups') ]),
+			E('button', { class: 'o-btn o-btn-primary', click: function () { showEdit(null); } }, [ _('Add') ])
 		]));
 
 		var table = E('table', { class: 'o-table' }, [
 			E('thead', {}, [ E('tr', {}, [
-				E('th', {}, [ 'ID' ]), E('th', {}, [ '名称' ]), E('th', {}, [ '成员' ]),
-				E('th', {}, [ '引用' ]), E('th', {}, [ '备注' ]), E('th', {}, [ '操作' ])
+				E('th', {}, [ 'ID' ]), E('th', {}, [ _('Name') ]), E('th', {}, [ _('Members') ]),
+				E('th', {}, [ _('References') ]), E('th', {}, [ _('Comment') ]), E('th', {}, [ _('Actions') ])
 			]) ])
 		]);
 		var tb = E('tbody', {});
 		if (!groups.length) {
-			tb.appendChild(E('tr', {}, [ E('td', { colspan: 6, class: 'o-muted' }, [ '暂无分组。端口映射中可选用分组限制源 IP。' ]) ]));
+			tb.appendChild(E('tr', {}, [ E('td', { colspan: 6, class: 'o-muted' }, [
+				_('No groups yet. Port mapping can use a group to restrict source IPs.')
+			]) ]));
 		}
 		groups.forEach(function (g) {
 			tb.appendChild(E('tr', {}, [
@@ -79,23 +81,23 @@ return view.extend({
 					' ', (g.entries || []).slice(0, 3).join(', '),
 					(g.entries || []).length > 3 ? '…' : ''
 				]),
-				E('td', {}, [ E('span', { class: 'o-badge' }, [ String(g.refs || 0) + ' 条映射' ]) ]),
+				E('td', {}, [ E('span', { class: 'o-badge' }, [ _('%d mapping(s)').format(g.refs || 0) ]) ]),
 				E('td', {}, [ g.comment || '—' ]),
 				E('td', { class: 'o-ops' }, [
-					E('a', { href: '#', click: function (ev) { ev.preventDefault(); showEdit(g); } }, [ '编辑' ]),
+					E('a', { href: '#', click: function (ev) { ev.preventDefault(); showEdit(g); } }, [ _('Edit') ]),
 					' ',
 					E('a', {
 						href: '#', style: 'color:#fe6f73',
 						click: function (ev) {
 							ev.preventDefault();
 							if ((g.refs || 0) > 0) {
-								alert('该分组仍被 ' + g.refs + ' 条端口映射引用，请先修改映射。');
+								alert(_('This group is still referenced by %d port mapping(s). Update those first.').format(g.refs));
 								return;
 							}
-							if (!confirm('删除分组 ' + g.id + ' ?')) return;
+							if (!confirm(_('Delete group %s?').format(g.id))) return;
 							callDel(g.id).then(function () { location.reload(); });
 						}
-					}, [ '删除' ])
+					}, [ _('Delete') ])
 				])
 			]));
 		});

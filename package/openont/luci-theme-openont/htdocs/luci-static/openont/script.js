@@ -1,5 +1,15 @@
-/* OpenONT theme helpers */
+/* OpenONT theme helpers — labels come from data-label (translated in template) */
 (function () {
+	function tr(s) {
+		try {
+			if (typeof _ === 'function')
+				return _(s);
+			if (typeof L !== 'undefined' && typeof L._ === 'function')
+				return L._(s);
+		} catch (e) { /* ignore */ }
+		return s;
+	}
+
 	function fmtRate(bps) {
 		if (bps == null || isNaN(bps)) return '—';
 		var u = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
@@ -29,10 +39,10 @@
 			var mem = box.querySelector('[data-stat="mem"]');
 			var up = box.querySelector('[data-stat="up"]');
 			var down = box.querySelector('[data-stat="down"]');
-			if (cpu) cpu.textContent = 'CPU: ' + fmtPct(data.cpu);
-			if (mem) mem.textContent = '内存: ' + fmtPct(data.mem);
-			if (up) up.textContent = '上行: ' + fmtRate(data.tx_bps);
-			if (down) down.textContent = '下行: ' + fmtRate(data.rx_bps);
+			if (cpu) cpu.textContent = (cpu.getAttribute('data-label') || tr('CPU')) + ': ' + fmtPct(data.cpu);
+			if (mem) mem.textContent = (mem.getAttribute('data-label') || tr('Memory')) + ': ' + fmtPct(data.mem);
+			if (up) up.textContent = (up.getAttribute('data-label') || tr('Upload')) + ': ' + fmtRate(data.tx_bps);
+			if (down) down.textContent = (down.getAttribute('data-label') || tr('Download')) + ': ' + fmtRate(data.rx_bps);
 		} catch (e) { /* ignore */ }
 	}
 

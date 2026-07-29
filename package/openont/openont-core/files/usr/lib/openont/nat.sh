@@ -185,7 +185,7 @@ openont_nat_list_json() {
 		excl_t=$(uci -q get "firewall.@redirect[$i].openont_excl_port")
 		[ "$first" -eq 1 ] || printf ','
 		first=0
-		printf '{"name":"%s","kind":"%s","proto":"%s","dest_ip":"%s","dest_port":"%s","src_dport":"%s","enabled":%s,"src_group":"%s","excl_proto":"%s","excl_port":"%s","src_wan":"全部线路"}' \
+		printf '{"name":"%s","kind":"%s","proto":"%s","dest_ip":"%s","dest_port":"%s","src_dport":"%s","enabled":%s,"src_group":"%s","excl_proto":"%s","excl_port":"%s","src_wan":"all"}' \
 			"$(openont_json_escape "$name")" "$(openont_json_escape "$kind")" \
 			"$(openont_json_escape "$proto")" "$(openont_json_escape "$dest_ip")" \
 			"$(openont_json_escape "$dest_port")" "$(openont_json_escape "$src_dport")" \

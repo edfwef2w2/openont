@@ -24,18 +24,22 @@ return view.extend({
 		var groups = (data[1] && data[1].groups) || [];
 		var root = E('div', { class: 'o-page' });
 		var filter = E('select', { class: 'o-input' }, [
-			E('option', { value: '' }, [ '全部' ]),
-			E('option', { value: '1' }, [ '已启用' ]),
-			E('option', { value: '0' }, [ '已停用' ])
+			E('option', { value: '' }, [ _('All') ]),
+			E('option', { value: '1' }, [ _('Enabled') ]),
+			E('option', { value: '0' }, [ _('Disabled') ])
 		]);
-		var search = E('input', { class: 'o-input', placeholder: '内网地址/内外网端口/备注' });
+		var search = E('input', { class: 'o-input', placeholder: _('Internal address / ports / comment') });
 		var editBox = E('div', { class: 'o-card', style: 'display:none;margin-top:12px' });
 		var tbody = E('tbody', {});
 
-		function groupName(id) {
-			if (!id) return '任意';
+		function groupLabel(id) {
+			if (!id) return _('Any');
 			var g = groups.filter(function (x) { return x.id === id; })[0];
 			return g ? g.name : id;
+		}
+
+		function wanLabel(v) {
+			return (!v || v === 'all') ? _('All WAN') : v;
 		}
 
 		function showEdit(it) {
@@ -52,7 +56,7 @@ return view.extend({
 				E('option', { value: 'tcp+udp' }, [ 'tcp+udp' ])
 			]);
 			proto.value = (it.proto || 'tcp').replace(/ /g, '+');
-			var grp = E('select', { class: 'o-input' }, [ E('option', { value: '' }, [ '任意' ]) ]);
+			var grp = E('select', { class: 'o-input' }, [ E('option', { value: '' }, [ _('Any') ]) ]);
 			groups.forEach(function (g) {
 				grp.appendChild(E('option', { value: g.id }, [ g.name + ' (' + (g.entries || []).length + ')' ]));
 			});
@@ -60,24 +64,30 @@ return view.extend({
 			var prev = E('div', { class: 'o-muted' });
 			function refreshPrev() {
 				var g = groups.filter(function (x) { return x.id === grp.value; })[0];
-				prev.textContent = g ? ('成员: ' + (g.entries || []).join(', ')) : '不限制源 IP';
+				prev.textContent = g
+					? (_('Members') + ': ' + (g.entries || []).join(', '))
+					: _('No source IP restriction');
 			}
 			grp.addEventListener('change', refreshPrev);
 			refreshPrev();
 			var err = E('div', { class: 'o-alert', style: 'display:none' });
-			editBox.appendChild(E('div', { class: 'o-card-title' }, [ it.name ? '编辑端口映射' : '添加端口映射' ]));
+			editBox.appendChild(E('div', { class: 'o-card-title' }, [ it.name ? _('Edit port mapping') : _('Add port mapping') ]));
 			editBox.appendChild(err);
 			[
-				[ '备注/名称', nameIn ], [ '内网地址 *', dip ], [ '内网端口 *', dport ],
-				[ '协议 *', proto ], [ '外网地址', E('input', { class: 'o-input', value: '全部线路', disabled: 'disabled' }) ],
-				[ '外网端口 *', sport ], [ '允许访问 IP', grp ]
+				[ _('Comment / name'), nameIn ],
+				[ _('Internal address') + ' *', dip ],
+				[ _('Internal port') + ' *', dport ],
+				[ _('Protocol') + ' *', proto ],
+				[ _('External address'), E('input', { class: 'o-input', value: _('All WAN'), disabled: 'disabled' }) ],
+				[ _('External port') + ' *', sport ],
+				[ _('Allow-access IP'), grp ]
 			].forEach(function (row) {
 				editBox.appendChild(E('div', { class: 'o-form-row' }, [ E('label', {}, [ row[0] ]), row[1] ]));
 			});
 			editBox.appendChild(prev);
 			editBox.appendChild(E('p', {}, [
-				E('a', { href: L.url('admin/network/openont-ipgroup') }, [ '管理 IP 分组' ]),
-				' · 与 CLI openont-nat portmap-add 相同'
+				E('a', { href: L.url('admin/network/openont-ipgroup') }, [ _('Manage IP groups') ]),
+				' · CLI: openont-nat portmap-add …'
 			]));
 			editBox.appendChild(E('div', { class: 'o-form-actions' }, [
 				E('button', {
@@ -88,12 +98,12 @@ return view.extend({
 							.then(function (res) {
 								if (res && res.ok === false) {
 									err.style.display = '';
-									err.textContent = res.error || '失败';
+									err.textContent = res.error || _('Failed');
 								} else location.reload();
 							});
 					}
-				}, [ '保存' ]),
-				E('button', { class: 'o-btn', click: function () { editBox.style.display = 'none'; } }, [ '取消' ])
+				}, [ _('Save') ]),
+				E('button', { class: 'o-btn', click: function () { editBox.style.display = 'none'; } }, [ _('Cancel') ])
 			]));
 		}
 
@@ -109,35 +119,36 @@ return view.extend({
 					E('td', {}, [ it.dest_ip ]),
 					E('td', {}, [ it.dest_port ]),
 					E('td', {}, [ it.proto ]),
-					E('td', {}, [ it.src_wan || '全部线路' ]),
+					E('td', {}, [ wanLabel(it.src_wan) ]),
 					E('td', {}, [ it.src_dport ]),
-					E('td', {}, [ groupName(it.src_group) ]),
+					E('td', {}, [ groupLabel(it.src_group) ]),
 					E('td', {}, [ it.name ]),
 					E('td', {}, [
-						E('span', { class: it.enabled ? 'colorG' : 'colorR' }, [ it.enabled ? '已启用' : '已停用' ])
+						E('span', { class: it.enabled ? 'colorG' : 'colorR' }, [
+							it.enabled ? _('Enabled') : _('Disabled')
+						])
 					]),
 					E('td', { class: 'o-ops' }, [
-						E('a', { href: '#', click: function (ev) { ev.preventDefault(); showEdit(it); } }, [ '编辑' ]), ' ',
+						E('a', { href: '#', click: function (ev) { ev.preventDefault(); showEdit(it); } }, [ _('Edit') ]), ' ',
 						E('a', {
 							href: '#', click: function (ev) {
 								ev.preventDefault();
-								var c = Object.assign({}, it, { name: (it.name || 'pm') + '-copy' });
-								showEdit(c);
+								showEdit(Object.assign({}, it, { name: (it.name || 'pm') + '-copy' }));
 							}
-						}, [ '复制' ]), ' ',
+						}, [ _('Copy') ]), ' ',
 						E('a', {
 							href: '#', click: function (ev) {
 								ev.preventDefault();
 								(it.enabled ? callDis : callEn)(it.name).then(function () { location.reload(); });
 							}
-						}, [ it.enabled ? '停用' : '启用' ]), ' ',
+						}, [ it.enabled ? _('Disable') : _('Enable') ]), ' ',
 						E('a', {
 							href: '#', style: 'color:#fe6f73', click: function (ev) {
 								ev.preventDefault();
-								if (!confirm('删除 ' + it.name + ' ?')) return;
+								if (!confirm(_('Delete %s?').format(it.name))) return;
 								callDel(it.name).then(function () { location.reload(); });
 							}
-						}, [ '删除' ])
+						}, [ _('Delete') ])
 					])
 				]));
 			});
@@ -147,23 +158,23 @@ return view.extend({
 		search.addEventListener('input', renderRows);
 
 		root.appendChild(E('div', { class: 'o-toolbar' }, [
-			E('h3', { style: 'margin:0;margin-right:auto' }, [ '端口映射' ]),
+			E('h3', { style: 'margin:0;margin-right:auto' }, [ _('Port Mapping') ]),
 			filter, search,
-			E('button', { class: 'o-btn o-btn-primary', click: function () { showEdit(null); } }, [ '添加' ])
+			E('button', { class: 'o-btn o-btn-primary', click: function () { showEdit(null); } }, [ _('Add') ])
 		]));
 
 		var table = E('table', { class: 'o-table' }, [
 			E('thead', {}, [ E('tr', {}, [
-				E('th', {}, [ '内网地址' ]), E('th', {}, [ '内网端口' ]), E('th', {}, [ '协议' ]),
-				E('th', {}, [ '外网地址' ]), E('th', {}, [ '外网端口' ]), E('th', {}, [ '允许访问 IP' ]),
-				E('th', {}, [ '备注' ]), E('th', {}, [ '状态' ]), E('th', {}, [ '操作' ])
+				E('th', {}, [ _('Internal address') ]), E('th', {}, [ _('Internal port') ]), E('th', {}, [ _('Protocol') ]),
+				E('th', {}, [ _('External address') ]), E('th', {}, [ _('External port') ]), E('th', {}, [ _('Allow-access IP') ]),
+				E('th', {}, [ _('Comment') ]), E('th', {}, [ _('State') ]), E('th', {}, [ _('Actions') ])
 			]) ]),
 			tbody
 		]);
 		root.appendChild(E('div', { class: 'o-card' }, [ table ]));
 		root.appendChild(editBox);
 		root.appendChild(E('div', { class: 'o-help' }, [
-			'帮助：内外网端口段数量需一致。允许访问 IP 可选用 IP 分组。CLI: openont-nat portmap-add …'
+			_('Hint: keep the same number of internal and external port entries when using ranges. Allow-access IP may use an IP group.')
 		]));
 		renderRows();
 		return root;

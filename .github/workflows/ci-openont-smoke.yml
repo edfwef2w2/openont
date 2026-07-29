@@ -30,10 +30,21 @@ jobs:
           test -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/portmap.js
           test -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dmz.js
           test -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ipgroup.js
+          test -f package/openont/luci-mod-openont/po/zh_Hans/openont.po
+          test -f package/openont/luci-mod-openont/po/templates/openont.pot
           test -f package/openont/luci-theme-openont/htdocs/luci-static/openont/cascade.css
           test -f configs/openont.common.config
           test -f scripts/openont/apply-config.sh
           test ! -d samples
+          # UI sources must not hardcode CJK (i18n msgids are English)
+          if grep -R -n -P '[\x{4e00}-\x{9fff}]' \
+            package/openont/luci-mod-openont/htdocs \
+            package/openont/luci-mod-openont/root/usr/share/luci \
+            package/openont/luci-theme-openont/ucode \
+            package/openont/luci-theme-openont/htdocs 2>/dev/null; then
+            echo "CJK found in UI sources; use gettext msgids" >&2
+            exit 1
+          fi
           echo "paths ok"
 
       - name: Shell syntax check

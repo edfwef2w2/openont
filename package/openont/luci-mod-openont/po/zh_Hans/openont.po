@@ -1,0 +1,357 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-mod-openont\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: zh_Hans\n"
+
+msgid "System Overview"
+msgstr "系统概况"
+
+msgid "Overview"
+msgstr "概览"
+
+msgid "Port Binding"
+msgstr "网口绑定"
+
+msgid "Port Mapping"
+msgstr "端口映射"
+
+msgid "DMZ Host"
+msgstr "DMZ主机"
+
+msgid "IP Groups"
+msgstr "IP分组"
+
+msgid "Status"
+msgstr "状态监控"
+
+msgid "System"
+msgstr "系统设置"
+
+msgid "Network"
+msgstr "网络设置"
+
+msgid "QoS"
+msgstr "流控分流"
+
+msgid "Firewall"
+msgstr "安全设置"
+
+msgid "Account"
+msgstr "账号"
+
+msgid "Logout"
+msgstr "退出"
+
+msgid "CPU"
+msgstr "CPU"
+
+msgid "Memory"
+msgstr "内存"
+
+msgid "Upload"
+msgstr "上行"
+
+msgid "Download"
+msgstr "下行"
+
+msgid "Administration Login"
+msgstr "管理登录"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Login"
+msgstr "登录"
+
+msgid "Connected"
+msgstr "已连接"
+
+msgid "Disconnected"
+msgstr "未连接"
+
+msgid "Same operations as openont-port on the console"
+msgstr "与控制台 openont-port 操作一致"
+
+msgid "Total NICs"
+msgstr "总网卡"
+
+msgid "Free"
+msgstr "空闲"
+
+msgid "Physical NIC"
+msgstr "物理网卡"
+
+msgid "Role"
+msgstr "角色"
+
+msgid "Link"
+msgstr "链路"
+
+msgid "Speed"
+msgstr "速率"
+
+msgid "State"
+msgstr "状态"
+
+msgid "Bound"
+msgstr "已绑定"
+
+msgid "Physical NIC status"
+msgstr "物理网卡状态"
+
+msgid "Logical interfaces (lanN / wanN)"
+msgstr "逻辑接口 (lanN / wanN)"
+
+msgid "No bindings yet. Use the form below or: openont-port set lan1 eth0"
+msgstr "尚未绑定。请使用下方表单或: openont-port set lan1 eth0"
+
+msgid "Remove %s from %s?"
+msgstr "从 %s 移除 %s？"
+
+
+msgid "Remove"
+msgstr "移除"
+
+msgid "Unbind %s?"
+msgstr "解绑 %s？"
+
+msgid "Unbind"
+msgstr "解绑"
+
+msgid "Bind / set (openont-port set)"
+msgstr "绑定 / 设置（openont-port set）"
+
+msgid "NICs (multi-select for LAN)"
+msgstr "网卡（LAN 可多选）"
+
+msgid "WAN protocol"
+msgstr "WAN 协议"
+
+msgid "Please set a role and select at least one NIC"
+msgstr "请填写角色并至少选择一个网卡"
+
+msgid "Failed"
+msgstr "失败"
+
+msgid "Apply binding"
+msgstr "应用绑定"
+
+msgid "Allow-access IP groups"
+msgstr "允许访问 IP 分组"
+
+msgid "Add"
+msgstr "添加"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Members"
+msgstr "成员"
+
+msgid "References"
+msgstr "引用"
+
+msgid "Comment"
+msgstr "备注"
+
+msgid "Actions"
+msgstr "操作"
+
+msgid "No groups yet. Port mapping can use a group to restrict source IPs."
+msgstr "暂无分组。端口映射可选用分组限制源 IP。"
+
+msgid "%d mapping(s)"
+msgstr "%d 条映射"
+
+msgid "Edit"
+msgstr "编辑"
+
+msgid "This group is still referenced by %d port mapping(s). Update those first."
+msgstr "该分组仍被 %d 条端口映射引用，请先修改映射。"
+
+msgid "Delete group %s?"
+msgstr "删除分组 %s？"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "Edit IP group"
+msgstr "编辑 IP 分组"
+
+msgid "Add IP group"
+msgstr "添加 IP 分组"
+
+msgid "One IP or CIDR per line"
+msgstr "每行一个 IP 或 CIDR"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "All"
+msgstr "全部"
+
+msgid "Enabled"
+msgstr "已启用"
+
+msgid "Disabled"
+msgstr "已停用"
+
+msgid "Internal address / ports / comment"
+msgstr "内网地址/内外网端口/备注"
+
+msgid "Any"
+msgstr "任意"
+
+msgid "All WAN"
+msgstr "全部线路"
+
+msgid "Edit port mapping"
+msgstr "编辑端口映射"
+
+msgid "Add port mapping"
+msgstr "添加端口映射"
+
+msgid "Comment / name"
+msgstr "备注/名称"
+
+msgid "Internal address"
+msgstr "内网地址"
+
+msgid "Internal port"
+msgstr "内网端口"
+
+msgid "Protocol"
+msgstr "协议"
+
+msgid "External address"
+msgstr "外网地址"
+
+msgid "External port"
+msgstr "外网端口"
+
+msgid "Allow-access IP"
+msgstr "允许访问 IP"
+
+msgid "No source IP restriction"
+msgstr "不限制源 IP"
+
+msgid "Manage IP groups"
+msgstr "管理 IP 分组"
+
+msgid "Copy"
+msgstr "复制"
+
+msgid "Disable"
+msgstr "停用"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Delete %s?"
+msgstr "删除 %s？"
+
+msgid "Hint: keep the same number of internal and external port entries when using ranges. Allow-access IP may use an IP group."
+msgstr "提示：使用端口范围时内外网端口数量需一致。允许访问 IP 可选用 IP 分组。"
+
+msgid "None"
+msgstr "无"
+
+msgid "Optional, e.g. 22,80"
+msgstr "可选，如 22,80"
+
+msgid "Exclude protocol"
+msgstr "排除协议"
+
+msgid "Exclude ports"
+msgstr "排除端口"
+
+msgid "Only one enabled DMZ is recommended. The host is fully exposed on WAN (DNAT 1-65535)."
+msgstr "建议仅启用一条 DMZ。内网主机将完整暴露到 WAN（DNAT 1-65535）。"
+
+msgid "WAN"
+msgstr "外网"
+
+msgid "Uptime"
+msgstr "已运行"
+
+msgid "%d day(s) %d hour(s) %d min"
+msgstr "%d天%d时%d分"
+
+msgid "%d hour(s) %d min"
+msgstr "%d时%d分"
+
+msgid "Rate status"
+msgstr "速率状态"
+
+msgid "Physical connections"
+msgstr "物理连接"
+
+msgid "Hosts"
+msgstr "连接设备"
+
+msgid "Connections"
+msgstr "连接数"
+
+msgid "Wired"
+msgstr "有线"
+
+msgid "Interface status"
+msgstr "接口状态"
+
+msgid "WAN enabled"
+msgstr "WAN 已启用"
+
+msgid "LAN enabled"
+msgstr "LAN 已启用"
+
+msgid "DHCP pool free"
+msgstr "DHCP 池剩余"
+
+msgid "Last 30 minutes"
+msgstr "近30分钟"
+
+msgid "Last 1 hour"
+msgstr "近1小时"
+
+msgid "Last 1 day"
+msgstr "近1天"
+
+msgid "Protocol traffic (last 30 minutes)"
+msgstr "近30分钟协议流量分布"
+
+msgid "Protocol traffic (last 1 hour)"
+msgstr "近1小时协议流量分布"
+
+msgid "Protocol traffic (last 1 day)"
+msgstr "近1天协议流量分布"
+
+msgid "Upload / download rate (last 5 minutes)"
+msgstr "近5分钟上下行速率"
+
+msgid "Auto refresh 5s"
+msgstr "自动刷新 5s"
+
+msgid "No binding"
+msgstr "无绑定"
+
+msgid "Device"
+msgstr "设备"
+
+msgid "Bound eth"
+msgstr "绑定 eth"
+
+msgid "Other"
+msgstr "其他"
+
+msgid "No data yet (sampling)"
+msgstr "暂无数据（采样中）"
+
+msgid "Sampling…"
+msgstr "采样中…"

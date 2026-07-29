@@ -50,6 +50,15 @@ openont-nat dmz-add dmz1 192.168.1.50 1
 make -j$(nproc)
 ```
 
+## Internationalization
+
+UI strings use English msgids with LuCI `_()` / `translate()` and gettext catalogues:
+
+- `package/openont/luci-mod-openont/po/templates/openont.pot`
+- `package/openont/luci-mod-openont/po/zh_Hans/openont.po` → package `luci-i18n-openont-zh-cn` (via `feeds/luci/luci.mk`)
+
+RPC returns structured fields (`enabled`, `link`, `uptime_sec`, `src_wan: "all"`); the Web UI translates labels. Select language under **System → Language and Style** (install the matching `luci-i18n-*` packages).
+
 ## CI
 
 - `ci-openont-smoke.yml` — path and shell syntax checks

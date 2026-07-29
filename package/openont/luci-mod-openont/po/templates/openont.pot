@@ -1,0 +1,355 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: \n"
+
+msgid "System Overview"
+msgstr ""
+
+msgid "Overview"
+msgstr ""
+
+msgid "Port Binding"
+msgstr ""
+
+msgid "Port Mapping"
+msgstr ""
+
+msgid "DMZ Host"
+msgstr ""
+
+msgid "IP Groups"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "System"
+msgstr ""
+
+msgid "Network"
+msgstr ""
+
+msgid "QoS"
+msgstr ""
+
+msgid "Firewall"
+msgstr ""
+
+msgid "Account"
+msgstr ""
+
+msgid "Logout"
+msgstr ""
+
+msgid "CPU"
+msgstr ""
+
+msgid "Memory"
+msgstr ""
+
+msgid "Upload"
+msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Administration Login"
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Login"
+msgstr ""
+
+msgid "Connected"
+msgstr ""
+
+msgid "Disconnected"
+msgstr ""
+
+msgid "Same operations as openont-port on the console"
+msgstr ""
+
+msgid "Total NICs"
+msgstr ""
+
+msgid "Free"
+msgstr ""
+
+msgid "Physical NIC"
+msgstr ""
+
+msgid "Role"
+msgstr ""
+
+msgid "Link"
+msgstr ""
+
+msgid "Speed"
+msgstr ""
+
+msgid "State"
+msgstr ""
+
+msgid "Bound"
+msgstr ""
+
+msgid "Physical NIC status"
+msgstr ""
+
+msgid "Logical interfaces (lanN / wanN)"
+msgstr ""
+
+msgid "No bindings yet. Use the form below or: openont-port set lan1 eth0"
+msgstr ""
+
+msgid "Remove %s from %s?"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Unbind %s?"
+msgstr ""
+
+msgid "Unbind"
+msgstr ""
+
+msgid "Bind / set (openont-port set)"
+msgstr ""
+
+msgid "NICs (multi-select for LAN)"
+msgstr ""
+
+msgid "WAN protocol"
+msgstr ""
+
+msgid "Please set a role and select at least one NIC"
+msgstr ""
+
+msgid "Failed"
+msgstr ""
+
+msgid "Apply binding"
+msgstr ""
+
+msgid "Allow-access IP groups"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Members"
+msgstr ""
+
+msgid "References"
+msgstr ""
+
+msgid "Comment"
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "No groups yet. Port mapping can use a group to restrict source IPs."
+msgstr ""
+
+msgid "%d mapping(s)"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "This group is still referenced by %d port mapping(s). Update those first."
+msgstr ""
+
+msgid "Delete group %s?"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Edit IP group"
+msgstr ""
+
+msgid "Add IP group"
+msgstr ""
+
+msgid "One IP or CIDR per line"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "Internal address / ports / comment"
+msgstr ""
+
+msgid "Any"
+msgstr ""
+
+msgid "All WAN"
+msgstr ""
+
+msgid "Edit port mapping"
+msgstr ""
+
+msgid "Add port mapping"
+msgstr ""
+
+msgid "Comment / name"
+msgstr ""
+
+msgid "Internal address"
+msgstr ""
+
+msgid "Internal port"
+msgstr ""
+
+msgid "Protocol"
+msgstr ""
+
+msgid "External address"
+msgstr ""
+
+msgid "External port"
+msgstr ""
+
+msgid "Allow-access IP"
+msgstr ""
+
+msgid "No source IP restriction"
+msgstr ""
+
+msgid "Manage IP groups"
+msgstr ""
+
+msgid "Copy"
+msgstr ""
+
+msgid "Disable"
+msgstr ""
+
+msgid "Enable"
+msgstr ""
+
+msgid "Delete %s?"
+msgstr ""
+
+msgid "Hint: keep the same number of internal and external port entries when using ranges. Allow-access IP may use an IP group."
+msgstr ""
+
+msgid "None"
+msgstr ""
+
+msgid "Optional, e.g. 22,80"
+msgstr ""
+
+msgid "Exclude protocol"
+msgstr ""
+
+msgid "Exclude ports"
+msgstr ""
+
+msgid "Only one enabled DMZ is recommended. The host is fully exposed on WAN (DNAT 1-65535)."
+msgstr ""
+
+msgid "WAN"
+msgstr ""
+
+msgid "Uptime"
+msgstr ""
+
+msgid "%d day(s) %d hour(s) %d min"
+msgstr ""
+
+msgid "%d hour(s) %d min"
+msgstr ""
+
+msgid "Rate status"
+msgstr ""
+
+msgid "Physical connections"
+msgstr ""
+
+msgid "Hosts"
+msgstr ""
+
+msgid "Connections"
+msgstr ""
+
+msgid "Wired"
+msgstr ""
+
+msgid "Interface status"
+msgstr ""
+
+msgid "WAN enabled"
+msgstr ""
+
+msgid "LAN enabled"
+msgstr ""
+
+msgid "DHCP pool free"
+msgstr ""
+
+msgid "Last 30 minutes"
+msgstr ""
+
+msgid "Last 1 hour"
+msgstr ""
+
+msgid "Last 1 day"
+msgstr ""
+
+msgid "Protocol traffic (last 30 minutes)"
+msgstr ""
+
+msgid "Protocol traffic (last 1 hour)"
+msgstr ""
+
+msgid "Protocol traffic (last 1 day)"
+msgstr ""
+
+msgid "Upload / download rate (last 5 minutes)"
+msgstr ""
+
+msgid "Auto refresh 5s"
+msgstr ""
+
+msgid "No binding"
+msgstr ""
+
+msgid "Device"
+msgstr ""
+
+msgid "Bound eth"
+msgstr ""
+
+msgid "Other"
+msgstr ""
+
+msgid "No data yet (sampling)"
+msgstr ""
+
+msgid "Sampling…"
+msgstr ""

@@ -5,14 +5,14 @@
 <div class="o-login-wrap">
 	<div class="o-login-box">
 		<h1>OpenONT</h1>
-		<p class="o-login-sub">管理登录</p>
+		<p class="o-login-sub">{{ translate('Administration Login') }}</p>
 		<form method="post" action="{{ REQUEST_URI }}">
 			{% if error %}<div class="o-alert">{{ error }}</div>{% endif %}
-			<label>用户名</label>
+			<label>{{ translate('Username') }}</label>
 			<input type="text" name="luci_username" value="{{ duser }}" autocomplete="username" />
-			<label>密码</label>
+			<label>{{ translate('Password') }}</label>
 			<input type="password" name="luci_password" autocomplete="current-password" />
-			<input type="submit" value="登录" class="o-btn o-btn-primary" />
+			<input type="submit" value="{{ translate('Login') }}" class="o-btn o-btn-primary" />
 		</form>
 	</div>
 </div>
