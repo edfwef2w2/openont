@@ -1,0 +1,80 @@
+name: Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openont-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint and package checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Required files
+        run: |
+          set -euo pipefail
+          files=(
+            package/openont/openont-core/Makefile
+            package/openont/openont-core/files/usr/lib/openont/port.sh
+            package/openont/openont-core/files/usr/lib/openont/nat.sh
+            package/openont/openont-core/files/usr/lib/openont/ipgroup.sh
+            package/openont/openont-core/files/usr/sbin/openont-port
+            package/openont/openont-core/files/usr/sbin/openont-nat
+            package/openont/openont-core/files/usr/sbin/openont-ipgroup
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/overview.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ports.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/portmap.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dmz.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ipgroup.js
+            package/openont/luci-mod-openont/po/zh_Hans/openont.po
+            package/openont/luci-mod-openont/po/templates/openont.pot
+            package/openont/luci-theme-openont/htdocs/luci-static/openont/cascade.css
+            configs/openont.common.config
+            configs/openont-x86_64.config
+            configs/openont-armsr_armv8.config
+            scripts/openont/apply-config.sh
+          )
+          for f in "${files[@]}"; do
+            test -f "$f" || { echo "missing: $f" >&2; exit 1; }
+          done
+          test ! -d samples || { echo "samples/ must not exist" >&2; exit 1; }
+          echo "files ok"
+
+      - name: No hardcoded CJK in UI sources
+        run: |
+          set -euo pipefail
+          if grep -R -n -P '[\x{4e00}-\x{9fff}]' \
+            package/openont/luci-mod-openont/htdocs \
+            package/openont/luci-mod-openont/root/usr/share/luci \
+            package/openont/luci-theme-openont/ucode \
+            package/openont/luci-theme-openont/htdocs 2>/dev/null; then
+            echo "CJK found in UI sources; use gettext msgids" >&2
+            exit 1
+          fi
+          echo "i18n ok"
+
+      - name: Shell syntax
+        run: |
+          set -euo pipefail
+          for f in \
+            package/openont/openont-core/files/usr/lib/openont/*.sh \
+            package/openont/openont-core/files/usr/sbin/openont-* \
+            package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont \
+            package/openont/luci-mod-openont/root/usr/sbin/openont-statsd \
+            package/openont/openont-base/files/etc/uci-defaults/* \
+            scripts/openont/apply-config.sh
+          do
+            sh -n "$f"
+          done
+          echo "syntax ok"

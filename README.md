@@ -61,9 +61,14 @@ RPC returns structured fields (`enabled`, `link`, `uptime_sec`, `src_wan: "all"`
 
 ## CI
 
-- `ci-openont-smoke.yml` — path and shell syntax checks
-- `build-openont.yml` — full images for x86_64 and armsr/armv8
+Only two workflows under `.github/workflows/`:
 
+| Workflow | File | When |
+|----------|------|------|
+| **Test** | `test.yml` | push / PR — lint, paths, shell syntax, i18n checks |
+| **Build images** | `build.yml` | manual (`workflow_dispatch`) or tag `v*` — full firmware images |
+
+Build targets: `x86_64`, `armsr_armv8`, or `all` (manual input).
 ## License
 
 Same as OpenWrt (primarily GPL-2.0). See `COPYING`.

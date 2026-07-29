@@ -1,38 +1,63 @@
-name: Build OpenONT
+name: Build images
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: Target to build
+        required: true
+        default: x86_64
+        type: choice
+        options:
+          - x86_64
+          - armsr_armv8
+          - all
   push:
-    branches:
-      - main
-      - master
     tags:
       - "v*"
-    paths-ignore:
-      - "**.md"
-      - "LICENSE"
-      - "LICENSES/**"
 
 permissions:
   contents: read
 
 concurrency:
-  group: openont-build-${{ github.ref }}
+  group: openont-build-${{ github.ref }}-${{ github.event.inputs.target || 'tag' }}
   cancel-in-progress: true
 
 jobs:
+  prepare:
+    name: Resolve targets
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            t="${{ github.event.inputs.target }}"
+          else
+            t="all"
+          fi
+          case "$t" in
+            x86_64)
+              echo 'matrix={"include":[{"name":"x86_64","target":"x86_64"}]}' >> "$GITHUB_OUTPUT"
+              ;;
+            armsr_armv8)
+              echo 'matrix={"include":[{"name":"armsr_armv8","target":"armsr_armv8"}]}' >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo 'matrix={"include":[{"name":"x86_64","target":"x86_64"},{"name":"armsr_armv8","target":"armsr_armv8"}]}' >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
   build:
-    name: Build ${{ matrix.name }}
+    name: ${{ matrix.name }}
+    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 720
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - name: x86_64
-            target: x86_64
-          - name: armsr_armv8
-            target: armsr_armv8
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     permissions:
       contents: write
 
@@ -50,30 +75,29 @@ jobs:
             gettext git libncurses-dev libssl-dev python3-setuptools rsync swig \
             unzip zlib1g-dev file wget curl ccache ecj fastjar \
             java-propose-classpath libelf-dev python3 python3-dev python3-pyelftools \
-            qemu-utils time zlib1g-dev
+            qemu-utils time
 
-      - name: Cache download directory
+      - name: Cache dl/
         uses: actions/cache@v4
         with:
           path: dl
-          key: openont-dl-${{ matrix.name }}-${{ hashFiles('feeds.conf.default', 'include/download.mk') }}
+          key: openont-dl-${{ matrix.name }}-${{ hashFiles('feeds.conf.default') }}
           restore-keys: |
             openont-dl-${{ matrix.name }}-
             openont-dl-
 
-      - name: Update feeds
+      - name: Feeds
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Apply OpenONT config
+      - name: Configure
         run: |
           chmod +x scripts/openont/apply-config.sh
           ./scripts/openont/apply-config.sh "${{ matrix.target }}"
 
       - name: Build
-        run: |
-          make -j"$(nproc)" world V=s
+        run: make -j"$(nproc)" world V=s
 
       - name: Collect artifacts
         run: |
@@ -82,7 +106,7 @@ jobs:
             -name '*.img.gz' -o -name '*.img' -o -name '*.vmdk' -o \
             -name '*.vdi' -o -name '*.vhdx' -o -name '*.tar.gz' -o \
             -name 'sha256sums' -o -name '*.bin' -o -name '*.rootfs*' \
-          \) -print0 | xargs -0 -I{} cp -a {} out/ 2>/dev/null || true
+          \) -exec cp -a {} out/ \; 2>/dev/null || true
           ls -lah out || true
 
       - name: Upload artifacts
@@ -93,7 +117,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Release (tags only)
+      - name: GitHub Release (tags)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
