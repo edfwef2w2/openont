@@ -1,13 +1,13 @@
 name: Build Images
 
-# Inherit Smoke run title when chained; otherwise show trigger context.
+# Same title as Build Smoke when chained (no sha / no arrows).
 run-name: >-
   ${{
     github.event_name == 'workflow_run'
-      && format('Images ← {0}', github.event.workflow_run.display_title)
+      && github.event.workflow_run.display_title
       || github.event_name == 'workflow_dispatch'
-      && format('Images · manual · {0} · {1}', github.event.inputs.target, github.ref_name)
-      || format('Images · {0} · {1}', github.ref_name, github.sha)
+      && format('{0} · manual · {1}', github.ref_name, github.event.inputs.target)
+      || github.ref_name
   }}
 
 on:
@@ -41,13 +41,7 @@ concurrency:
 
 jobs:
   prepare:
-    name: >-
-      Prepare · ${{
-        github.event_name == 'workflow_run'
-          && github.event.workflow_run.display_title
-          || github.event.inputs.target
-          || github.ref_name
-      }}
+    name: ${{ github.event.workflow_run.display_title || github.ref_name }}
     runs-on: ubuntu-latest
     # Skip failed/cancelled smoke; only auto-build for main/master.
     if: |
@@ -70,18 +64,16 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             t="${{ github.event.inputs.target }}"
             ref="${{ github.sha }}"
-            title="manual · ${t}"
+            title="${{ github.ref_name }} · manual · ${t}"
           elif [ "${{ github.event_name }}" = "workflow_run" ]; then
             t="all"
             ref="${{ github.event.workflow_run.head_sha }}"
-            # Pass through Build Smoke run-name / display title
             title="${{ github.event.workflow_run.display_title }}"
-            [ -n "$title" ] || title="Smoke #${{ github.event.workflow_run.run_number }}"
+            [ -n "$title" ] || title="${{ github.event.workflow_run.head_branch }}"
           else
-            # tag push
             t="all"
             ref="${{ github.sha }}"
-            title="tag · ${{ github.ref_name }}"
+            title="${{ github.ref_name }}"
           fi
 
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
