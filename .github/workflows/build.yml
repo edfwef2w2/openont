@@ -214,6 +214,7 @@ jobs:
 
       - name: Collect artifacts
         run: |
+          set -euo pipefail
           mkdir -p out
           find bin/targets -type f \( \
             -name '*.img.gz' -o -name '*.img' -o -name '*.vmdk' -o \
@@ -221,14 +222,73 @@ jobs:
             -name 'sha256sums' -o -name '*.bin' -o -name '*.rootfs*' \
           \) -exec cp -a {} out/ \; 2>/dev/null || true
           ls -lah out || true
+          n=$(find out -maxdepth 1 -type f 2>/dev/null | wc -l | tr -d ' ')
+          echo "collected $n file(s)"
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: openont-${{ matrix.name }}
-          path: out/
-          if-no-files-found: warn
-          retention-days: 14
+      # One Actions artifact per image/product (not one zip per arch).
+      - name: Upload each product separately
+        env:
+          TARGET_NAME: ${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(out/*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No artifacts to upload" >&2
+            exit 0
+          fi
+
+          tool="$RUNNER_TEMP/gha-artifact-upload"
+          mkdir -p "$tool"
+          npm install --prefix "$tool" @actions/artifact@2 --silent
+          export NODE_PATH="$tool/node_modules"
+          export TARGET_NAME GITHUB_WORKSPACE
+
+          node <<'NODE'
+          const { DefaultArtifactClient } = require('@actions/artifact');
+          const fs = require('fs');
+          const path = require('path');
+
+          const outDir = path.join(process.env.GITHUB_WORKSPACE, 'out');
+          const target = process.env.TARGET_NAME || 'unknown';
+          const client = new DefaultArtifactClient();
+
+          function artifactName(fileName) {
+            // Unique across matrix jobs; keep readable product basename.
+            let name = `openont-${target}-${fileName}`;
+            name = name.replace(/[^a-zA-Z0-9._-]+/g, '-');
+            if (name.length > 200) name = name.slice(0, 200);
+            return name;
+          }
+
+          (async () => {
+            const names = fs.readdirSync(outDir).filter((n) => {
+              try {
+                return fs.statSync(path.join(outDir, n)).isFile();
+              } catch {
+                return false;
+              }
+            });
+            if (names.length === 0) {
+              console.log('No files in out/');
+              return;
+            }
+            for (const fileName of names) {
+              const full = path.join(outDir, fileName);
+              const name = artifactName(fileName);
+              console.log(`upload: ${name} <- ${fileName}`);
+              // compressionLevel 9 = max zlib; retentionDays 400 = GitHub Actions max
+              await client.uploadArtifact(name, [full], outDir, {
+                retentionDays: 400,
+                compressionLevel: 9,
+              });
+            }
+            console.log(`uploaded ${names.length} artifact(s) for ${target}`);
+          })().catch((err) => {
+            console.error(err);
+            process.exit(1);
+          });
+          NODE
 
       - name: GitHub Release (tags)
         if: startsWith(github.ref, 'refs/tags/v')
