@@ -180,9 +180,10 @@ jobs:
           if [ -n "$found_root" ]; then
             verify_tree "$found_root"
           else
-            # Fallback: inspect luci-mod-openont ipk contents
-            ipk=$(find bin/packages -type f -name 'luci-mod-openont*.ipk' 2>/dev/null | head -n1 || true)
-            [ -n "$ipk" ] || { echo "no rootfs with openont and no luci-mod-openont ipk" >&2; exit 1; }
+            # Fallback: inspect luci-mod-openont package (legacy .ipk only;
+            # current OpenWrt defaults to .apk — prefer rootfs path above).
+            ipk=$(find bin/packages bin/targets -type f -name 'luci-mod-openont*.ipk' 2>/dev/null | head -n1 || true)
+            [ -n "$ipk" ] || { echo "no rootfs with openont and no luci-mod-openont .ipk fallback" >&2; exit 1; }
             echo "checking ipk: $ipk"
             tmp=$(mktemp -d)
             trap 'rm -rf "$tmp"' EXIT
@@ -199,10 +200,15 @@ jobs:
             verify_tree "$tmp/data"
           fi
 
+          # OpenWrt mainline packages as .apk (CONFIG_USE_APK); older trees use .ipk.
           for name in openont-core luci-mod-openont luci-theme-openont; do
-            find bin/packages -type f -name "${name}*.ipk" 2>/dev/null | grep -q . \
-              || { echo "missing ipk for $name" >&2; exit 1; }
-            echo "ipk ok: $name"
+            if ! find bin/packages bin/targets -type f \( \
+                -name "${name}*.ipk" -o -name "${name}*.apk" \
+              \) 2>/dev/null | grep -q .; then
+              echo "missing package artifact for $name (.ipk or .apk under bin/packages|bin/targets)" >&2
+              exit 1
+            fi
+            echo "package ok: $name"
           done
           echo "OpenONT packaging verification ok"
 
