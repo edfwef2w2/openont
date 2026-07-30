@@ -109,7 +109,8 @@ jobs:
     name: ${{ matrix.name }}
     needs: [prepare, static]
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    # tools + package; first run is long, subsequent benefit from dl cache only
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
@@ -151,11 +152,25 @@ jobs:
           grep -E '^CONFIG_PACKAGE_luci-theme-openont=y' .config \
             || { echo "missing CONFIG_PACKAGE_luci-theme-openont=y" >&2; exit 1; }
 
+      # Single-package compile needs host tools (packaging scripts, etc.).
+      # Without this, package/*/compile fails almost immediately.
+      - name: Host tools
+        run: make -j"$(nproc)" tools/install
+
+      # PKGARCH=all still needs target metadata / staging layout on modern trees.
+      - name: Toolchain
+        run: make -j"$(nproc)" toolchain/install
+
       - name: Build luci-theme-openont package
         run: |
           set -euo pipefail
-          make package/luci-theme-openont/clean
-          make package/luci-theme-openont/compile V=s -j"$(nproc)"
+          # Package lives under package/openont/ (nested), not package/luci-theme-openont/.
+          PKG_DIR="package/openont/luci-theme-openont"
+          test -f "$PKG_DIR/Makefile" \
+            || { echo "missing $PKG_DIR/Makefile" >&2; exit 1; }
+
+          echo "compiling $PKG_DIR"
+          make "$PKG_DIR/compile" V=s -j"$(nproc)"
 
       - name: Verify package artifact
         run: |
@@ -167,7 +182,13 @@ jobs:
 
           if [ "${#pkgs[@]}" -eq 0 ]; then
             echo "no luci-theme-openont .ipk/.apk under bin/packages|bin/targets" >&2
-            find bin -type f \( -name '*theme*' -o -name '*openont*' \) 2>/dev/null | head -n 50 || true
+            echo "--- bin tree sample ---"
+            find bin -type f 2>/dev/null | head -n 80 || true
+            echo "--- logs (if any) ---"
+            find logs -type f -name '*.txt' 2>/dev/null | head -n 20 | while read -r f; do
+              echo "==== $f ===="
+              tail -n 40 "$f" || true
+            done
             exit 1
           fi
 
