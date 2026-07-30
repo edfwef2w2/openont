@@ -236,95 +236,136 @@ jobs:
           find bin/targets -type f \( \
             -name '*.img.gz' -o -name '*.img' -o -name '*.vmdk' -o \
             -name '*.vdi' -o -name '*.vhdx' -o -name '*.tar.gz' -o \
-            -name 'sha256sums' -o -name '*.bin' -o -name '*.rootfs*' \
+            -name 'sha256sums' -o -name '*.bin' \
           \) -exec cp -a {} out/ \; 2>/dev/null || true
           ls -lah out || true
           n=$(find out -maxdepth 1 -type f 2>/dev/null | wc -l | tr -d ' ')
           echo "collected $n file(s)"
+          # One basename per line for the per-file publish matrix.
+          find out -maxdepth 1 -type f -printf '%f\n' | sort > "filelist-${{ matrix.name }}.txt"
+          cat "filelist-${{ matrix.name }}.txt"
 
-      # One artifact per product type (official upload-artifact only).
-      # Custom node @actions/artifact from a run: step cannot see
-      # ACTIONS_RUNTIME_TOKEN and fails — use discrete steps instead.
-      - name: Upload squashfs-combined-efi
+      # Staging only (short retention). Final user-facing artifacts are one file each
+      # (see publish-file job: compression-level 9, single path per artifact).
+      - name: Stage outputs for per-file publish
         uses: actions/upload-artifact@v4
         with:
-          name: openont-${{ matrix.name }}-squashfs-combined-efi
-          path: out/*squashfs-combined-efi*
-          if-no-files-found: ignore
-          compression-level: 9
-          retention-days: 90
+          name: openont-${{ matrix.name }}-staging
+          path: out/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
 
-      - name: Upload squashfs-combined
+      - name: Upload file list
         uses: actions/upload-artifact@v4
         with:
-          name: openont-${{ matrix.name }}-squashfs-combined
-          path: |
-            out/*squashfs-combined.img.gz
-            out/*squashfs-combined.img
-            out/*squashfs-combined.vmdk
-            out/*squashfs-combined.vdi
-            out/*squashfs-combined.vhdx
-          if-no-files-found: ignore
-          compression-level: 9
-          retention-days: 90
-
-      - name: Upload ext4-combined-efi
-        uses: actions/upload-artifact@v4
-        with:
-          name: openont-${{ matrix.name }}-ext4-combined-efi
-          path: out/*ext4-combined-efi*
-          if-no-files-found: ignore
-          compression-level: 9
-          retention-days: 90
-
-      - name: Upload ext4-combined
-        uses: actions/upload-artifact@v4
-        with:
-          name: openont-${{ matrix.name }}-ext4-combined
-          path: |
-            out/*ext4-combined.img.gz
-            out/*ext4-combined.img
-            out/*ext4-combined.vmdk
-            out/*ext4-combined.vdi
-            out/*ext4-combined.vhdx
-          if-no-files-found: ignore
-          compression-level: 9
-          retention-days: 90
-
-      - name: Upload rootfs
-        uses: actions/upload-artifact@v4
-        with:
-          name: openont-${{ matrix.name }}-rootfs
-          path: out/*rootfs*
-          if-no-files-found: ignore
-          compression-level: 9
-          retention-days: 90
-
-      - name: Upload sha256sums
-        uses: actions/upload-artifact@v4
-        with:
-          name: openont-${{ matrix.name }}-sha256sums
-          path: out/sha256sums
-          if-no-files-found: ignore
-          compression-level: 9
-          retention-days: 90
-
-      - name: Upload other images
-        uses: actions/upload-artifact@v4
-        with:
-          name: openont-${{ matrix.name }}-other
-          path: |
-            out/*.bin
-            out/*.tar.gz
-          if-no-files-found: ignore
-          compression-level: 9
-          retention-days: 90
+          name: openont-${{ matrix.name }}-filelist
+          path: filelist-${{ matrix.name }}.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
 
       - name: GitHub Release (tags)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          # Release assets are raw files (not Actions zip wrappers).
           files: out/*
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build matrix of {target,file,artifact} so each download link unpacks to exactly one file.
+  publish-matrix:
+    name: Publish matrix
+    needs: build
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+      has_files: ${{ steps.set.outputs.has_files }}
+    steps:
+      - name: Download file lists
+        uses: actions/download-artifact@v4
+        with:
+          pattern: openont-*-filelist
+          merge-multiple: true
+          path: filelists
+          if-no-artifacts-found: ignore
+
+      - id: set
+        run: |
+          set -euo pipefail
+          mkdir -p filelists
+          mapfile -t lists < <(find filelists -type f -name 'filelist-*.txt' | sort)
+          if [ "${#lists[@]}" -eq 0 ]; then
+            echo "matrix=[]" >> "$GITHUB_OUTPUT"
+            echo "has_files=false" >> "$GITHUB_OUTPUT"
+            echo "no file lists found"
+            exit 0
+          fi
+
+          python3 - "$GITHUB_OUTPUT" "${lists[@]}" <<'PY'
+          import json, re, sys, hashlib
+          from pathlib import Path
+
+          out_path = Path(sys.argv[1])
+          lists = sys.argv[2:]
+          items = []
+          for list_path in lists:
+              p = Path(list_path)
+              # filelist-<target>.txt
+              name = p.name
+              if not name.startswith("filelist-") or not name.endswith(".txt"):
+                  continue
+              target = name[len("filelist-"):-len(".txt")]
+              if not target:
+                  continue
+              for file in p.read_text(encoding="utf-8", errors="replace").splitlines():
+                  file = file.strip()
+                  if not file:
+                      continue
+                  raw = f"openont-{target}-{file}"
+                  artifact = re.sub(r"[^a-zA-Z0-9._-]", "-", raw)
+                  if len(artifact) > 100:
+                      digest = hashlib.sha256(file.encode()).hexdigest()[:12]
+                      ext = file.rsplit(".", 1)[-1] if "." in file else "bin"
+                      prefix = re.sub(r"[^a-zA-Z0-9._-]", "-", f"openont-{target}-")[:40]
+                      artifact = f"{prefix}{digest}-{ext}"[:100]
+                  items.append({"target": target, "file": file, "artifact": artifact})
+
+          matrix = json.dumps(items, separators=(",", ":"))
+          print(f"entries={len(items)}")
+          print(matrix)
+          with out_path.open("a", encoding="utf-8") as fh:
+              fh.write(f"has_files={'true' if items else 'false'}\n")
+              fh.write("matrix<<__MATRIX__\n")
+              fh.write(matrix + "\n")
+              fh.write("__MATRIX__\n")
+          PY
+
+  publish-file:
+    name: ${{ matrix.artifact }}
+    needs: publish-matrix
+    if: needs.publish-matrix.outputs.has_files == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.publish-matrix.outputs.matrix) }}
+    steps:
+      - name: Fetch staged file
+        uses: actions/download-artifact@v4
+        with:
+          name: openont-${{ matrix.target }}-staging
+          path: staged
+
+      - name: Publish single file (max zip compression)
+        uses: actions/upload-artifact@v4
+        with:
+          # One Actions artifact == one payload file after unzip.
+          name: ${{ matrix.artifact }}
+          path: staged/${{ matrix.file }}
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 90

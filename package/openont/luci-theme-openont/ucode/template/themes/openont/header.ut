@@ -1,89 +1,112 @@
 {#
- # OpenONT theme header
+ # OpenONT theme header — LuCI ucode compatible
 -#}
 {%
-	import { getuid, getgid } from 'fs';
-	import { cursor } from 'uci';
-	import { nodeinfo } from 'luci.version';
+	import { getuid, getspnam } from 'luci.core';
 
-	const boardinfo = ubus.call('system', 'board');
-	const sysinfo = ubus.call('system', 'info');
+	const boardinfo = ubus.call('system', 'board') ?? {};
+	const path = ctx.path ?? [];
+	const cat = path[1] ?? '';
+	const page = path[2] ?? '';
+	const logged_in = !!ctx.authsession;
 
-	http.prepare_content('application/xhtml+xml; charset=UTF-8');
+	let section = null;
+	let children = {};
+
+	if (logged_in) {
+		const menu = dispatcher.menu_json(ctx.authacl);
+		section = menu?.children?.admin?.children?.[cat];
+		children = section?.children ?? {};
+	}
+
+	const page_title = dispatched?.title ?? section?.title ?? cat ?? 'LuCI';
+	const hostname = boardinfo.hostname ?? 'OpenONT';
+
+	http.prepare_content('text/html; charset=UTF-8');
 -%}
 <!DOCTYPE html>
 <html lang="{{ dispatcher.lang }}">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>{{ striptags(boardinfo?.hostname ?? 'OpenONT') }} - {{ striptags(entitytitle ?? category ?? 'LuCI') }}</title>
+		<title>{{ striptags(`${hostname} - ${_(page_title)}`) }}</title>
 		<link rel="stylesheet" href="{{ media }}/cascade.css" />
-		<script src="{{ resource }}/luci.js"></script>
-		<script>
-			L = new LuCI({{
-				mediaurlbase: media,
-				resourcebase: resource,
-				scriptname: dispatcher.scriptname,
-				documentroot: dispatcher.docroot,
-				requestpath: path,
-				dispatchpath: node_url,
-				pollinterval: +uci.get('luci', 'main', 'pollinterval') || 5,
-				sessionid: ctx?.authsession,
-				token: ctx?.token,
-				nodespec: node
-			}});
-		</script>
+		<script src="{{ dispatcher.build_url('admin/translations', dispatcher.lang) }}"></script>
+		<script src="{{ resource }}/cbi.js"></script>
 	</head>
-	<body class="openont-body lang_{{ dispatcher.lang }}">
+	<body class="openont-body lang_{{ dispatcher.lang }} {{ logged_in ? 'logged-in' : 'node-main-login' }}" data-page="{{ entityencode(join('-', length(ctx.request_path) ? ctx.request_path : path), true) }}">
 		<header class="o-header">
 			<div class="o-header-logo">
-				<a href="{{ url('admin/status/overview') }}">
+				<a href="{{ logged_in ? dispatcher.build_url('admin/status/overview') : '#' }}">
 					<span class="o-logo-mark">OpenONT</span>
 				</a>
 				<div class="o-header-edition">
-					<span>{{ striptags(boardinfo?.hostname ?? 'OpenONT') }}</span>
+					<span>{{ striptags(hostname) }}</span>
 					<br />
-					<span class="o-ver">{{ striptags(nodeinfo?.distversion ?? '') }}</span>
+					<span class="o-ver">{{ striptags(version.distversion ?? '') }}</span>
 				</div>
 			</div>
+			{% if (logged_in): %}
 			<ul class="o-header-tools" id="o-header-stats">
-				<li data-stat="cpu" data-label="{{ translate('CPU') }}">{{ translate('CPU') }}: —</li>
-				<li data-stat="mem" data-label="{{ translate('Memory') }}">{{ translate('Memory') }}: —</li>
-				<li data-stat="up" data-label="{{ translate('Upload') }}">{{ translate('Upload') }}: —</li>
-				<li data-stat="down" data-label="{{ translate('Download') }}">{{ translate('Download') }}: —</li>
+				<li data-stat="cpu" data-label="{{ _('CPU') }}">{{ _('CPU') }}: —</li>
+				<li data-stat="mem" data-label="{{ _('Memory') }}">{{ _('Memory') }}: —</li>
+				<li data-stat="up" data-label="{{ _('Upload') }}">{{ _('Upload') }}: —</li>
+				<li data-stat="down" data-label="{{ _('Download') }}">{{ _('Download') }}: —</li>
 			</ul>
 			<ul class="o-header-user">
-				<li><a href="{{ url('admin/system/admin') }}">{{ translate('Account') }}</a></li>
-				<li><a href="{{ url('admin/logout') }}">{{ translate('Logout') }}</a></li>
+				<li><a href="{{ dispatcher.build_url('admin/system/admin') }}">{{ _('Account') }}</a></li>
+				<li><a href="{{ dispatcher.build_url('admin/logout') }}">{{ _('Logout') }}</a></li>
 			</ul>
+			{% endif %}
 		</header>
-		<div class="o-layout">
+		<div class="o-layout{{ logged_in ? '' : ' o-layout-login' }}">
+			{% if (logged_in): %}
 			<nav class="o-nav1" id="o-nav1">
 				<ul>
-					<li><a href="{{ url('admin/status/overview') }}" class="{{ path?.[2] == 'status' ? 'current' : '' }}"><span class="ico ico-status"></span><strong>{{ translate('Status') }}</strong></a></li>
-					<li><a href="{{ url('admin/system') }}" class="{{ path?.[2] == 'system' ? 'current' : '' }}"><span class="ico ico-sys"></span><strong>{{ translate('System') }}</strong></a></li>
-					<li><a href="{{ url('admin/network/openont-ports') }}" class="{{ path?.[3] == 'openont-ports' || path?.[3] == 'openont-portmap' || path?.[3] == 'openont-dmz' || path?.[3] == 'openont-ipgroup' || path?.[3] == 'openont-pppoe' || path?.[3] == 'openont-offload' ? 'current' : '' }}"><span class="ico ico-net"></span><strong>{{ translate('Network') }}</strong></a></li>
-					<li><a href="{{ url('admin/network/sqm') }}" class=""><span class="ico ico-qos"></span><strong>{{ translate('QoS') }}</strong></a></li>
-					<li><a href="{{ url('admin/network/firewall') }}" class=""><span class="ico ico-fw"></span><strong>{{ translate('Firewall') }}</strong></a></li>
+					<li><a href="{{ dispatcher.build_url('admin/status/overview') }}" class="{{ cat == 'status' ? 'current' : '' }}"><span class="ico ico-status"></span><strong>{{ _('Status') }}</strong></a></li>
+					<li><a href="{{ dispatcher.build_url('admin/system') }}" class="{{ cat == 'system' ? 'current' : '' }}"><span class="ico ico-sys"></span><strong>{{ _('System') }}</strong></a></li>
+					<li><a href="{{ dispatcher.build_url('admin/network/openont-ports') }}" class="{{ cat == 'network' ? 'current' : '' }}"><span class="ico ico-net"></span><strong>{{ _('Network') }}</strong></a></li>
+					<li><a href="{{ dispatcher.build_url('admin/network/sqm') }}" class="{{ page == 'sqm' ? 'current' : '' }}"><span class="ico ico-qos"></span><strong>{{ _('QoS') }}</strong></a></li>
+					<li><a href="{{ dispatcher.build_url('admin/network/firewall') }}" class="{{ page == 'firewall' ? 'current' : '' }}"><span class="ico ico-fw"></span><strong>{{ _('Firewall') }}</strong></a></li>
 				</ul>
 			</nav>
 			<aside class="o-nav2">
 				<div class="o-nav2-top">
-					<p class="o-nav2-title">{{ striptags(category ?? entitytitle ?? '') }}</p>
+					<p class="o-nav2-title">{{ striptags(_(section?.title ?? page_title ?? '')) }}</p>
 				</div>
 				<ul class="o-nav2-list" id="o-tabmenu">
-					{% if tree?.children %}
-						{% for c in tree.children %}
-							{% if !c.satisfied || c.hidden %}{% continue %}{% endif %}
+					{% if (length(children)): %}
+						{% for (name, c in children): %}
+							{% if (c.satisfied && !c.hidden && c.title): %}
 							<li>
-								<a class="{{ c.name == path?.[3] ? 'active' : '' }}" href="{{ c.url }}">{{ striptags(translate(c.title)) }}</a>
+								<a class="{{ name == page ? 'active' : '' }}" href="{{ dispatcher.build_url('admin', cat, name) }}">{{ striptags(_(c.title)) }}</a>
 							</li>
+							{% endif %}
 						{% endfor %}
 					{% endif %}
 				</ul>
 			</aside>
-			<main class="o-section">
+			{% endif %}
+			<main class="o-section{{ logged_in ? '' : ' o-section-login' }}">
+				{% if (logged_in): %}
 				<div class="o-section-top">
-					<div class="o-breadcrumb">{{ striptags(entitytitle ?? category ?? '') }}</div>
+					<div class="o-breadcrumb">{{ striptags(_(dispatched?.title ?? page_title ?? '')) }}</div>
 				</div>
+				{% endif %}
 				<div class="o-section-body" id="maincontent">
+					{% if (logged_in && getuid() == 0 && getspnam('root')?.pwdp === ''): %}
+						<div class="alert-message warning o-alert">
+							<strong>{{ _('No password set!') }}</strong>
+							{{ _('There is no password set on this router. Please configure a root password to protect the web interface.') }}
+							{% if (dispatcher.lookup('admin/system/admin')): %}
+								<a href="{{ dispatcher.build_url('admin/system/admin') }}">{{ _('Go to password configuration...') }}</a>
+							{% endif %}
+						</div>
+					{% endif %}
+					{% if (logged_in && boardinfo.rootfs_type == 'initramfs'): %}
+						<div class="alert-message warning o-alert">
+							<strong>{{ _('System running in recovery (initramfs) mode.') }}</strong>
+							{{ _('No changes to settings will be stored and are lost after rebooting. This mode should only be used to install a firmware upgrade') }}
+						</div>
+					{% endif %}
+					<div id="tabmenu" style="display:none"></div>

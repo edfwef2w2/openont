@@ -404,13 +404,23 @@ a:hover { text-decoration: underline; }
 	padding: 12px 4px;
 }
 
-/* Login */
+/* Login (no side nav when unauthenticated) */
+.o-layout-login {
+	padding-top: var(--o-header-h);
+}
+.o-section-login {
+	margin-left: 0;
+	width: 100%;
+}
+.o-section-login .o-section-body {
+	padding: 0;
+}
 .o-login-wrap {
 	min-height: calc(100vh - var(--o-header-h));
 	display: flex; align-items: center; justify-content: center;
 	background: linear-gradient(160deg, #1d74b2, #0d4f7a);
-	margin: calc(-1 * var(--o-header-h)) calc(-1 * (var(--o-nav1-w) + var(--o-nav2-w))) 0 calc(-1 * (var(--o-nav1-w) + var(--o-nav2-w)));
-	padding-top: var(--o-header-h);
+	margin: 0;
+	padding: 24px 12px;
 }
 .o-login-box {
 	width: 360px; background: #fff; border-radius: 4px;

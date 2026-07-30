@@ -2,9 +2,12 @@
  # OpenONT theme footer
 -#}
 				</div>
+				{% if (ctx.authsession): %}
 				<footer class="o-footer">
-					<p>© OpenONT · <a href="https://github.com/edfwef2w2/openont" target="_blank" rel="noopener">edfwef2w2/openont</a></p>
+					<p>© OpenONT · <a href="https://github.com/edfwef2w2/openont" target="_blank" rel="noopener">edfwef2w2/openont</a>
+						· {{ version.luciname }} ({{ version.luciversion }})</p>
 				</footer>
+				{% endif %}
 			</main>
 		</div>
 		<script src="{{ media }}/script.js"></script>

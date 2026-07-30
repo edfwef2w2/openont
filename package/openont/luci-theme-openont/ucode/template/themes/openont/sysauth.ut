@@ -1,19 +1,44 @@
 {#
  # OpenONT login page
+ # Include base header/footer so luci.js + L = new LuCI(...) are injected.
 -#}
-{% include('themes/openont/header') %}
+{% include('header') %}
 <div class="o-login-wrap">
 	<div class="o-login-box">
 		<h1>OpenONT</h1>
-		<p class="o-login-sub">{{ translate('Administration Login') }}</p>
-		<form method="post" action="{{ REQUEST_URI }}">
-			{% if error %}<div class="o-alert">{{ error }}</div>{% endif %}
-			<label>{{ translate('Username') }}</label>
-			<input type="text" name="luci_username" value="{{ duser }}" autocomplete="username" />
-			<label>{{ translate('Password') }}</label>
+		<p class="o-login-sub">{{ _('Administration Login') }}</p>
+		<form method="post">
+			{% if (fuser): %}
+				<div class="o-alert">{{ _('Invalid username and/or password! Please try again.') }}</div>
+			{% endif %}
+			{% if (auth_message && !fuser): %}
+				<div class="o-alert">{{ auth_message }}</div>
+			{% endif %}
+			<label>{{ _('Username') }}</label>
+			<input type="text" name="luci_username" value="{{ entityencode(duser ?? 'root', true) }}" autocomplete="username" />
+			<label>{{ _('Password') }}</label>
 			<input type="password" name="luci_password" autocomplete="current-password" />
-			<input type="submit" value="{{ translate('Login') }}" class="o-btn o-btn-primary" />
+			{% if (auth_fields): %}
+				{% for (let field in auth_fields): %}
+					<label>{{ _(field.label ?? field.name) }}</label>
+					<input
+						type="{{ field.type ?? 'text' }}"
+						name="{{ field.name }}"
+						{% if (field.placeholder): %}placeholder="{{ field.placeholder }}"{% endif %}
+						{% if (field.required): %}required{% endif %}
+					/>
+				{% endfor %}
+			{% endif %}
+			{% if (auth_html): %}
+				{{ auth_html }}
+			{% endif %}
+			<input type="submit" value="{{ _('Login') }}" class="o-btn o-btn-primary" />
 		</form>
 	</div>
 </div>
-{% include('themes/openont/footer') %}
+<script>
+	var input = document.getElementsByName('luci_password')[0];
+	if (input)
+		input.focus();
+</script>
+{% include('footer') %}
