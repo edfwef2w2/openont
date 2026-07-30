@@ -242,70 +242,83 @@ jobs:
           n=$(find out -maxdepth 1 -type f 2>/dev/null | wc -l | tr -d ' ')
           echo "collected $n file(s)"
 
-      # One Actions artifact per image/product (not one zip per arch).
-      - name: Upload each product separately
-        env:
-          TARGET_NAME: ${{ matrix.name }}
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          files=(out/*)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No artifacts to upload" >&2
-            exit 0
-          fi
+      # One artifact per product type (official upload-artifact only).
+      # Custom node @actions/artifact from a run: step cannot see
+      # ACTIONS_RUNTIME_TOKEN and fails — use discrete steps instead.
+      - name: Upload squashfs-combined-efi
+        uses: actions/upload-artifact@v4
+        with:
+          name: openont-${{ matrix.name }}-squashfs-combined-efi
+          path: out/*squashfs-combined-efi*
+          if-no-files-found: ignore
+          compression-level: 9
+          retention-days: 90
 
-          tool="$RUNNER_TEMP/gha-artifact-upload"
-          mkdir -p "$tool"
-          npm install --prefix "$tool" @actions/artifact@2 --silent
-          export NODE_PATH="$tool/node_modules"
-          export TARGET_NAME GITHUB_WORKSPACE
+      - name: Upload squashfs-combined
+        uses: actions/upload-artifact@v4
+        with:
+          name: openont-${{ matrix.name }}-squashfs-combined
+          path: |
+            out/*squashfs-combined.img.gz
+            out/*squashfs-combined.img
+            out/*squashfs-combined.vmdk
+            out/*squashfs-combined.vdi
+            out/*squashfs-combined.vhdx
+          if-no-files-found: ignore
+          compression-level: 9
+          retention-days: 90
 
-          node <<'NODE'
-          const { DefaultArtifactClient } = require('@actions/artifact');
-          const fs = require('fs');
-          const path = require('path');
+      - name: Upload ext4-combined-efi
+        uses: actions/upload-artifact@v4
+        with:
+          name: openont-${{ matrix.name }}-ext4-combined-efi
+          path: out/*ext4-combined-efi*
+          if-no-files-found: ignore
+          compression-level: 9
+          retention-days: 90
 
-          const outDir = path.join(process.env.GITHUB_WORKSPACE, 'out');
-          const target = process.env.TARGET_NAME || 'unknown';
-          const client = new DefaultArtifactClient();
+      - name: Upload ext4-combined
+        uses: actions/upload-artifact@v4
+        with:
+          name: openont-${{ matrix.name }}-ext4-combined
+          path: |
+            out/*ext4-combined.img.gz
+            out/*ext4-combined.img
+            out/*ext4-combined.vmdk
+            out/*ext4-combined.vdi
+            out/*ext4-combined.vhdx
+          if-no-files-found: ignore
+          compression-level: 9
+          retention-days: 90
 
-          function artifactName(fileName) {
-            // Unique across matrix jobs; keep readable product basename.
-            let name = `openont-${target}-${fileName}`;
-            name = name.replace(/[^a-zA-Z0-9._-]+/g, '-');
-            if (name.length > 200) name = name.slice(0, 200);
-            return name;
-          }
+      - name: Upload rootfs
+        uses: actions/upload-artifact@v4
+        with:
+          name: openont-${{ matrix.name }}-rootfs
+          path: out/*rootfs*
+          if-no-files-found: ignore
+          compression-level: 9
+          retention-days: 90
 
-          (async () => {
-            const names = fs.readdirSync(outDir).filter((n) => {
-              try {
-                return fs.statSync(path.join(outDir, n)).isFile();
-              } catch {
-                return false;
-              }
-            });
-            if (names.length === 0) {
-              console.log('No files in out/');
-              return;
-            }
-            for (const fileName of names) {
-              const full = path.join(outDir, fileName);
-              const name = artifactName(fileName);
-              console.log(`upload: ${name} <- ${fileName}`);
-              // compressionLevel 9 = max zlib; retentionDays 400 = GitHub Actions max
-              await client.uploadArtifact(name, [full], outDir, {
-                retentionDays: 400,
-                compressionLevel: 9,
-              });
-            }
-            console.log(`uploaded ${names.length} artifact(s) for ${target}`);
-          })().catch((err) => {
-            console.error(err);
-            process.exit(1);
-          });
-          NODE
+      - name: Upload sha256sums
+        uses: actions/upload-artifact@v4
+        with:
+          name: openont-${{ matrix.name }}-sha256sums
+          path: out/sha256sums
+          if-no-files-found: ignore
+          compression-level: 9
+          retention-days: 90
+
+      - name: Upload other images
+        uses: actions/upload-artifact@v4
+        with:
+          name: openont-${{ matrix.name }}-other
+          path: |
+            out/*.bin
+            out/*.tar.gz
+          if-no-files-found: ignore
+          compression-level: 9
+          retention-days: 90
 
       - name: GitHub Release (tags)
         if: startsWith(github.ref, 'refs/tags/v')
