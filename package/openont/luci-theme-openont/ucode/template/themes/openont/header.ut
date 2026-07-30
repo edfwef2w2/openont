@@ -37,7 +37,7 @@
 	<body class="openont-body lang_{{ dispatcher.lang }}">
 		<header class="o-header">
 			<div class="o-header-logo">
-				<a href="{{ url('admin/openont/overview') }}">
+				<a href="{{ url('admin/status/overview') }}">
 					<span class="o-logo-mark">OpenONT</span>
 				</a>
 				<div class="o-header-edition">
@@ -60,10 +60,9 @@
 		<div class="o-layout">
 			<nav class="o-nav1" id="o-nav1">
 				<ul>
-					<li><a href="{{ url('admin/openont/overview') }}" class="{{ path?.[2] == 'openont' ? 'current' : '' }}"><span class="ico ico-home"></span><strong>{{ translate('System Overview') }}</strong></a></li>
-					<li><a href="{{ url('admin/status') }}" class="{{ path?.[2] == 'status' ? 'current' : '' }}"><span class="ico ico-status"></span><strong>{{ translate('Status') }}</strong></a></li>
+					<li><a href="{{ url('admin/status/overview') }}" class="{{ path?.[2] == 'status' ? 'current' : '' }}"><span class="ico ico-status"></span><strong>{{ translate('Status') }}</strong></a></li>
 					<li><a href="{{ url('admin/system') }}" class="{{ path?.[2] == 'system' ? 'current' : '' }}"><span class="ico ico-sys"></span><strong>{{ translate('System') }}</strong></a></li>
-					<li><a href="{{ url('admin/network/openont-ports') }}" class="{{ path?.[3] == 'openont-ports' || path?.[3] == 'openont-portmap' || path?.[3] == 'openont-dmz' || path?.[3] == 'openont-ipgroup' ? 'current' : '' }}"><span class="ico ico-net"></span><strong>{{ translate('Network') }}</strong></a></li>
+					<li><a href="{{ url('admin/network/openont-ports') }}" class="{{ path?.[3] == 'openont-ports' || path?.[3] == 'openont-portmap' || path?.[3] == 'openont-dmz' || path?.[3] == 'openont-ipgroup' || path?.[3] == 'openont-pppoe' || path?.[3] == 'openont-offload' ? 'current' : '' }}"><span class="ico ico-net"></span><strong>{{ translate('Network') }}</strong></a></li>
 					<li><a href="{{ url('admin/network/sqm') }}" class=""><span class="ico ico-qos"></span><strong>{{ translate('QoS') }}</strong></a></li>
 					<li><a href="{{ url('admin/network/firewall') }}" class=""><span class="ico ico-fw"></span><strong>{{ translate('Firewall') }}</strong></a></li>
 				</ul>

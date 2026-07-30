@@ -122,8 +122,89 @@ jobs:
           chmod +x scripts/openont/apply-config.sh
           ./scripts/openont/apply-config.sh "${{ matrix.target }}"
 
+      - name: Verify config kept OpenONT packages
+        run: |
+          set -euo pipefail
+          # defconfig may drop unknown packages; fail early if selection vanished.
+          for pkg in openont-core openont-base luci-mod-openont luci-theme-openont; do
+            grep -E "^CONFIG_PACKAGE_${pkg}=y" .config \
+              || { echo "after defconfig missing CONFIG_PACKAGE_${pkg}=y" >&2; exit 1; }
+          done
+          echo "post-defconfig package selection ok"
+
       - name: Build
         run: make -j"$(nproc)" world V=s
+
+      - name: Verify OpenONT packaged into rootfs
+        run: |
+          set -euo pipefail
+
+          check_exec() {
+            local f="$1"
+            [ -f "$f" ] || { echo "missing: $f" >&2; return 1; }
+            [ -x "$f" ] || { echo "not executable: $f" >&2; return 1; }
+            echo "ok $f"
+          }
+
+          verify_tree() {
+            local root="$1"
+            echo "checking rootfs: $root"
+            check_exec "$root/usr/libexec/rpcd/openont"
+            check_exec "$root/etc/init.d/openont-stats"
+            check_exec "$root/usr/sbin/openont-statsd"
+            check_exec "$root/usr/sbin/openont-port"
+            [ -f "$root/usr/share/rpcd/acl.d/luci-mod-openont.json" ] \
+              || { echo "missing ACL under $root" >&2; return 1; }
+            [ -f "$root/www/luci-static/resources/view/openont/ports.js" ] \
+              || { echo "missing ports.js under $root" >&2; return 1; }
+          }
+
+          found_root=""
+          # OpenWrt TARGET_DIR is usually build_dir/target-*/root-*
+          while IFS= read -r d; do
+            if [ -f "$d/usr/libexec/rpcd/openont" ]; then
+              found_root="$d"
+              break
+            fi
+          done < <(find build_dir -type d -path '*/root-*' 2>/dev/null | sort)
+
+          if [ -z "$found_root" ]; then
+            while IFS= read -r d; do
+              if [ -f "$d/usr/libexec/rpcd/openont" ]; then
+                found_root="$d"
+                break
+              fi
+            done < <(find staging_dir bin/targets -type d \( -name 'root-*' -o -name 'rootfs' \) 2>/dev/null | sort)
+          fi
+
+          if [ -n "$found_root" ]; then
+            verify_tree "$found_root"
+          else
+            # Fallback: inspect luci-mod-openont ipk contents
+            ipk=$(find bin/packages -type f -name 'luci-mod-openont*.ipk' 2>/dev/null | head -n1 || true)
+            [ -n "$ipk" ] || { echo "no rootfs with openont and no luci-mod-openont ipk" >&2; exit 1; }
+            echo "checking ipk: $ipk"
+            tmp=$(mktemp -d)
+            trap 'rm -rf "$tmp"' EXIT
+            tar -xzf "$ipk" -C "$tmp"
+            data=$(find "$tmp" -maxdepth 1 -name 'data.tar*' | head -n1)
+            [ -n "$data" ] || { echo "ipk has no data.tar*" >&2; exit 1; }
+            mkdir -p "$tmp/data"
+            case "$data" in
+              *.gz) tar -xzf "$data" -C "$tmp/data" ;;
+              *.xz) tar -xJf "$data" -C "$tmp/data" ;;
+              *.zst) tar --zstd -xf "$data" -C "$tmp/data" ;;
+              *) tar -xf "$data" -C "$tmp/data" ;;
+            esac
+            verify_tree "$tmp/data"
+          fi
+
+          for name in openont-core luci-mod-openont luci-theme-openont; do
+            find bin/packages -type f -name "${name}*.ipk" 2>/dev/null | grep -q . \
+              || { echo "missing ipk for $name" >&2; exit 1; }
+            echo "ipk ok: $name"
+          done
+          echo "OpenONT packaging verification ok"
 
       - name: Collect artifacts
         run: |

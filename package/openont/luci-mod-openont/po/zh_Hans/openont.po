@@ -4,9 +4,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: zh_Hans\n"
 
-msgid "System Overview"
-msgstr "系统概况"
-
 msgid "Overview"
 msgstr "概览"
 

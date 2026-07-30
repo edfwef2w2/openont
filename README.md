@@ -11,7 +11,7 @@ Repository: https://github.com/edfwef2w2/openont
 - Port roles `lanN` / `wanN`; **one LAN may bind multiple eth** (bridge)
 - Port mapping and DMZ (split from firewall UI)
 - **Allow-access IP groups** for port mapping
-- Custom OpenONT theme; system overview dashboard
+- Custom OpenONT theme; **Status → Overview** is the OpenONT dashboard (replaces stock LuCI status overview)
 - No Wi-Fi stack by default; no package-manager / theme switcher in UI
 
 ## Port binding (CLI ≡ Web)
@@ -29,6 +29,18 @@ openont-port del lan1
 ```
 
 Default LAN address after bind: `192.168.1.1/24`.
+
+## Address (CLI)
+
+One-shot IPv4 on an existing `lanN` / `wanN` (bind ports first with `openont-port`).
+
+```sh
+openont-address list
+openont-address set lan1 192.168.50.1/24
+openont-address set wan1 10.0.0.2/24 10.0.0.1 8.8.8.8
+openont-address dhcp wan1              # WAN back to DHCP
+openont-address status-json
+```
 
 ## Port map / DMZ / IP groups
 

@@ -23,7 +23,7 @@ define Package/openont-core
 endef
 
 define Package/openont-core/description
- Shared libraries and console tools for ports, NAT, offload and PPPoE.
+ Shared libraries and console tools for ports, address, NAT, offload and PPPoE.
 endef
 
 define Build/Compile
@@ -33,12 +33,14 @@ define Package/openont-core/install
 	$(INSTALL_DIR) $(1)/usr/lib/openont
 	$(INSTALL_DATA) ./files/usr/lib/openont/common.sh $(1)/usr/lib/openont/common.sh
 	$(INSTALL_DATA) ./files/usr/lib/openont/port.sh $(1)/usr/lib/openont/port.sh
+	$(INSTALL_DATA) ./files/usr/lib/openont/address.sh $(1)/usr/lib/openont/address.sh
 	$(INSTALL_DATA) ./files/usr/lib/openont/nat.sh $(1)/usr/lib/openont/nat.sh
 	$(INSTALL_DATA) ./files/usr/lib/openont/ipgroup.sh $(1)/usr/lib/openont/ipgroup.sh
 	$(INSTALL_DATA) ./files/usr/lib/openont/offload.sh $(1)/usr/lib/openont/offload.sh
 	$(INSTALL_DATA) ./files/usr/lib/openont/pppoe.sh $(1)/usr/lib/openont/pppoe.sh
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/usr/sbin/openont-port $(1)/usr/sbin/openont-port
+	$(INSTALL_BIN) ./files/usr/sbin/openont-address $(1)/usr/sbin/openont-address
 	$(INSTALL_BIN) ./files/usr/sbin/openont-nat $(1)/usr/sbin/openont-nat
 	$(INSTALL_BIN) ./files/usr/sbin/openont-ipgroup $(1)/usr/sbin/openont-ipgroup
 	$(INSTALL_BIN) ./files/usr/sbin/openont-offload $(1)/usr/sbin/openont-offload

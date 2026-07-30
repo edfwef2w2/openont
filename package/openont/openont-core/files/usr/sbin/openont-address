@@ -1,0 +1,32 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+. /usr/lib/openont/address.sh
+
+usage() {
+	cat <<EOF
+Usage: openont-address <command> [args]
+
+Commands:
+  list|show
+  set <lanN|wanN> <ip[/cidr]> [gateway] [dns...]
+      lan:  openont-address set lan1 192.168.50.1/24
+      wan:  openont-address set wan1 10.0.0.2/24 10.0.0.1 8.8.8.8
+  dhcp <wanN>
+      wan:  openont-address dhcp wan1
+  status-json
+
+Role must already exist (openont-port set <role> <eth...>).
+EOF
+}
+
+cmd="${1:-}"
+[ -n "$cmd" ] && shift
+
+case "$cmd" in
+	list|show) openont_address_list ;;
+	set) openont_address_set "$@" ;;
+	dhcp) openont_address_dhcp "$@" ;;
+	status-json) openont_address_status_json ;;
+	-h|--help|help|"") usage; [ -n "$cmd" ] || exit 1 ;;
+	*) echo "unknown: $cmd" >&2; usage; exit 1 ;;
+esac

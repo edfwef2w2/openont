@@ -27,16 +27,24 @@ jobs:
           files=(
             package/openont/openont-core/Makefile
             package/openont/openont-core/files/usr/lib/openont/port.sh
+            package/openont/openont-core/files/usr/lib/openont/address.sh
             package/openont/openont-core/files/usr/lib/openont/nat.sh
             package/openont/openont-core/files/usr/lib/openont/ipgroup.sh
             package/openont/openont-core/files/usr/lib/openont/offload.sh
             package/openont/openont-core/files/usr/lib/openont/pppoe.sh
             package/openont/openont-core/files/usr/sbin/openont-port
+            package/openont/openont-core/files/usr/sbin/openont-address
             package/openont/openont-core/files/usr/sbin/openont-nat
             package/openont/openont-core/files/usr/sbin/openont-ipgroup
             package/openont/openont-core/files/usr/sbin/openont-offload
             package/openont/openont-core/files/usr/sbin/openont-pppoe
-            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/overview.js
+            package/openont/luci-mod-openont/Makefile
+            package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont
+            package/openont/luci-mod-openont/root/etc/init.d/openont-stats
+            package/openont/luci-mod-openont/root/usr/sbin/openont-statsd
+            package/openont/luci-mod-openont/root/usr/share/rpcd/acl.d/luci-mod-openont.json
+            package/openont/luci-mod-openont/root/usr/share/luci/menu.d/luci-mod-openont.json
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/status/overview.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ports.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/portmap.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dmz.js
@@ -55,7 +63,64 @@ jobs:
             test -f "$f" || { echo "missing: $f" >&2; exit 1; }
           done
           test ! -d samples || { echo "samples/ must not exist" >&2; exit 1; }
+          # Stock overview fully replaced: no OpenONT dual home, no openont/overview view
+          test ! -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/overview.js \
+            || { echo "legacy view/openont/overview.js must be removed" >&2; exit 1; }
+          if grep -q 'admin/openont' package/openont/luci-mod-openont/root/usr/share/luci/menu.d/luci-mod-openont.json; then
+            echo "menu must not define admin/openont" >&2
+            exit 1
+          fi
+          grep -q '"path": "status/overview"' package/openont/luci-mod-openont/root/usr/share/luci/menu.d/luci-mod-openont.json \
+            || { echo "menu must use status/overview view path" >&2; exit 1; }
+          if grep -n "admin/openont\|System Overview\|openont/overview" \
+            package/openont/luci-theme-openont/ucode/template/themes/openont/header.ut; then
+            echo "theme still references System Overview / admin/openont" >&2
+            exit 1
+          fi
           echo "files ok"
+
+      - name: Executable bits (git index + working tree)
+        run: |
+          set -euo pipefail
+          # Must be 100755 in git — luci.mk installs root/ with cp -pR.
+          exec_files=(
+            package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont
+            package/openont/luci-mod-openont/root/etc/init.d/openont-stats
+            package/openont/luci-mod-openont/root/usr/sbin/openont-statsd
+            package/openont/openont-core/files/usr/sbin/openont-port
+            package/openont/openont-core/files/usr/sbin/openont-address
+            package/openont/openont-core/files/usr/sbin/openont-nat
+            package/openont/openont-core/files/usr/sbin/openont-ipgroup
+            package/openont/openont-core/files/usr/sbin/openont-offload
+            package/openont/openont-core/files/usr/sbin/openont-pppoe
+            package/openont/openont-base/files/etc/uci-defaults/99-openont-defaults
+            package/openont/openont-base/files/etc/profile.d/openont.sh
+            package/openont/luci-theme-openont/root/etc/uci-defaults/30_luci-theme-openont
+            scripts/openont/apply-config.sh
+          )
+          fail=0
+          for f in "${exec_files[@]}"; do
+            mode=$(git ls-files -s -- "$f" | awk '{print $1}')
+            if [ "$mode" != "100755" ]; then
+              echo "git mode not 100755 ($mode): $f" >&2
+              fail=1
+            fi
+            if [ ! -x "$f" ]; then
+              echo "working tree not executable: $f" >&2
+              fail=1
+            fi
+          done
+          [ "$fail" -eq 0 ] || exit 1
+          echo "executable bits ok"
+
+      - name: Config selects OpenONT packages
+        run: |
+          set -euo pipefail
+          for pkg in openont-core openont-base luci-mod-openont luci-theme-openont; do
+            grep -q "^CONFIG_PACKAGE_${pkg}=y" configs/openont.common.config \
+              || { echo "missing CONFIG_PACKAGE_${pkg}=y in openont.common.config" >&2; exit 1; }
+          done
+          echo "config selection ok"
 
       - name: No hardcoded CJK in UI sources
         run: |
@@ -78,6 +143,7 @@ jobs:
             package/openont/openont-core/files/usr/sbin/openont-* \
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont \
             package/openont/luci-mod-openont/root/usr/sbin/openont-statsd \
+            package/openont/luci-mod-openont/root/etc/init.d/openont-stats \
             package/openont/openont-base/files/etc/uci-defaults/* \
             scripts/openont/apply-config.sh
           do

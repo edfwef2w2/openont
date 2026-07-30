@@ -3,9 +3,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: \n"
 
-msgid "System Overview"
-msgstr ""
-
 msgid "Overview"
 msgstr ""
 
