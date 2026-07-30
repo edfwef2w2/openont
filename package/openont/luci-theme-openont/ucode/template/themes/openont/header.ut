@@ -55,10 +55,10 @@
 			<ul class="nav" id="topmenu" style="display:none"></ul>
 			<div class="bw-theme-switch" id="bw-theme-switch">
 				<button type="button" class="bw-theme-toggle" id="bw-theme-toggle"
-					aria-pressed="false" title="{{ _('切换浅色 / 深色模式') }}">
+					aria-pressed="false" title="{{ _('Toggle light / dark mode') }}">
 					<span class="bw-theme-toggle-icon bw-icon-sun" aria-hidden="true"></span>
 					<span class="bw-theme-toggle-icon bw-icon-moon" aria-hidden="true"></span>
-					<span class="bw-theme-toggle-text">{{ _('浅色模式') }}</span>
+					<span class="bw-theme-toggle-text">{{ _('Light mode') }}</span>
 				</button>
 			</div>
 			<div id="indicators" class="pull-right"></div>

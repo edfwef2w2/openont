@@ -165,7 +165,7 @@ return view.extend({
 		]);
 
 		page.appendChild(E('div', { class: 'o-card', style: 'margin-top:12px' }, [
-			E('div', { class: 'o-card-title' }, [ _('Bind / set (openont-port set)') ]),
+			E('div', { class: 'o-card-title' }, [ _('Add binding') ]),
 			err,
 			E('div', { class: 'o-form-row' }, [
 				E('label', {}, [ _('Role') ]),
@@ -206,9 +206,6 @@ return view.extend({
 						});
 					}
 				}, [ _('Apply binding') ])
-			]),
-			E('p', { class: 'o-muted' }, [
-				'CLI: openont-port set lan1 eth0 eth1 · openont-port add lan1 eth2 · openont-port del-port lan1 eth1 · openont-port del lan1'
 			])
 		]));
 

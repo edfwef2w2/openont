@@ -30,8 +30,8 @@
 		btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
 		var label = btn.querySelector('.bw-theme-toggle-text');
 		if (label)
-			label.textContent = dark ? tr('深色模式') : tr('浅色模式');
-		btn.title = tr('切换浅色 / 深色模式');
+			label.textContent = dark ? tr('Dark mode') : tr('Light mode');
+		btn.title = tr('Toggle light / dark mode');
 	}
 
 	function initThemeToggle() {

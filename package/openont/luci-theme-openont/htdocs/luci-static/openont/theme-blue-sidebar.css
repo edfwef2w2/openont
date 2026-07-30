@@ -44,7 +44,7 @@
 	--shadow-sm: 0 1px 2px rgba(15, 79, 150, 0.06);
 	--shadow-md: 0 4px 16px rgba(15, 79, 150, 0.08);
 	--shadow-lg: 0 8px 28px rgba(15, 79, 150, 0.12);
-	/* 温和圆润、可读优先：Nunito（英）+ Noto Sans SC（中），无装饰体 */
+	/* UI font stack: Nunito / Noto Sans SC / system sans (readable admin UI) */
 	--font-ui: "Nunito", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
 	--font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
 
