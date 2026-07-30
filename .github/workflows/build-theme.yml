@@ -4,6 +4,16 @@ run-name: ${{ github.event.pull_request.title || github.event.head_commit.messag
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: Target to package theme for
+        required: true
+        default: all
+        type: choice
+        options:
+          - x86_64
+          - armsr_armv8
+          - all
   push:
     paths:
       - "package/openont/luci-theme-openont/**"
@@ -17,16 +27,39 @@ permissions:
   contents: read
 
 jobs:
-  theme:
-    name: luci-theme-openont
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            t="${{ github.event.inputs.target }}"
+          else
+            t="all"
+          fi
+          case "$t" in
+            x86_64)
+              echo 'matrix={"include":[{"name":"x86_64","target":"x86_64"}]}' >> "$GITHUB_OUTPUT"
+              ;;
+            armsr_armv8)
+              echo 'matrix={"include":[{"name":"armsr_armv8","target":"armsr_armv8"}]}' >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo 'matrix={"include":[{"name":"x86_64","target":"x86_64"},{"name":"armsr_armv8","target":"armsr_armv8"}]}' >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Static checks (theme sources)
+      - name: Theme source checks
         run: |
           set -euo pipefail
           theme=package/openont/luci-theme-openont
@@ -72,6 +105,19 @@ jobs:
 
           echo "static checks ok"
 
+  theme:
+    name: ${{ matrix.name }}
+    needs: [prepare, static]
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Install build dependencies
         run: |
           sudo apt-get update
@@ -86,10 +132,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: dl
-          key: openont-dl-theme-${{ hashFiles('feeds.conf.default') }}
+          key: openont-dl-theme-${{ matrix.name }}-${{ hashFiles('feeds.conf.default') }}
           restore-keys: |
+            openont-dl-theme-${{ matrix.name }}-
+            openont-dl-${{ matrix.name }}-
             openont-dl-theme-
-            openont-dl-x86_64-
             openont-dl-
 
       - name: Feeds
@@ -97,10 +144,10 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Configure (x86_64, for packaging only)
+      - name: Configure
         run: |
           chmod +x scripts/openont/apply-config.sh
-          ./scripts/openont/apply-config.sh x86_64
+          ./scripts/openont/apply-config.sh "${{ matrix.target }}"
           grep -E '^CONFIG_PACKAGE_luci-theme-openont=y' .config \
             || { echo "missing CONFIG_PACKAGE_luci-theme-openont=y" >&2; exit 1; }
 
@@ -162,7 +209,7 @@ jobs:
       - name: Upload theme package
         uses: actions/upload-artifact@v4
         with:
-          name: luci-theme-openont
+          name: luci-theme-openont-${{ matrix.name }}
           path: out/
           if-no-files-found: error
           compression-level: 9
