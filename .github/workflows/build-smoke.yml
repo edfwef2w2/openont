@@ -120,7 +120,36 @@ jobs:
             grep -q "^CONFIG_PACKAGE_${pkg}=y" configs/openont.common.config \
               || { echo "missing CONFIG_PACKAGE_${pkg}=y in openont.common.config" >&2; exit 1; }
           done
+          # Must not enable stock themes
+          if grep -E '^CONFIG_PACKAGE_luci-theme-bootstrap=y' configs/openont.common.config; then
+            echo "bootstrap theme must not be enabled" >&2
+            exit 1
+          fi
+          grep -q 'CONFIG_PACKAGE_luci-theme-bootstrap is not set' configs/openont.common.config \
+            || { echo "common config should disable luci-theme-bootstrap" >&2; exit 1; }
           echo "config selection ok"
+
+      - name: Theme and overview sources
+        run: |
+          set -euo pipefail
+          test -f package/openont/luci-theme-openont/htdocs/luci-static/openont/cascade.css
+          test -f package/openont/luci-theme-openont/ucode/template/themes/openont/header.ut
+          test -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/status/overview.js
+          grep -q 'o-overview' package/openont/luci-mod-openont/htdocs/luci-static/resources/view/status/overview.js \
+            || { echo "overview.js missing o-overview dashboard marker" >&2; exit 1; }
+          grep -q "object: 'openont'" package/openont/luci-mod-openont/htdocs/luci-static/resources/view/status/overview.js \
+            || { echo "overview.js must use openont RPC" >&2; exit 1; }
+          grep -q 'mediaurlbase=/luci-static/openont' \
+            package/openont/openont-base/files/etc/uci-defaults/99-openont-defaults \
+            package/openont/luci-theme-openont/root/etc/uci-defaults/30_luci-theme-openont \
+            || { echo "uci-defaults must force openont mediaurlbase" >&2; exit 1; }
+          # No CLI leak strings in LuCI views
+          if grep -R -n -E 'CLI:|openont-port set |Same operations as openont-port' \
+            package/openont/luci-mod-openont/htdocs 2>/dev/null; then
+            echo "CLI / console leak strings found in UI sources" >&2
+            exit 1
+          fi
+          echo "theme and overview sources ok"
 
       - name: i18n Check
         run: |

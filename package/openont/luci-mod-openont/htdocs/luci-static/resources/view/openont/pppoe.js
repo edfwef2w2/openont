@@ -14,12 +14,6 @@ function stateLabel(it) {
 	return _('Disconnected');
 }
 
-function stateClass(it) {
-	if (it.pending) return 'o-badge o-badge-info';
-	if (it.up) return 'o-badge o-badge-ok';
-	return 'o-badge o-badge-bad';
-}
-
 function fmtUptime(sec) {
 	sec = parseInt(sec, 10) || 0;
 	var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
@@ -38,10 +32,8 @@ return view.extend({
 	},
 
 	render: function (data) {
-		var self = this;
-		var root = E('div', { class: 'o-page' });
-		var err = E('div', { class: 'o-alert', style: 'display:none' });
-		var tbody = E('tbody', { id: 'o-pppoe-tbody' });
+		var err = E('div', { class: 'alert-message', style: 'display:none' });
+		var tbody = E('tbody', {});
 
 		function showErr(msg) {
 			if (!msg) {
@@ -68,37 +60,37 @@ return view.extend({
 			var list = (d && d.interfaces) || [];
 			tbody.innerHTML = '';
 			if (!list.length) {
-				tbody.appendChild(E('tr', {}, [
-					E('td', { colspan: 8, class: 'o-muted' }, [
-						_('No PPPoE interface found. Bind a WAN with PPPoE first: openont-port set wan1 eth0 pppoe')
+				tbody.appendChild(E('tr', { class: 'tr' }, [
+					E('td', { class: 'td cbi-empty', colspan: 8 }, [
+						_('No PPPoE interface found. Configure a WAN with PPPoE under Network → Port Binding first.')
 					])
 				]));
 				return;
 			}
 			list.forEach(function (it) {
-				tbody.appendChild(E('tr', {}, [
-					E('td', {}, [ it.name ]),
-					E('td', {}, [ E('span', { class: stateClass(it) }, [ stateLabel(it) ]) ]),
-					E('td', {}, [ it.ipv4 || '—' ]),
-					E('td', {}, [ it.device || '—' ]),
-					E('td', {}, [ it.l3_device || '—' ]),
-					E('td', {}, [ it.up ? fmtUptime(it.uptime) : '—' ]),
-					E('td', {}, [ it.username || '—' ]),
-					E('td', { class: 'o-ops' }, [
+				tbody.appendChild(E('tr', { class: 'tr' }, [
+					E('td', { class: 'td' }, [ it.name ]),
+					E('td', { class: 'td' }, [ stateLabel(it) ]),
+					E('td', { class: 'td' }, [ it.ipv4 || '—' ]),
+					E('td', { class: 'td' }, [ it.device || '—' ]),
+					E('td', { class: 'td' }, [ it.l3_device || '—' ]),
+					E('td', { class: 'td' }, [ it.up ? fmtUptime(it.uptime) : '—' ]),
+					E('td', { class: 'td' }, [ it.username || '—' ]),
+					E('td', { class: 'td' }, [
 						E('button', {
-							class: 'o-btn o-btn-primary',
+							class: 'cbi-button cbi-button-action',
 							disabled: it.up && !it.pending ? 'disabled' : null,
 							click: function () { act(callDial, it.name); }
 						}, [ _('Dial') ]),
 						' ',
 						E('button', {
-							class: 'o-btn',
+							class: 'cbi-button',
 							disabled: !it.up && !it.pending ? 'disabled' : null,
 							click: function () { act(callHangup, it.name); }
 						}, [ _('Hang up') ]),
 						' ',
 						E('button', {
-							class: 'o-btn',
+							class: 'cbi-button',
 							click: function () { act(callRedial, it.name); }
 						}, [ _('Redial') ])
 					])
@@ -106,41 +98,43 @@ return view.extend({
 			});
 		}
 
-		root.appendChild(E('div', { class: 'o-toolbar' }, [
-			E('h3', { style: 'margin:0;flex:1' }, [ _('PPPoE Dial') ]),
-			E('button', {
-				class: 'o-btn',
-				click: function () {
-					callStatus('').then(fill);
-				}
-			}, [ _('Refresh') ])
-		]));
-		root.appendChild(err);
-		root.appendChild(E('div', { class: 'o-card' }, [
-			E('table', { class: 'o-table' }, [
-				E('thead', {}, [ E('tr', {}, [
-					E('th', {}, [ _('Interface') ]),
-					E('th', {}, [ _('State') ]),
-					E('th', {}, [ 'IPv4' ]),
-					E('th', {}, [ _('Device') ]),
-					E('th', {}, [ _('L3 device') ]),
-					E('th', {}, [ _('Uptime') ]),
-					E('th', {}, [ _('Username') ]),
-					E('th', {}, [ _('Actions') ])
-				]) ]),
-				tbody
+		var map = E('div', { class: 'cbi-map' }, [
+			E('h2', { name: 'content' }, [ _('PPPoE Dial') ]),
+			E('div', { class: 'cbi-map-descr' }, [
+				_('Dial, hang up or redial PPPoE WAN interfaces.')
+			]),
+			err,
+			E('div', { class: 'cbi-section' }, [
+				E('h3', {}, [ _('Interfaces') ]),
+				E('div', { class: 'cbi-section-actions' }, [
+					E('button', {
+						class: 'cbi-button',
+						click: function () { callStatus('').then(fill); }
+					}, [ _('Refresh') ])
+				]),
+				E('div', { class: 'cbi-section-node' }, [
+					E('table', { class: 'table cbi-section-table' }, [
+						E('thead', {}, [ E('tr', { class: 'tr table-titles' }, [
+							E('th', { class: 'th' }, [ _('Interface') ]),
+							E('th', { class: 'th' }, [ _('State') ]),
+							E('th', { class: 'th' }, [ 'IPv4' ]),
+							E('th', { class: 'th' }, [ _('Device') ]),
+							E('th', { class: 'th' }, [ _('L3 device') ]),
+							E('th', { class: 'th' }, [ _('Uptime') ]),
+							E('th', { class: 'th' }, [ _('Username') ]),
+							E('th', { class: 'th' }, [ _('Actions') ])
+						]) ]),
+						tbody
+					])
+				])
 			])
-		]));
-		root.appendChild(E('p', { class: 'o-muted' }, [
-			'CLI: openont-pppoe status | dial <iface> | hangup <iface> | redial <iface>'
-		]));
+		]);
 
 		fill(data || {});
-
 		poll.add(function () {
 			return callStatus('').then(fill);
 		}, 4);
 
-		return root;
+		return map;
 	}
 });

@@ -209,7 +209,7 @@ return view.extend({
 		if (!list.length) {
 			ul.appendChild(E('li', {}, [
 				E('div', { class: 'name' }, [ _('No binding') ]),
-				E('div', { class: 'meta' }, [ 'openont-port set lan1 eth0' ])
+				E('div', { class: 'meta' }, [ _('Bind interfaces under Network → Port Binding') ])
 			]));
 			return;
 		}

@@ -236,40 +236,172 @@ a:hover { text-decoration: underline; }
 	font-size: 12px; color: #555; background: #fff;
 }
 
-/* LuCI content overrides inside theme */
-#maincontent .cbi-map,
+/* LuCI standard form/map (DHCP/DNS-style) — themed blue/white */
+#maincontent .cbi-map {
+	background: transparent;
+	border: none;
+	padding: 0;
+	margin: 0 0 16px;
+	box-shadow: none;
+}
+#maincontent .cbi-map > h2,
+#maincontent .cbi-map-title {
+	margin: 0 0 6px;
+	font-size: 18px;
+	font-weight: 600;
+	color: #333;
+	border: none;
+	padding: 0;
+}
+#maincontent .cbi-map-descr {
+	margin: 0 0 14px;
+	color: var(--o-muted);
+	font-size: 12px;
+	line-height: 1.45;
+}
 #maincontent .cbi-section,
 #maincontent fieldset {
 	background: var(--o-card);
 	border: 1px solid var(--o-border);
 	border-radius: 2px;
-	padding: 10px 12px;
+	padding: 12px 14px;
 	margin-bottom: 12px;
+	box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
-#maincontent h2, #maincontent h3 {
-	color: #444; border-bottom: 1px solid var(--o-border);
-	padding-bottom: 6px;
+#maincontent .cbi-section > h3,
+#maincontent .cbi-section-title,
+#maincontent legend {
+	margin: 0 0 10px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #555;
+	border-bottom: 1px solid var(--o-border);
+	padding-bottom: 8px;
 }
-#maincontent table {
-	width: 100%; border-collapse: collapse;
+#maincontent .cbi-section-descr {
+	margin: -4px 0 10px;
+	color: var(--o-muted);
+	font-size: 12px;
 }
-#maincontent table th, #maincontent table td {
-	border-bottom: 1px solid var(--o-border); padding: 6px 8px; text-align: left;
+#maincontent .cbi-section-node,
+#maincontent .cbi-value {
+	margin-bottom: 8px;
+}
+#maincontent .cbi-value {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 8px 12px;
+}
+#maincontent .cbi-value-title {
+	width: 140px;
+	flex-shrink: 0;
+	color: #666;
+	line-height: 28px;
+	font-size: 12px;
+}
+#maincontent .cbi-value-field {
+	flex: 1;
+	min-width: 200px;
+}
+#maincontent .cbi-page-actions,
+#maincontent .cbi-section-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 12px;
+	padding-top: 10px;
+	border-top: 1px solid var(--o-border);
+}
+#maincontent table,
+#maincontent .table,
+#maincontent .cbi-section-table {
+	width: 100%;
+	border-collapse: collapse;
+	background: #fff;
+	font-size: 12px;
+}
+#maincontent table th,
+#maincontent .table th,
+#maincontent .cbi-section-table th,
+#maincontent table td,
+#maincontent .table td,
+#maincontent .cbi-section-table td {
+	border-bottom: 1px solid var(--o-border);
+	padding: 8px 10px;
+	text-align: left;
+	vertical-align: middle;
+}
+#maincontent table th,
+#maincontent .table th,
+#maincontent .cbi-section-table th {
+	background: #f7f8fa;
+	color: #555;
+	font-weight: 600;
 }
 #maincontent input[type="text"],
 #maincontent input[type="password"],
 #maincontent input[type="number"],
-#maincontent select, #maincontent textarea {
-	border: 1px solid #ccc; border-radius: 2px; padding: 5px 8px;
+#maincontent select,
+#maincontent textarea {
+	border: 1px solid #ccc;
+	border-radius: 2px;
+	padding: 5px 8px;
+	font-size: 12px;
+	max-width: 100%;
 }
-#maincontent .cbi-button, #maincontent button,
+#maincontent .cbi-button,
+#maincontent button,
 .o-btn {
-	border: 1px solid #ccc; background: #f5f5f5; border-radius: 2px;
-	padding: 6px 14px; cursor: pointer; font-size: 12px;
+	border: 1px solid #ccc;
+	background: #f5f5f5;
+	border-radius: 2px;
+	padding: 6px 14px;
+	cursor: pointer;
+	font-size: 12px;
+	color: #333;
 }
-.o-btn-primary, #maincontent .cbi-button-save,
-#maincontent .cbi-button-apply {
-	background: var(--o-blue2); border-color: var(--o-blue2); color: #fff;
+#maincontent .cbi-button:hover,
+#maincontent button:hover,
+.o-btn:hover {
+	background: #eee;
+}
+.o-btn-primary,
+#maincontent .cbi-button-positive,
+#maincontent .cbi-button-save,
+#maincontent .cbi-button-apply,
+#maincontent .cbi-button-add,
+#maincontent .cbi-button-action {
+	background: var(--o-blue2);
+	border-color: var(--o-blue2);
+	color: #fff;
+}
+.o-btn-primary:hover,
+#maincontent .cbi-button-positive:hover,
+#maincontent .cbi-button-save:hover,
+#maincontent .cbi-button-apply:hover {
+	background: var(--o-blue-dark);
+	border-color: var(--o-blue-dark);
+	color: #fff;
+}
+#maincontent .cbi-button-remove,
+#maincontent .cbi-button-neutral {
+	color: var(--o-red);
+}
+#maincontent .alert-message,
+#maincontent .cbi-error {
+	background: #fff1f0;
+	border: 1px solid #ffccc7;
+	color: #cf1322;
+	padding: 8px 10px;
+	border-radius: 2px;
+	margin-bottom: 10px;
+	font-size: 12px;
+}
+#maincontent .cbi-empty {
+	color: var(--o-muted);
+	font-size: 12px;
+	padding: 12px 4px;
 }
 
 /* Login */
@@ -297,8 +429,20 @@ a:hover { text-decoration: underline; }
 	padding: 8px; border-radius: 2px; margin-bottom: 10px; font-size: 12px;
 }
 
-/* Hide stock theme chrome remnants if any */
-header.fixed-header, .mainmenu, .modemenu { }
+/* Hide stock bootstrap chrome if any remnant CSS/JS injects it */
+header.fixed-header,
+.main > .main-left,
+.mainmenu,
+.modemenu,
+#mainmenu,
+.navbar,
+.container > .main {
+	/* OpenONT uses .o-header / .o-nav1 / .o-nav2 instead */
+}
+body.openont-body .main > .main-left,
+body.openont-body header.fixed-header {
+	display: none !important;
+}
 
 /* Tables / forms / ports */
 .o-page { max-width: 1200px; }

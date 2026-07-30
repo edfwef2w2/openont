@@ -70,9 +70,6 @@ msgstr "已连接"
 msgid "Disconnected"
 msgstr "未连接"
 
-msgid "Same operations as openont-port on the console"
-msgstr "与控制台 openont-port 操作一致"
-
 msgid "Total NICs"
 msgstr "总网卡"
 
@@ -103,8 +100,8 @@ msgstr "物理网卡状态"
 msgid "Logical interfaces (lanN / wanN)"
 msgstr "逻辑接口 (lanN / wanN)"
 
-msgid "No bindings yet. Use the form below or: openont-port set lan1 eth0"
-msgstr "尚未绑定。请使用下方表单或: openont-port set lan1 eth0"
+msgid "No bindings yet. Use the form below to create one."
+msgstr "尚未绑定。请使用下方表单创建。"
 
 msgid "Remove %s from %s?"
 msgstr "从 %s 移除 %s？"
@@ -119,8 +116,8 @@ msgstr "解绑 %s？"
 msgid "Unbind"
 msgstr "解绑"
 
-msgid "Bind / set (openont-port set)"
-msgstr "绑定 / 设置（openont-port set）"
+msgid "Add binding"
+msgstr "添加绑定"
 
 msgid "NICs (multi-select for LAN)"
 msgstr "网卡（LAN 可多选）"
@@ -428,5 +425,59 @@ msgstr "挂断"
 msgid "Redial"
 msgstr "重拨"
 
-msgid "No PPPoE interface found. Bind a WAN with PPPoE first: openont-port set wan1 eth0 pppoe"
-msgstr "未找到 PPPoE 接口。请先绑定 WAN：openont-port set wan1 eth0 pppoe"
+msgid "No PPPoE interface found. Configure a WAN with PPPoE under Network → Port Binding first."
+msgstr "未找到 PPPoE 接口。请先在 网络 → 端口绑定 中配置 PPPoE 的 WAN。"
+
+msgid "Bind physical network adapters to LAN or WAN interfaces."
+msgstr "将物理网卡绑定到 LAN 或 WAN 接口。"
+
+msgid "Bind interfaces under Network → Port Binding"
+msgstr "请到 网络 → 端口绑定 中绑定接口"
+
+msgid "Dial, hang up or redial PPPoE WAN interfaces."
+msgstr "拨号、挂断或重拨 PPPoE WAN 接口。"
+
+msgid "Configure firewall flow offloading to improve forwarding performance."
+msgstr "配置防火墙流量卸载以提升转发性能。"
+
+msgid "Forward external ports to internal hosts. Use IP groups to restrict source addresses."
+msgstr "将外部端口转发到内部主机。可用 IP 组限制源地址。"
+
+msgid "Expose an internal host on WAN. Only one enabled DMZ host is recommended."
+msgstr "在 WAN 上暴露一台内部主机。建议仅启用一个 DMZ 主机。"
+
+msgid "Named lists of IP addresses or networks used by port mapping access control."
+msgstr "用于端口映射访问控制的 IP/网段分组列表。"
+
+msgid "Select free adapters and assign them to a LAN or WAN role."
+msgstr "选择空闲网卡并分配到 LAN 或 WAN 角色。"
+
+msgid "Physical adapters"
+msgstr "物理网卡"
+
+msgid "Logical interfaces"
+msgstr "逻辑接口"
+
+msgid "LAN and WAN interfaces created from physical adapters."
+msgstr "由物理网卡创建的 LAN/WAN 接口。"
+
+msgid "No port mappings."
+msgstr "暂无端口映射。"
+
+msgid "No DMZ hosts configured."
+msgstr "尚未配置 DMZ 主机。"
+
+msgid "Capability"
+msgstr "能力"
+
+msgid "Search…"
+msgstr "搜索…"
+
+msgid "Hold Ctrl/Cmd to select multiple adapters for LAN."
+msgstr "按住 Ctrl/Cmd 可为 LAN 多选网卡。"
+
+msgid "Please set a role and select at least one adapter"
+msgstr "请设置角色并至少选择一块网卡"
+
+msgid "No network adapters found."
+msgstr "未发现网卡。"

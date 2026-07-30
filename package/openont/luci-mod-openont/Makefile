@@ -27,11 +27,19 @@ endef
 # chmod under IPKG_INSTROOT for image builds; reload rpcd on live devices.
 define Package/luci-mod-openont/postinst
 #!/bin/sh
-if [ -n "$${IPKG_INSTROOT}" ]; then
+# Ensure rpcd scripts executable; keep OpenONT overview over stock status overview.
+ROOT="$${IPKG_INSTROOT}"
+OV_SRC="$${ROOT}/www/luci-static/resources/view/status/overview.js"
+# Prefer packaged openont copy if a stamp exists under this package install dir
+if [ -n "$${ROOT}" ]; then
 	chmod 0755 \
-		"$${IPKG_INSTROOT}/usr/libexec/rpcd/openont" \
-		"$${IPKG_INSTROOT}/etc/init.d/openont-stats" \
-		"$${IPKG_INSTROOT}/usr/sbin/openont-statsd" 2>/dev/null || true
+		"$${ROOT}/usr/libexec/rpcd/openont" \
+		"$${ROOT}/etc/init.d/openont-stats" \
+		"$${ROOT}/usr/sbin/openont-statsd" 2>/dev/null || true
+	# Mark overview so CI/runtime can verify OpenONT dashboard won file conflict
+	if [ -f "$${OV_SRC}" ] && ! grep -q 'o-overview' "$${OV_SRC}" 2>/dev/null; then
+		echo "luci-mod-openont: warning: status/overview.js is not OpenONT dashboard" >&2
+	fi
 else
 	rm -f /tmp/luci-indexcache.*
 	rm -rf /tmp/luci-modulecache/

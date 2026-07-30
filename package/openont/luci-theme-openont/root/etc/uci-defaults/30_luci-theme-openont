@@ -1,12 +1,12 @@
 #!/bin/sh
+# Always register and select OpenONT theme (first boot and package reinstall).
 
-if [ "$PKG_UPGRADE" != 1 ]; then
-	uci get luci.themes.OpenONT >/dev/null 2>&1 || \
-	uci batch <<-EOF
-		set luci.themes.OpenONT=/luci-static/openont
-		set luci.main.mediaurlbase=/luci-static/openont
-		commit luci
-	EOF
-fi
+uci -q batch <<-EOF
+	set luci.themes.OpenONT=/luci-static/openont
+	set luci.main.mediaurlbase=/luci-static/openont
+	delete luci.themes.Bootstrap
+	delete luci.themes.OpenWrt
+	commit luci
+EOF
 
 exit 0

@@ -130,6 +130,10 @@ jobs:
             grep -E "^CONFIG_PACKAGE_${pkg}=y" .config \
               || { echo "after defconfig missing CONFIG_PACKAGE_${pkg}=y" >&2; exit 1; }
           done
+          if grep -E '^CONFIG_PACKAGE_luci-theme-bootstrap=y' .config; then
+            echo "after defconfig bootstrap theme still enabled" >&2
+            exit 1
+          fi
           echo "post-defconfig package selection ok"
 
       - name: Build
@@ -157,6 +161,19 @@ jobs:
               || { echo "missing ACL under $root" >&2; return 1; }
             [ -f "$root/www/luci-static/resources/view/openont/ports.js" ] \
               || { echo "missing ports.js under $root" >&2; return 1; }
+            [ -f "$root/www/luci-static/openont/cascade.css" ] \
+              || { echo "missing openont theme CSS under $root" >&2; return 1; }
+            [ -f "$root/usr/share/ucode/luci/template/themes/openont/header.ut" ] \
+              || { echo "missing openont theme header under $root" >&2; return 1; }
+            local ov="$root/www/luci-static/resources/view/status/overview.js"
+            [ -f "$ov" ] || { echo "missing status/overview.js under $root" >&2; return 1; }
+            grep -q 'o-overview' "$ov" \
+              || { echo "status/overview.js is not OpenONT dashboard under $root" >&2; return 1; }
+            # Stock bootstrap theme package should not be present
+            if [ -d "$root/www/luci-static/bootstrap" ]; then
+              echo "stock bootstrap theme static still in rootfs" >&2
+              return 1
+            fi
           }
 
           found_root=""

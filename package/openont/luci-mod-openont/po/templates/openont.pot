@@ -69,9 +69,6 @@ msgstr ""
 msgid "Disconnected"
 msgstr ""
 
-msgid "Same operations as openont-port on the console"
-msgstr ""
-
 msgid "Total NICs"
 msgstr ""
 
@@ -102,7 +99,7 @@ msgstr ""
 msgid "Logical interfaces (lanN / wanN)"
 msgstr ""
 
-msgid "No bindings yet. Use the form below or: openont-port set lan1 eth0"
+msgid "No bindings yet. Use the form below to create one."
 msgstr ""
 
 msgid "Remove %s from %s?"
@@ -117,7 +114,7 @@ msgstr ""
 msgid "Unbind"
 msgstr ""
 
-msgid "Bind / set (openont-port set)"
+msgid "Add binding"
 msgstr ""
 
 msgid "NICs (multi-select for LAN)"
@@ -426,5 +423,59 @@ msgstr ""
 msgid "Redial"
 msgstr ""
 
-msgid "No PPPoE interface found. Bind a WAN with PPPoE first: openont-port set wan1 eth0 pppoe"
+msgid "No PPPoE interface found. Configure a WAN with PPPoE under Network → Port Binding first."
+msgstr ""
+
+msgid "Bind physical network adapters to LAN or WAN interfaces."
+msgstr ""
+
+msgid "Bind interfaces under Network → Port Binding"
+msgstr ""
+
+msgid "Dial, hang up or redial PPPoE WAN interfaces."
+msgstr ""
+
+msgid "Configure firewall flow offloading to improve forwarding performance."
+msgstr ""
+
+msgid "Forward external ports to internal hosts. Use IP groups to restrict source addresses."
+msgstr ""
+
+msgid "Expose an internal host on WAN. Only one enabled DMZ host is recommended."
+msgstr ""
+
+msgid "Named lists of IP addresses or networks used by port mapping access control."
+msgstr ""
+
+msgid "Select free adapters and assign them to a LAN or WAN role."
+msgstr ""
+
+msgid "Physical adapters"
+msgstr ""
+
+msgid "Logical interfaces"
+msgstr ""
+
+msgid "LAN and WAN interfaces created from physical adapters."
+msgstr ""
+
+msgid "No port mappings."
+msgstr ""
+
+msgid "No DMZ hosts configured."
+msgstr ""
+
+msgid "Capability"
+msgstr ""
+
+msgid "Search…"
+msgstr ""
+
+msgid "Hold Ctrl/Cmd to select multiple adapters for LAN."
+msgstr ""
+
+msgid "Please set a role and select at least one adapter"
+msgstr ""
+
+msgid "No network adapters found."
 msgstr ""

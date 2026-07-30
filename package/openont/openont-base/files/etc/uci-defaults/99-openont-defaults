@@ -53,9 +53,12 @@ if [ ! -f /etc/openont/.ports_initialized ]; then
 	touch /etc/openont/.ports_initialized
 fi
 
-# Default theme
+# Force OpenONT theme (wins over any stock theme defaults)
 uci -q batch <<-EOF
-	set luci.main.mediaurlbase='/luci-static/openont'
+	set luci.themes.OpenONT=/luci-static/openont
+	set luci.main.mediaurlbase=/luci-static/openont
+	delete luci.themes.Bootstrap
+	delete luci.themes.OpenWrt
 	commit luci
 EOF
 
