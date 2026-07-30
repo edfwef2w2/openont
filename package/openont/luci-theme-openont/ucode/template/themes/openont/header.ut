@@ -19,7 +19,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<script>
-		/* Apply theme before paint to avoid FOUC */
+		/* Apply theme before paint to avoid FOUC.
+		   Enter anim: play on first visit / refresh; skip only when path changes (page switch). */
 		(function () {
 			try {
 				var key = 'openont-theme-dark';
@@ -30,6 +31,13 @@
 				document.documentElement.setAttribute('data-darkmode', 'false');
 				document.documentElement.setAttribute('data-theme', 'light');
 			}
+			try {
+				var path = location.pathname + location.search + location.hash;
+				var prev = sessionStorage.getItem('openont-nav-path');
+				if (prev != null && prev !== path)
+					document.documentElement.classList.add('bw-nav-static');
+				sessionStorage.setItem('openont-nav-path', path);
+			} catch (e) { /* ignore */ }
 		})();
 		</script>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -58,7 +66,7 @@
 					aria-pressed="false" title="{{ _('Toggle light / dark mode') }}">
 					<span class="bw-theme-toggle-icon bw-icon-sun" aria-hidden="true"></span>
 					<span class="bw-theme-toggle-icon bw-icon-moon" aria-hidden="true"></span>
-					<span class="bw-theme-toggle-text">{{ _('Light mode') }}</span>
+					<span class="bw-theme-toggle-text">{{ _('Dark mode') }}</span>
 				</button>
 			</div>
 			<div id="indicators" class="pull-right"></div>

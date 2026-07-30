@@ -83,7 +83,7 @@ return view.extend({
 		var rx = rateParts(ov.rx_bps);
 		row1.appendChild(E('div', { class: 'o-col o-col-3' }, [
 			E('div', { class: 'o-card' }, [
-				E('div', { class: 'o-card-title' }, [ _('Rate status') ]),
+				E('div', { class: 'o-card-title', 'data-icon': 'rate' }, [ _('Rate status') ]),
 				E('div', { class: 'o-rate-line up' }, [
 					E('span', { class: 'val', id: 'o-tx-val' }, [ tx.v ]),
 					E('span', { class: 'unit', id: 'o-tx-unit' }, [ tx.u ]),
@@ -99,7 +99,7 @@ return view.extend({
 
 		row1.appendChild(E('div', { class: 'o-col o-col-6' }, [
 			E('div', { class: 'o-card' }, [
-				E('div', { class: 'o-card-title' }, [ _('Physical connections') ]),
+				E('div', { class: 'o-card-title', 'data-icon': 'hosts' }, [ _('Physical connections') ]),
 				E('div', { class: 'o-stat-grid' }, [
 					E('div', {}, [
 						E('div', { class: 'num', id: 'o-hosts' }, [ String(ov.hosts || 0) ]),
@@ -122,7 +122,7 @@ return view.extend({
 		/* Row 2: interface status (no AC) */
 		var row2 = E('div', { class: 'o-row' });
 		var ifCard = E('div', { class: 'o-card' }, [
-			E('div', { class: 'o-card-title' }, [ _('Interface status') ]),
+			E('div', { class: 'o-card-title', 'data-icon': 'iface' }, [ _('Interface status') ]),
 			E('div', { class: 'o-if-summary' }, [
 				E('div', { class: 'item' }, [
 					E('div', { class: 'num', id: 'o-wan-n' }, [ String(ov.wan_enabled || 0) ]),
@@ -158,7 +158,7 @@ return view.extend({
 
 		row3.appendChild(E('div', { class: 'o-col o-col-4' }, [
 			E('div', { class: 'o-card' }, [
-				E('div', { class: 'o-card-title' }, [
+				E('div', { class: 'o-card-title', 'data-icon': 'pie' }, [
 					E('span', { id: 'o-pie-title' }, [ _('Protocol traffic (last 30 minutes)') ]),
 					pieSelect
 				]),
@@ -170,7 +170,7 @@ return view.extend({
 
 		row3.appendChild(E('div', { class: 'o-col o-col-8' }, [
 			E('div', { class: 'o-card' }, [
-				E('div', { class: 'o-card-title' }, [
+				E('div', { class: 'o-card-title', 'data-icon': 'chart' }, [
 					E('span', {}, [ _('Upload / download rate (last 5 minutes)') ]),
 					E('span', { style: 'font-size:11px;color:#999;font-weight:400' }, [ _('Auto refresh 5s') ])
 				]),
