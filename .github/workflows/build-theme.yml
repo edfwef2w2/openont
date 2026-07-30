@@ -66,6 +66,7 @@ jobs:
           for f in \
             "$theme/Makefile" \
             "$theme/htdocs/luci-static/openont/cascade.css" \
+            "$theme/htdocs/luci-static/openont/theme-blue-sidebar.css" \
             "$theme/htdocs/luci-static/openont/script.js" \
             "$theme/ucode/template/themes/openont/header.ut" \
             "$theme/ucode/template/themes/openont/footer.ut" \
@@ -76,6 +77,7 @@ jobs:
           done
 
           header="$theme/ucode/template/themes/openont/header.ut"
+          footer="$theme/ucode/template/themes/openont/footer.ut"
 
           # Must not import non-existent luci.version export (breaks WebUI).
           if grep -nE "from 'luci\.version'|nodeinfo" "$header"; then
@@ -96,12 +98,19 @@ jobs:
             exit 1
           fi
 
-          grep -q 'version\.distversion' "$header" \
-            || { echo "header.ut should use version.distversion" >&2; exit 1; }
+          # Dist version is rendered in footer (not header).
+          grep -q 'version\.distversion' "$footer" \
+            || { echo "footer.ut should use version.distversion" >&2; exit 1; }
 
           grep -q 'mediaurlbase=/luci-static/openont' \
             "$theme/root/etc/uci-defaults/30_luci-theme-openont" \
             || { echo "uci-defaults must force openont mediaurlbase" >&2; exit 1; }
+
+          # Header must load OpenONT theme CSS and status overview entry.
+          grep -q 'theme-blue-sidebar.css' "$header" \
+            || { echo "header.ut must load theme-blue-sidebar.css" >&2; exit 1; }
+          grep -q 'admin/status/overview' "$header" \
+            || { echo "header.ut brand link should use admin/status/overview" >&2; exit 1; }
 
           echo "static checks ok"
 
