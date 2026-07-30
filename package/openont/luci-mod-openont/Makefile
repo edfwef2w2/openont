@@ -1,7 +1,7 @@
 #
 # Copyright (C) 2026 OpenONT
 #
-# This is free software, licensed under the Apache License, Version 2.0.
+# This is free software, licensed under the GNU General Public License v2.
 #
 
 include $(TOPDIR)/rules.mk
@@ -12,33 +12,35 @@ LUCI_DEPENDS:=+luci-base +luci-mod-status +openont-core
 LUCI_PKGARCH:=all
 
 PKG_LICENSE:=Apache-2.0
+PKG_RELEASE:=3
 
-# luci.mk installs root/ via "cp -pR" (preserves mode). Force +x on
-# rpcd/init/sbin so ubus object "openont" is always registered even if
-# git file modes are wrong (common on Windows checkouts).
+# Force executable bits (Windows checkouts often lose +x).
+# Also stamp OpenONT dashboard over stock status/overview.js in the build tree
+# so luci.mk packaging never ships the original overview.
 define Build/Prepare/luci-mod-openont
 	chmod 0755 \
 		$(PKG_BUILD_DIR)/root/usr/libexec/rpcd/openont \
 		$(PKG_BUILD_DIR)/root/etc/init.d/openont-stats \
 		$(PKG_BUILD_DIR)/root/usr/sbin/openont-statsd
+	mkdir -p $(PKG_BUILD_DIR)/htdocs/luci-static/resources/view/status
+	cp -f $(PKG_BUILD_DIR)/htdocs/luci-static/resources/view/openont/overview.js \
+		$(PKG_BUILD_DIR)/htdocs/luci-static/resources/view/status/overview.js
 endef
 
 # Defined before luci.mk so its default postinst is not used (ifndef guard).
-# chmod under IPKG_INSTROOT for image builds; reload rpcd on live devices.
 define Package/luci-mod-openont/postinst
 #!/bin/sh
-# Ensure rpcd scripts executable; keep OpenONT overview over stock status overview.
 ROOT="$${IPKG_INSTROOT}"
-OV_SRC="$${ROOT}/www/luci-static/resources/view/status/overview.js"
-# Prefer packaged openont copy if a stamp exists under this package install dir
 if [ -n "$${ROOT}" ]; then
 	chmod 0755 \
 		"$${ROOT}/usr/libexec/rpcd/openont" \
 		"$${ROOT}/etc/init.d/openont-stats" \
 		"$${ROOT}/usr/sbin/openont-statsd" 2>/dev/null || true
-	# Mark overview so CI/runtime can verify OpenONT dashboard won file conflict
-	if [ -f "$${OV_SRC}" ] && ! grep -q 'o-overview' "$${OV_SRC}" 2>/dev/null; then
-		echo "luci-mod-openont: warning: status/overview.js is not OpenONT dashboard" >&2
+	# Image root: always overwrite stock overview with OpenONT dashboard
+	if [ -f "$${ROOT}/www/luci-static/resources/view/openont/overview.js" ]; then
+		mkdir -p "$${ROOT}/www/luci-static/resources/view/status"
+		cp -f "$${ROOT}/www/luci-static/resources/view/openont/overview.js" \
+			"$${ROOT}/www/luci-static/resources/view/status/overview.js"
 	fi
 else
 	rm -f /tmp/luci-indexcache.*
@@ -47,6 +49,12 @@ else
 		/usr/libexec/rpcd/openont \
 		/etc/init.d/openont-stats \
 		/usr/sbin/openont-statsd 2>/dev/null || true
+	# Live device: kill stock overview if luci-mod-status reinstalled it
+	if [ -f /www/luci-static/resources/view/openont/overview.js ]; then
+		mkdir -p /www/luci-static/resources/view/status
+		cp -f /www/luci-static/resources/view/openont/overview.js \
+			/www/luci-static/resources/view/status/overview.js
+	fi
 	/etc/init.d/rpcd reload 2>/dev/null
 fi
 exit 0
@@ -81,11 +89,11 @@ else
   define Package/luci-mod-openont/install
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/openont
 	$(INSTALL_DATA) ./htdocs/luci-static/resources/view/openont/*.js $(1)/www/luci-static/resources/view/openont/
-	# Replace stock status overview with OpenONT dashboard
+	# Overwrite stock luci-mod-status overview with the OpenONT dashboard
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/status
-	$(INSTALL_DATA) ./htdocs/luci-static/resources/view/status/overview.js $(1)/www/luci-static/resources/view/status/overview.js
+	$(INSTALL_DATA) ./htdocs/luci-static/resources/view/openont/overview.js $(1)/www/luci-static/resources/view/status/overview.js
 	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
-	$(INSTALL_DATA) ./root/usr/share/luci/menu.d/luci-mod-openont.json $(1)/usr/share/luci/menu.d/luci-mod-openont.json
+	$(INSTALL_DATA) ./root/usr/share/luci/menu.d/zzz-luci-mod-openont.json $(1)/usr/share/luci/menu.d/zzz-luci-mod-openont.json
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	$(INSTALL_DATA) ./root/usr/share/rpcd/acl.d/luci-mod-openont.json $(1)/usr/share/rpcd/acl.d/luci-mod-openont.json
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
@@ -94,7 +102,6 @@ else
 	$(INSTALL_BIN) ./root/etc/init.d/openont-stats $(1)/etc/init.d/openont-stats
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./root/usr/sbin/openont-statsd $(1)/usr/sbin/openont-statsd
-	# Install zh-cn catalogue when po2lmo is available on the build host.
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 	if command -v po2lmo >/dev/null 2>&1 && [ -f ./po/zh_Hans/openont.po ]; then \
 		po2lmo ./po/zh_Hans/openont.po $(1)/usr/lib/lua/luci/i18n/openont.zh-cn.lmo; \

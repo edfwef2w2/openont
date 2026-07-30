@@ -1,12 +1,14 @@
 #!/bin/sh
-# Always register and select OpenONT theme (first boot and package reinstall).
+# Register OpenONT as the only LuCI theme and select it.
 
-uci -q batch <<-EOF
-	set luci.themes.OpenONT=/luci-static/openont
-	set luci.main.mediaurlbase=/luci-static/openont
-	delete luci.themes.Bootstrap
-	delete luci.themes.OpenWrt
-	commit luci
-EOF
+uci -q set luci.themes.OpenONT=/luci-static/openont
+uci -q set luci.main.mediaurlbase=/luci-static/openont
 
+# Remove any other theme entries left from prior images or packages
+for opt in $(uci -q show luci.themes 2>/dev/null | sed -n 's/^luci\.themes\.\([^=]*\)=.*/\1/p'); do
+	[ "$opt" = "OpenONT" ] && continue
+	uci -q delete "luci.themes.$opt"
+done
+
+uci -q commit luci
 exit 0

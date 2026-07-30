@@ -1,29 +1,32 @@
 {#
- # OpenONT login page
- # Include base header/footer so luci.js + L = new LuCI(...) are injected.
+ # OpenONT login page (self-contained form, no external theme view)
 -#}
-{% include('header') %}
+{% include('header', { blank_page: true }) %}
 <div class="o-login-wrap">
 	<div class="o-login-box">
 		<h1>OpenONT</h1>
 		<p class="o-login-sub">{{ _('Administration Login') }}</p>
-		<form method="post">
+		<form method="post" id="o-login-form">
 			{% if (fuser): %}
-				<div class="o-alert">{{ _('Invalid username and/or password! Please try again.') }}</div>
+				<div class="alert-message error">{{ _('Invalid username and/or password! Please try again.') }}</div>
 			{% endif %}
 			{% if (auth_message && !fuser): %}
-				<div class="o-alert">{{ auth_message }}</div>
+				<div class="alert-message warning">{{ auth_message }}</div>
 			{% endif %}
-			<label>{{ _('Username') }}</label>
-			<input type="text" name="luci_username" value="{{ entityencode(duser ?? 'root', true) }}" autocomplete="username" />
-			<label>{{ _('Password') }}</label>
-			<input type="password" name="luci_password" autocomplete="current-password" />
+			<label for="luci_username">{{ _('Username') }}</label>
+			<input type="text" name="luci_username" id="luci_username"
+				value="{{ entityencode(duser ?? 'root', true) }}"
+				autocomplete="username" />
+			<label for="luci_password">{{ _('Password') }}</label>
+			<input type="password" name="luci_password" id="luci_password"
+				autocomplete="current-password" />
 			{% if (auth_fields): %}
 				{% for (let field in auth_fields): %}
-					<label>{{ _(field.label ?? field.name) }}</label>
+					<label for="{{ field.name }}">{{ _(field.label ?? field.name) }}</label>
 					<input
 						type="{{ field.type ?? 'text' }}"
 						name="{{ field.name }}"
+						id="{{ field.name }}"
 						{% if (field.placeholder): %}placeholder="{{ field.placeholder }}"{% endif %}
 						{% if (field.required): %}required{% endif %}
 					/>
@@ -32,13 +35,15 @@
 			{% if (auth_html): %}
 				{{ auth_html }}
 			{% endif %}
-			<input type="submit" value="{{ _('Login') }}" class="o-btn o-btn-primary" />
+			<button type="submit" class="btn cbi-button-positive important o-btn o-btn-primary">{{ _('Log in') }}</button>
 		</form>
 	</div>
 </div>
 <script>
-	var input = document.getElementsByName('luci_password')[0];
-	if (input)
-		input.focus();
+	(function () {
+		var input = document.getElementById('luci_password');
+		if (input)
+			input.focus();
+	})();
 </script>
-{% include('footer') %}
+{% include('footer', { blank_page: true }) %}

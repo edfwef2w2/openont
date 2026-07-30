@@ -53,14 +53,23 @@ if [ ! -f /etc/openont/.ports_initialized ]; then
 	touch /etc/openont/.ports_initialized
 fi
 
-# Force OpenONT theme (wins over any stock theme defaults)
-uci -q batch <<-EOF
-	set luci.themes.OpenONT=/luci-static/openont
-	set luci.main.mediaurlbase=/luci-static/openont
-	delete luci.themes.Bootstrap
-	delete luci.themes.OpenWrt
-	commit luci
-EOF
+# Force OpenONT as the only registered LuCI theme
+uci -q set luci.themes.OpenONT=/luci-static/openont
+uci -q set luci.main.mediaurlbase=/luci-static/openont
+for opt in $(uci -q show luci.themes 2>/dev/null | sed -n 's/^luci\.themes\.\([^=]*\)=.*/\1/p'); do
+	[ "$opt" = "OpenONT" ] && continue
+	uci -q delete "luci.themes.$opt"
+done
+uci -q commit luci
+
+# Force OpenONT dashboard over stock status overview; clear LuCI caches
+if [ -f /www/luci-static/resources/view/openont/overview.js ]; then
+	mkdir -p /www/luci-static/resources/view/status
+	cp -f /www/luci-static/resources/view/openont/overview.js \
+		/www/luci-static/resources/view/status/overview.js
+fi
+rm -f /tmp/luci-indexcache.* 2>/dev/null || true
+rm -rf /tmp/luci-modulecache/ 2>/dev/null || true
 
 # Apply recommended flow offload once (software/hardware based on platform).
 if [ ! -f /etc/openont/.offload_initialized ] && [ -x /usr/sbin/openont-offload ]; then

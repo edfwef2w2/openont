@@ -1,15 +1,23 @@
 {#
- # OpenONT theme footer
+ # OpenONT Blue-White Sidebar theme — footer
 -#}
-				</div>
-				{% if (ctx.authsession): %}
-				<footer class="o-footer">
-					<p>© OpenONT · <a href="https://github.com/edfwef2w2/openont" target="_blank" rel="noopener">edfwef2w2/openont</a>
-						· {{ version.luciname }} ({{ version.luciversion }})</p>
-				</footer>
-				{% endif %}
-			</main>
+		{% if (!blank_page): %}
 		</div>
+		<footer>
+			<span>
+				Powered by
+				<a href="https://github.com/openwrt/luci" target="_blank" rel="noreferrer">
+					{{ version.luciname }} ({{ version.luciversion }})</a>
+				/
+				<a href="{{ entityencode(version.disturl ?? 'https://github.com/edfwef2w2/openont', true) }}" target="_blank" rel="noreferrer">
+					{{ version.distname }} {{ version.distversion }}{% if (version.distrevision): %} ({{ version.distrevision }}){% endif %}</a>
+			</span>
+			<ul class="breadcrumb pull-right" id="modemenu" style="display:none"></ul>
+		</footer>
+		{% if (ctx.authsession): %}
+		<script>L.require('menu-openont')</script>
+		{% endif %}
 		<script src="{{ media }}/script.js"></script>
+		{% endif %}
 	</body>
 </html>
