@@ -42,6 +42,8 @@ jobs:
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont
             package/openont/luci-mod-openont/root/etc/init.d/openont-stats
             package/openont/luci-mod-openont/root/usr/sbin/openont-statsd
+            package/openont/luci-mod-openont/root/usr/sbin/openont-appclass
+            package/openont/luci-mod-openont/root/usr/share/openont/app-class.conf
             package/openont/luci-mod-openont/root/usr/share/rpcd/acl.d/luci-mod-openont.json
             package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/overview.js
@@ -95,6 +97,7 @@ jobs:
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont
             package/openont/luci-mod-openont/root/etc/init.d/openont-stats
             package/openont/luci-mod-openont/root/usr/sbin/openont-statsd
+            package/openont/luci-mod-openont/root/usr/sbin/openont-appclass
             package/openont/openont-core/files/usr/sbin/openont-port
             package/openont/openont-core/files/usr/sbin/openont-address
             package/openont/openont-core/files/usr/sbin/openont-nat

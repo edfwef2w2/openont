@@ -1,7 +1,6 @@
 /* ============================================================
    OpenONT Blue-White Visual System
    Left sidebar navigation · Light blue & white palette
-   Content-preserving theme overlay (no markup/text changes)
    ============================================================ */
 
 :root {
@@ -806,7 +805,7 @@ header .label.notice {
 	line-height: 2.15em;
 }
 
-/* Neutral hover/focus — kill cascade blue focus ring (border-color !important) */
+/* Neutral hover/focus (override cascade focus ring) */
 .btn:hover,
 .btn:focus,
 .btn:focus-visible,
@@ -903,7 +902,7 @@ header .label.notice {
 	outline: none !important;
 }
 
-/* Cascade forces Apply/Reset + Save to white fill — restore solid green (issue 7) */
+/* Page-actions Save after Apply/Reset: keep solid green fill */
 .cbi-page-actions .cbi-button-apply + .cbi-button-save,
 .cbi-page-actions .cbi-button-negative + .cbi-button-save {
 	background: linear-gradient(180deg, var(--bw-success), #0b8a5f);
@@ -1105,10 +1104,7 @@ fieldset {
 	margin-bottom: 12px;
 }
 
-/*
- * 2A — empty-field validation bubble ("请输入：不能为空")
- * Pure red + white; tiny gap under the field (not restyle cascade padding).
- */
+/* Validation error tooltip: red bubble with a small gap under the field */
 .cbi-tooltip.error {
 	background: #e11d48;
 	color: #fff;
@@ -1117,9 +1113,8 @@ fieldset {
 }
 
 /*
- * 2B — System Local Time: #localtime + <br> + .control-group (sync buttons).
- * Vertical from one token; horizontal gap = half (not hard-coded).
- * Only matches "input + br + control-group" (not password inline groups).
+ * Local Time sync controls: input/localtime + br + .control-group.
+ * Vertical spacing uses --bw-sync-gap-y; horizontal gap is half that value.
  */
 :root {
 	--bw-sync-gap-y: 12px;
