@@ -260,7 +260,13 @@ header .nav,
 	gap: 2px;
 }
 
-/* Soft fade-in when async menu becomes visible (avoids white-text flash) */
+/*
+ * Menu visibility gate:
+ *  - First visit: soft fade-in after async menu render (avoids unstyled FOUC).
+ *  - Same-session page switch (html.bw-sidebar-static): keep fully opaque with
+ *    no transition (old 0.2s fade flashed all top-level nav labels).
+ *  Pure CSS only (no JS change).
+ */
 #topmenu.nav {
 	opacity: 0;
 }
@@ -270,8 +276,10 @@ header .nav,
 	transition: opacity 0.25s ease;
 }
 
+html.bw-sidebar-static #topmenu.nav,
 html.bw-sidebar-static #topmenu.nav.bw-menu-ready {
-	transition: opacity 0.2s ease;
+	opacity: 1 !important;
+	transition: none !important;
 }
 
 header .nav > li,
@@ -417,15 +425,18 @@ header .nav .dropdown-menu {
 	box-sizing: border-box;
 }
 
-/* Click-to-expand only (.open set by JS) */
+/* Click-to-expand only (.open set by JS).
+   gap = padding so item spacing matches top-edge inset (was stuck together). */
 header .dropdown.open > .dropdown-menu {
-	display: block;
+	display: flex;
+	flex-direction: column;
 	left: auto !important;
 	max-height: 520px;
 	opacity: 1;
 	visibility: visible;
 	margin: 2px 0 6px;
 	padding: 4px;
+	gap: 4px;
 	transform: translateY(0);
 	transition:
 		max-height 0.6s var(--ease-out),
@@ -1805,12 +1816,15 @@ header .dropdown:not(.open) > .dropdown-menu {
 }
 
 header .dropdown.open > .dropdown-menu {
+	display: flex !important;
+	flex-direction: column !important;
 	max-height: 520px !important;
 	opacity: 1 !important;
 	visibility: visible !important;
 	margin: 2px 0 6px !important;
-	/* same padding on all sides */
+	/* same padding on all sides; gap matches top-edge inset */
 	padding: 4px !important;
+	gap: 4px !important;
 	transform: translateY(0) !important;
 	pointer-events: auto !important;
 	overflow: hidden !important;
@@ -1826,6 +1840,7 @@ html.is-layout-narrow header .dropdown.open > .dropdown-menu {
 	max-height: none !important;
 	margin: 0 !important;
 	padding: 6px !important;
+	gap: 6px !important;
 	transform: translateY(0) scale(1) !important;
 	overflow: visible !important;
 }
