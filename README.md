@@ -16,7 +16,7 @@ Repository: https://github.com/edfwef2w2/openont
 
 ## Port binding (CLI ≡ Web)
 
-Web: **网络设置 → 网口绑定**
+Web: **Network → Port Binding**
 
 ```sh
 openont-port list
