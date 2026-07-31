@@ -330,11 +330,23 @@ header .dropdown-menu a:active {
 	box-shadow: none !important;
 }
 
-/* Top-level only: avoid padding change (stops layout jump) */
+/*
+ * Top-level hover: background stays put; label + icon still shift.
+ * .bw-nav-lbl is wrapped by script.js after menu render.
+ */
+header .nav > li > a .bw-nav-lbl {
+	display: inline-block;
+	transition: transform var(--dur-fast) var(--ease-out);
+}
+
 header .nav > li > a:hover {
 	color: #fff;
 	background: rgba(255, 255, 255, 0.1);
 	text-decoration: none;
+	transform: none;
+}
+
+header .nav > li > a:hover .bw-nav-lbl {
 	transform: translateX(2px);
 }
 
@@ -1091,6 +1103,40 @@ select:focus {
 
 fieldset {
 	margin-bottom: 12px;
+}
+
+/*
+ * 2A — empty-field validation bubble ("请输入：不能为空")
+ * Pure red + white; tiny gap under the field (not restyle cascade padding).
+ */
+.cbi-tooltip.error {
+	background: #e11d48;
+	color: #fff;
+	border-color: #c0163c;
+	margin-top: 2px;
+}
+
+/*
+ * 2B — System Local Time: #localtime + <br> + .control-group (sync buttons).
+ * Vertical from one token; horizontal gap = half (not hard-coded).
+ * Only matches "input + br + control-group" (not password inline groups).
+ */
+:root {
+	--bw-sync-gap-y: 12px;
+}
+
+.cbi-value-field > input + br,
+#localtime + br {
+	display: block;
+	margin: 0;
+	line-height: 0;
+	height: 0;
+}
+
+input + br + .control-group,
+#localtime + br + .control-group {
+	margin-top: var(--bw-sync-gap-y);
+	gap: calc(var(--bw-sync-gap-y) / 2);
 }
 
 /* Page actions bar — spacing above form fields (no enter anim) */
@@ -1990,7 +2036,8 @@ header .dropdown-menu a::before {
 
 header .nav > li > a:hover::before {
 	opacity: 1;
-	transform: scale(1.08);
+	/* Icon moves with label; scale kept from original hover */
+	transform: translateX(2px) scale(1.08);
 }
 
 /* Secondary: no icon scale (avoids hover “jump”) */

@@ -166,10 +166,43 @@
 		}
 	}
 
+	/**
+	 * Wrap top-level nav label text so hover can translate text/icons
+	 * without moving the row background (see theme CSS .bw-nav-lbl).
+	 */
+	function wrapNavLabels() {
+		var top = document.getElementById('topmenu');
+		if (!top)
+			return;
+
+		var links = top.querySelectorAll(':scope > li > a');
+		Array.prototype.forEach.call(links, function (a) {
+			if (a.querySelector('.bw-nav-lbl'))
+				return;
+
+			var texts = [];
+			Array.prototype.forEach.call(a.childNodes, function (n) {
+				if (n.nodeType === 3 && String(n.textContent || '').replace(/\s+/g, '').length)
+					texts.push(n);
+			});
+			if (!texts.length)
+				return;
+
+			var span = document.createElement('span');
+			span.className = 'bw-nav-lbl';
+			a.insertBefore(span, texts[0]);
+			texts.forEach(function (n) {
+				span.appendChild(n);
+			});
+		});
+	}
+
 	function markMenuReady() {
 		var top = document.getElementById('topmenu');
-		if (top && top.children.length)
+		if (top && top.children.length) {
+			wrapNavLabels();
 			top.classList.add('bw-menu-ready');
+		}
 	}
 
 	function initAccordion() {
@@ -183,11 +216,12 @@
 	}
 
 	/**
-	 * Scheme A + full fade-out:
+	 * Indicator FLIP + full fade-out:
 	 *  - Appear: Dark mode + pills share layout dy; opacity 0→1 together.
-	 *  - Exit: nodes are already removed by LuCI — rebuild fixed clones from
-	 *    a live position snapshot and fade/move them with the same dy as
-	 *    Dark mode FLIP, then drop the layer.
+	 *  - Exit (same document): rebuild fixed clones from snapshot after LuCI
+	 *    removes nodes; fade/move with the same dy as Dark mode.
+	 *  - Exit (full page nav): intercept same-origin link clicks so exit can
+	 *    paint before unload — MutationObserver alone never wins a hard nav.
 	 */
 	function initIndicatorFlip() {
 		var box = document.getElementById('indicators');
@@ -200,15 +234,22 @@
 		box._bwFlipBound = true;
 
 		var DUR = 0.42;
+		var DUR_NAV = 0.3;
 		var EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 		var TRANS_T = 'transform ' + DUR + 's ' + EASE;
 		var TRANS_BOTH = 'transform ' + DUR + 's ' + EASE + ', opacity ' + DUR + 's ' + EASE;
+		var TRANS_T_NAV = 'transform ' + DUR_NAV + 's ' + EASE;
+		var TRANS_BOTH_NAV = 'transform ' + DUR_NAV + 's ' + EASE +
+			', opacity ' + DUR_NAV + 's ' + EASE;
 		var MS = DUR * 1000 + 40;
+		var MS_NAV = DUR_NAV * 1000 + 40;
 
 		var prevTop = theme.getBoundingClientRect().top;
 		var prevCount = box.querySelectorAll('[data-indicator]').length;
 		var flipTimer = null;
 		var exitLayer = null;
+		var exitInProgress = false;
+		var pendingNavigateHref = null;
 		var savedToggleTransition = '';
 		/* Live snapshot of pill geometry while visible (for exit clones) */
 		var pillSnapshot = [];
@@ -291,8 +332,23 @@
 			toggle.style.transition = 'none';
 		}
 
+		function finishExitCleanup() {
+			removeExitLayer();
+			clearMotion([theme]);
+			pillSnapshot = [];
+			exitInProgress = false;
+			var href = pendingNavigateHref;
+			pendingNavigateHref = null;
+			if (href)
+				window.location.href = href;
+		}
+
 		/** Appear: re-bind dy + opacity fade-in */
 		function flipAppear() {
+			/* Do not kill an exit that is holding a pending page navigation */
+			if (exitInProgress && pendingNavigateHref)
+				return;
+
 			if (reduceMotion) {
 				pillsNow().forEach(function (p) {
 					p.style.opacity = '';
@@ -305,10 +361,15 @@
 				return;
 			}
 
-			/* Cancel in-flight exit/appear */
+			/* Cancel in-flight exit/appear only when not navigating away */
 			if (flipTimer)
 				clearTimeout(flipTimer);
-			removeExitLayer();
+			if (!exitInProgress)
+				removeExitLayer();
+			else {
+				removeExitLayer();
+				exitInProgress = false;
+			}
 
 			var last = theme.getBoundingClientRect().top;
 			var dy = prevTop - last;
@@ -368,19 +429,35 @@
 		}
 
 		/**
-		 * Exit: DOM already empty — paint fixed clones from pillSnapshot,
+		 * Exit: paint fixed clones from pillSnapshot / removedNodes,
 		 * FLIP Dark mode, fade/move clones with the same dy.
+		 * @param {Node[]} [removedNodes]
+		 * @param {{ forNav?: boolean }} [opts]
 		 */
-		function flipExit(removedNodes) {
+		function flipExit(removedNodes, opts) {
+			opts = opts || {};
+			var forNav = !!opts.forNav;
+			var useDur = forNav ? DUR_NAV : DUR;
+			var useTransT = forNav ? TRANS_T_NAV : TRANS_T;
+			var useTransBoth = forNav ? TRANS_BOTH_NAV : TRANS_BOTH;
+			var useMs = forNav ? MS_NAV : MS;
+
 			if (reduceMotion) {
 				prevTop = theme.getBoundingClientRect().top;
 				pillSnapshot = [];
+				exitInProgress = false;
+				if (pendingNavigateHref) {
+					var h = pendingNavigateHref;
+					pendingNavigateHref = null;
+					window.location.href = h;
+				}
 				return;
 			}
 
 			if (flipTimer)
 				clearTimeout(flipTimer);
 			removeExitLayer();
+			exitInProgress = true;
 
 			/* Cancel mid-appear transforms so measurements are layout-true */
 			theme.style.transition = 'none';
@@ -414,12 +491,17 @@
 			var needThemeFlip = Math.abs(dy) >= 0.5;
 			if (!needThemeFlip && !shots.length) {
 				pillSnapshot = [];
+				exitInProgress = false;
+				if (pendingNavigateHref) {
+					var hrefEmpty = pendingNavigateHref;
+					pendingNavigateHref = null;
+					window.location.href = hrefEmpty;
+				}
 				return;
 			}
 
 			lockSidebarOverflow();
 			prepareToggle();
-			removeExitLayer();
 
 			/* Fixed clone layer (nodes already gone from #indicators) */
 			var clones = [];
@@ -460,7 +542,7 @@
 
 			requestAnimationFrame(function () {
 				if (needThemeFlip) {
-					theme.style.transition = TRANS_T;
+					theme.style.transition = useTransT;
 					theme.style.transform = 'translateY(0)';
 				}
 				/*
@@ -469,22 +551,116 @@
 				 */
 				var cloneDy = -dy;
 				clones.forEach(function (c) {
-					c.style.transition = TRANS_BOTH;
+					c.style.transition = useTransBoth;
 					c.style.transform = 'translateY(' + cloneDy + 'px)';
 					c.style.opacity = '0';
 				});
 			});
 
-			if (flipTimer)
-				clearTimeout(flipTimer);
-			flipTimer = setTimeout(function () {
-				removeExitLayer();
-				clearMotion([theme]);
-				pillSnapshot = [];
-			}, MS);
+			flipTimer = setTimeout(finishExitCleanup, useMs);
+		}
+
+		/**
+		 * Full-page navigation never fires a visible exit via MO alone.
+		 * Intercept same-origin link clicks, play exit, then navigate.
+		 */
+		function shouldInterceptNav(a, ev) {
+			if (!a || !a.getAttribute)
+				return false;
+			if (ev.defaultPrevented)
+				return false;
+			if (ev.button !== 0)
+				return false;
+			if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey)
+				return false;
+			if (a.target && a.target !== '' && a.target !== '_self')
+				return false;
+			if (a.hasAttribute('download'))
+				return false;
+
+			var hrefAttr = a.getAttribute('href');
+			if (!hrefAttr || hrefAttr === '#' || hrefAttr.charAt(0) === '#')
+				return false;
+			/* Accordion category toggles */
+			if (a.classList.contains('menu') &&
+			    (hrefAttr === '#' || hrefAttr.indexOf('javascript:') === 0))
+				return false;
+
+			var url;
+			try {
+				url = new URL(a.href, window.location.href);
+			} catch (e) {
+				return false;
+			}
+			if (url.origin !== window.location.origin)
+				return false;
+			if (url.protocol !== 'http:' && url.protocol !== 'https:')
+				return false;
+			/* Same document (hash-only / identical) */
+			if (url.pathname === window.location.pathname &&
+			    url.search === window.location.search &&
+			    url.hash !== window.location.hash)
+				return false;
+			if (url.href === window.location.href)
+				return false;
+
+			return true;
+		}
+
+		function onNavClick(ev) {
+			if (pendingNavigateHref || reduceMotion)
+				return;
+
+			var a = ev.target && ev.target.closest
+				? ev.target.closest('a[href]')
+				: null;
+			if (!shouldInterceptNav(a, ev))
+				return;
+
+			/* Only delay when there is something to fade out */
+			if (!pillsNow().length && !pillSnapshot.length)
+				return;
+
+			ev.preventDefault();
+			ev.stopPropagation();
+
+			pendingNavigateHref = a.href;
+
+			/* Fresh geometry before tear-down */
+			if (pillsNow().length)
+				snapshotPills();
+
+			/* Detach live pills so theme can FLIP up; MO will also see exit */
+			var removed = pillsNow();
+			prevCount = 0;
+			removed.forEach(function (p) {
+				if (p.parentNode)
+					p.parentNode.removeChild(p);
+			});
+
+			/*
+			 * Call exit directly (do not rely on MO timing). forNav shortens
+			 * duration so the click→navigate delay stays acceptable.
+			 */
+			flipExit(removed, { forNav: true });
+		}
+
+		/* Refresh snapshot before click so clones match final layout */
+		function onPointerDown(ev) {
+			if (reduceMotion || !pillsNow().length)
+				return;
+			var a = ev.target && ev.target.closest
+				? ev.target.closest('a[href]')
+				: null;
+			if (a)
+				snapshotPills();
 		}
 
 		var mo = new MutationObserver(function (records) {
+			/* Nav-driven exit owns the animation; ignore MO churn */
+			if (pendingNavigateHref)
+				return;
+
 			var count = box.querySelectorAll('[data-indicator]').length;
 			var appear = count > prevCount;
 			var exit = count < prevCount;
@@ -541,6 +717,9 @@
 		});
 		mo.observe(box, { childList: true, subtree: true, characterData: true });
 
+		document.addEventListener('click', onNavClick, true);
+		document.addEventListener('pointerdown', onPointerDown, true);
+
 		window.addEventListener('resize', function () {
 			prevTop = theme.getBoundingClientRect().top;
 			prevCount = box.querySelectorAll('[data-indicator]').length;
@@ -554,6 +733,8 @@
 
 		box._bwFlipTeardown = function () {
 			mo.disconnect();
+			document.removeEventListener('click', onNavClick, true);
+			document.removeEventListener('pointerdown', onPointerDown, true);
 			removeExitLayer();
 			if (flipTimer)
 				clearTimeout(flipTimer);
