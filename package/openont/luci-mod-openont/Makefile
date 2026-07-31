@@ -12,7 +12,7 @@ LUCI_DEPENDS:=+luci-base +luci-mod-status +openont-core
 LUCI_PKGARCH:=all
 
 PKG_LICENSE:=Apache-2.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 # Force executable bits (Windows checkouts often lose +x).
 # Also stamp OpenONT dashboard over stock status/overview.js in the build tree
@@ -96,6 +96,8 @@ else
   define Package/luci-mod-openont/install
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/openont
 	$(INSTALL_DATA) ./htdocs/luci-static/resources/view/openont/*.js $(1)/www/luci-static/resources/view/openont/
+	$(INSTALL_DIR) $(1)/www/luci-static/resources/openont
+	$(INSTALL_DATA) ./htdocs/luci-static/resources/openont/*.js $(1)/www/luci-static/resources/openont/
 	# Overwrite stock luci-mod-status overview with the OpenONT dashboard
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/status
 	$(INSTALL_DATA) ./htdocs/luci-static/resources/view/openont/overview.js $(1)/www/luci-static/resources/view/status/overview.js

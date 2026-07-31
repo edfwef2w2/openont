@@ -49,30 +49,21 @@ function call_generic(ctx, name, type, val)
 	return ctx.ok();
 }
 
-function call_multi_table(name, val)
+/* Factory: method is invoked as ctx.table(name, val) so `this` is the call context. */
+function make_result_fn(type)
 {
-	return call_generic(this, name, "multi_table", val);
+	return function(name, val) {
+		return call_generic(this, name, type, val);
+	};
 }
 
-function call_table(name, val)
-{
-	return call_generic(this, name, "table", val);
-}
-
-function call_list(name, val)
-{
-	return call_generic(this, name, "list", val);
-}
-
-function call_string(name, val)
-{
-	return call_generic(this, name, "string", val);
-}
-
-function call_json(name, val)
-{
-	return call_generic(this, name, "json", val);
-}
+const result_methods = {
+	list: make_result_fn("list"),
+	table: make_result_fn("table"),
+	multi_table: make_result_fn("multi_table"),
+	string: make_result_fn("string"),
+	json: make_result_fn("json"),
+};
 
 function call_apply_defaults(named_args, args)
 {
@@ -107,12 +98,7 @@ const callctx_proto = {
 	select: call_select,
 	apply_defaults: call_apply_defaults,
 	ok: call_ok,
-	list: call_list,
-	table: call_table,
-	multi_table: call_multi_table,
-	string: call_string,
-	json: call_json,
-
+	...result_methods,
 	error: call_error,
 	...callctx_error_proto,
 };

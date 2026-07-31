@@ -53,6 +53,8 @@ jobs:
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ipgroup.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/offload.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/pppoe.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/rpc-helper.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/crud-table.js
             package/openont/luci-mod-openont/po/zh_Hans/openont.po
             package/openont/luci-mod-openont/po/templates/openont.pot
             package/openont/luci-theme-openont/htdocs/luci-static/openont/cascade.css
