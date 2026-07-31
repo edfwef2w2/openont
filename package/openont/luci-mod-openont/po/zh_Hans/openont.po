@@ -326,6 +326,51 @@ msgstr "近1小时协议流量分布"
 msgid "Protocol traffic (last 1 day)"
 msgstr "近1天协议流量分布"
 
+msgid "App traffic (last 30 minutes)"
+msgstr "近30分钟应用流量分布"
+
+msgid "App traffic (last 1 hour)"
+msgstr "近1小时应用流量分布"
+
+msgid "App traffic (last 1 day)"
+msgstr "近1天应用流量分布"
+
+msgid "App traffic (last %d minutes)"
+msgstr "近%d分钟应用流量分布"
+
+msgid "App traffic (sampling…)"
+msgstr "应用流量分布（采样中…）"
+
+msgid "HTTP"
+msgstr "HTTP协议"
+
+msgid "Streaming video"
+msgstr "网络视频"
+
+msgid "Online games"
+msgstr "网络游戏"
+
+msgid "Downloads"
+msgstr "网络下载"
+
+msgid "File transfer"
+msgstr "文件传输"
+
+msgid "Messaging"
+msgstr "网络通讯"
+
+msgid "Common protocols"
+msgstr "常用协议"
+
+msgid "Other apps"
+msgstr "其他应用"
+
+msgid "Speed test"
+msgstr "测速软件"
+
+msgid "Unknown apps"
+msgstr "未知应用"
+
 msgid "Upload / download rate (last 5 minutes)"
 msgstr "近5分钟上下行速率"
 

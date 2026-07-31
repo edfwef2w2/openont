@@ -129,35 +129,120 @@ rpc_overview() {
 rpc_history() {
 	local window="${1:-30}"
 	case "$window" in 30|60|1440) ;; *) window=30 ;; esac
-	local now cutoff tcp=0 udp=0 other=0
+	local now cutoff oldest available_sec effective_window
+	local http=0 video=0 game=0 download=0 fileb=0 im=0 common=0 other_app=0 speedtest=0 unknown=0
 	now=$(date +%s)
 	cutoff=$((now - window * 60))
+	oldest=0
+	available_sec=0
+	effective_window=0
+
+	# Single-pass awk: sum apps, collect rate points, discover oldest sample
+	local agg_file="$STATS_DIR/history.agg.$$"
+	if [ -f "$HIST_FILE" ]; then
+		awk -v cut="$cutoff" -v now="$now" '
+		function gi(s, key,   re, m) {
+			re = "\"" key "\":[0-9]+"
+			if (match(s, re)) {
+				m = substr(s, RSTART, RLENGTH)
+				sub(/.*:/, "", m)
+				return m + 0
+			}
+			return 0
+		}
+		{
+			t = gi($0, "t")
+			if (t <= 0) next
+			if (oldest == 0 || t < oldest) oldest = t
+			if (t < cut) next
+			http += gi($0, "http"); video += gi($0, "video"); game += gi($0, "game")
+			download += gi($0, "download"); fileb += gi($0, "file"); im += gi($0, "im")
+			common += gi($0, "common"); other_app += gi($0, "other_app")
+			speedtest += gi($0, "speedtest"); unknown += gi($0, "unknown")
+			# also accept legacy tcp/udp as unknown mix (ignore for apps)
+			rx = gi($0, "rx_bps"); tx = gi($0, "tx_bps")
+			printf "P %d %d %d\n", t, rx, tx
+		}
+		END {
+			printf "A %d %d %d %d %d %d %d %d %d %d\n", http, video, game, download, fileb, im, common, other_app, speedtest, unknown
+			printf "O %d\n", oldest
+		}
+		' "$HIST_FILE" > "$agg_file" 2>/dev/null
+	fi
+
 	json_init
 	json_add_int window "$window"
+	json_add_string unit "bytes"
+
+	if [ -f "$agg_file" ]; then
+		while read -r kind a b c d e f g h i j k; do
+			case "$kind" in
+				A)
+					http=$a; video=$b; game=$c; download=$d; fileb=$e
+					im=$f; common=$g; other_app=$h; speedtest=$i; unknown=$j
+					;;
+				O)
+					oldest=$a
+					;;
+			esac
+		done < "$agg_file"
+		if [ "${oldest:-0}" -gt 0 ] 2>/dev/null; then
+			available_sec=$((now - oldest))
+			[ "$available_sec" -lt 0 ] && available_sec=0
+		fi
+	fi
+
+	# effective window in minutes: min(selected, available)
+	if [ "$available_sec" -le 0 ] 2>/dev/null; then
+		effective_window=0
+	else
+		local avail_min=$(( (available_sec + 59) / 60 ))
+		if [ "$avail_min" -lt "$window" ]; then
+			effective_window=$avail_min
+		else
+			effective_window=$window
+		fi
+		[ "$effective_window" -lt 1 ] && effective_window=1
+	fi
+
+	json_add_int available_sec "$available_sec"
+	json_add_int oldest_t "${oldest:-0}"
+	json_add_int effective_window "$effective_window"
+
 	json_add_array points
-	if [ -f "$HIST_FILE" ]; then
-		while read -r line; do
-			t=$(echo "$line" | jsonfilter -e '@.t' 2>/dev/null)
-			[ -n "$t" ] && [ "$t" -ge "$cutoff" ] 2>/dev/null || continue
+	if [ -f "$agg_file" ]; then
+		while read -r kind t rx tx; do
+			[ "$kind" = "P" ] || continue
 			json_add_object
 			json_add_int t "$t"
-			json_add_int rx_bps "$(echo "$line" | jsonfilter -e '@.rx_bps' 2>/dev/null || echo 0)"
-			json_add_int tx_bps "$(echo "$line" | jsonfilter -e '@.tx_bps' 2>/dev/null || echo 0)"
-			json_add_int tcp "$(echo "$line" | jsonfilter -e '@.tcp' 2>/dev/null || echo 0)"
-			json_add_int udp "$(echo "$line" | jsonfilter -e '@.udp' 2>/dev/null || echo 0)"
-			json_add_int other "$(echo "$line" | jsonfilter -e '@.other' 2>/dev/null || echo 0)"
+			json_add_int rx_bps "$rx"
+			json_add_int tx_bps "$tx"
 			json_close_object
-			tcp=$((tcp + $(echo "$line" | jsonfilter -e '@.tcp' 2>/dev/null || echo 0)))
-			udp=$((udp + $(echo "$line" | jsonfilter -e '@.udp' 2>/dev/null || echo 0)))
-			other=$((other + $(echo "$line" | jsonfilter -e '@.other' 2>/dev/null || echo 0)))
-		done < "$HIST_FILE"
+		done < "$agg_file"
 	fi
 	json_close_array
-	json_add_object protocols
-	json_add_int tcp "$tcp"
-	json_add_int udp "$udp"
-	json_add_int other "$other"
+
+	json_add_object apps
+	json_add_int http "${http:-0}"
+	json_add_int video "${video:-0}"
+	json_add_int game "${game:-0}"
+	json_add_int download "${download:-0}"
+	json_add_int file "${fileb:-0}"
+	json_add_int im "${im:-0}"
+	json_add_int common "${common:-0}"
+	json_add_int other_app "${other_app:-0}"
+	json_add_int speedtest "${speedtest:-0}"
+	json_add_int unknown "${unknown:-0}"
 	json_close_object
+
+	# legacy empty protocols for old UI caches
+	json_add_object protocols
+	json_add_int tcp 0
+	json_add_int udp 0
+	json_add_int other 0
+	json_close_object
+
+	rm -f "$agg_file"
 	json_dump
 }
 
