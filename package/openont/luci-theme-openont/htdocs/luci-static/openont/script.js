@@ -1,6 +1,53 @@
-/* OpenONT theme — accordion sidebar + light/dark toggle */
+/* OpenONT theme — accordion sidebar + light/dark toggle + layout shell */
 (function () {
 	var THEME_KEY = 'openont-theme-dark';
+
+	/**
+	 * Shared layout mode (window.innerWidth / screen width):
+	 *   wide2x : ratio > 2/3
+	 *   normal : ratio > 1/3
+	 *   narrow : ratio ≤ 1/3  → sidebar collapses to top bar (is-layout-narrow)
+	 * Must stay in sync with overview.js _updateDashUnit / header FOUC script.
+	 */
+	function detectLayoutMode() {
+		var screenW = 1920;
+		try {
+			if (window.screen)
+				screenW = window.screen.availWidth || window.screen.width || screenW;
+		} catch (e) { /* ignore */ }
+		if (!screenW || screenW < 1)
+			screenW = 1920;
+		var winW = window.innerWidth || document.documentElement.clientWidth || screenW;
+		if (winW < 1)
+			winW = screenW;
+		var ratio = winW / screenW;
+		if (ratio > 2 / 3)
+			return 'wide2x';
+		if (ratio > 1 / 3)
+			return 'normal';
+		return 'narrow';
+	}
+
+	function applyLayoutShell() {
+		var mode = detectLayoutMode();
+		var html = document.documentElement;
+		var prev = html.getAttribute('data-layout-mode');
+		html.setAttribute('data-layout-mode', mode);
+		html.classList.toggle('is-layout-narrow', mode === 'narrow');
+		html.classList.toggle('is-layout-wide2x', mode === 'wide2x');
+		html.classList.toggle('is-layout-normal', mode === 'normal');
+		if (prev !== mode) {
+			try {
+				document.dispatchEvent(new CustomEvent('openont-layout-mode', {
+					detail: { mode: mode, prev: prev }
+				}));
+			} catch (e) { /* IE / old WebKit */ }
+		}
+		return mode;
+	}
+
+	/* Apply ASAP (header FOUC also runs; this keeps resize path alive) */
+	applyLayoutShell();
 
 	function tr(s) {
 		try {
@@ -742,9 +789,19 @@
 	}
 
 	function boot() {
+		applyLayoutShell();
 		initThemeToggle();
 		initAccordion();
 		initIndicatorFlip();
+
+		var resizeTimer = null;
+		window.addEventListener('resize', function () {
+			if (resizeTimer)
+				clearTimeout(resizeTimer);
+			resizeTimer = setTimeout(function () {
+				applyLayoutShell();
+			}, 80);
+		});
 	}
 
 	if (document.readyState === 'loading')
@@ -769,4 +826,7 @@
 			clearInterval(timer);
 		}
 	}, 100);
+
+	window.openontDetectLayoutMode = detectLayoutMode;
+	window.openontApplyLayoutShell = applyLayoutShell;
 })();

@@ -395,6 +395,9 @@ msgstr "暂无数据（采样中）"
 msgid "Sampling…"
 msgstr "采样中…"
 
+msgid "Total"
+msgstr "合计"
+
 msgid "Flow Offload"
 msgstr "流卸载"
 

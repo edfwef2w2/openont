@@ -393,6 +393,9 @@ msgstr ""
 msgid "Sampling…"
 msgstr ""
 
+msgid "Total"
+msgstr ""
+
 msgid "Flow Offload"
 msgstr ""
 

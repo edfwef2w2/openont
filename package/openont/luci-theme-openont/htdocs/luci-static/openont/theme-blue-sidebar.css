@@ -1637,117 +1637,116 @@ a:hover {
 }
 
 /* ============================================================
-   Responsive — collapse sidebar on narrow screens
+   Responsive — collapse sidebar to top bar on layout-narrow
+   Mode from script.js / header FOUC: window/screen ≤ 1/3
+   (same thirds rule as overview dashboard: ≤1/3 narrow)
    ============================================================ */
 
-@media screen and (max-width: 900px) {
-	:root {
-		--sidebar-width: 0px;
-	}
+html.is-layout-narrow {
+	--sidebar-width: 0px;
+}
 
-	header {
-		position: sticky;
-		top: 0;
-		left: auto;
-		bottom: auto;
-		width: 100%;
-		height: auto;
-		max-height: none;
-		flex-direction: row;
-		flex-wrap: wrap;
-		align-items: center;
-		z-index: 900;
-		box-shadow: 0 2px 12px rgba(6, 40, 80, 0.15);
-	}
+html.is-layout-narrow header {
+	position: sticky;
+	top: 0;
+	left: auto;
+	bottom: auto;
+	width: 100%;
+	height: auto;
+	max-height: none;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	z-index: 900;
+	box-shadow: 0 2px 12px rgba(6, 40, 80, 0.15);
+}
 
-	header .brand {
-		flex: 0 0 auto;
-		padding: 12px 16px;
-		border-bottom: none;
-		background: transparent;
-	}
+html.is-layout-narrow header .brand {
+	flex: 0 0 auto;
+	padding: 12px 16px;
+	border-bottom: none;
+	background: transparent;
+}
 
-	header .nav,
-	#topmenu.nav {
-		flex: 1 1 auto;
-		flex-direction: row;
-		flex-wrap: wrap;
-		margin: 0;
-		padding: 6px 8px;
-		gap: 2px;
-	}
+html.is-layout-narrow header .nav,
+html.is-layout-narrow #topmenu.nav {
+	flex: 1 1 auto;
+	flex-direction: row;
+	flex-wrap: wrap;
+	margin: 0;
+	padding: 6px 8px;
+	gap: 2px;
+}
 
-	header .nav > li {
-		width: auto;
-	}
+html.is-layout-narrow header .nav > li {
+	width: auto;
+}
 
-	header .nav a {
-		padding: 8px 12px;
-		font-size: 13px;
-	}
+html.is-layout-narrow header .nav a {
+	padding: 8px 12px;
+	font-size: 13px;
+}
 
-	/* Restore horizontal dropdowns on mobile */
-	header .dropdown {
-		position: relative;
-	}
+/* Restore horizontal dropdowns when shell is top bar */
+html.is-layout-narrow header .dropdown {
+	position: relative;
+}
 
-	header .dropdown-menu,
-	header .nav .dropdown-menu {
-		position: absolute !important;
-		top: 100% !important;
-		left: 0 !important;
-		width: max-content;
-		min-width: 160px;
-		max-width: 280px;
-		padding: 6px;
-		background: var(--bw-blue-900) !important;
-		border: 1px solid rgba(255, 255, 255, 0.1) !important;
-		border-radius: var(--radius-md);
-		box-shadow: var(--shadow-lg);
-		z-index: 950;
-	}
+html.is-layout-narrow header .dropdown-menu,
+html.is-layout-narrow header .nav .dropdown-menu {
+	position: absolute !important;
+	top: 100% !important;
+	left: 0 !important;
+	width: max-content;
+	min-width: 160px;
+	max-width: 280px;
+	padding: 6px;
+	background: var(--bw-blue-900) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-lg);
+	z-index: 950;
+}
 
-	/* Click-only accordion also on mobile (no hover open) */
-	header .dropdown.open > .dropdown-menu {
-		display: block;
-	}
+html.is-layout-narrow header .dropdown.open > .dropdown-menu {
+	display: block;
+}
 
-	header .pull-right {
-		margin: 0 8px 0 auto;
-		padding: 8px;
-		border-top: none;
-	}
+html.is-layout-narrow header .pull-right {
+	margin: 0 8px 0 auto;
+	padding: 8px;
+	border-top: none;
+}
 
-	#maincontent.container,
-	#maincontent {
-		margin-left: 0;
-		padding: 16px 14px 28px;
-	}
+html.is-layout-narrow #maincontent.container,
+html.is-layout-narrow #maincontent {
+	margin-left: 0;
+	padding: 16px 14px 28px;
+}
 
-	footer {
-		margin-left: 0;
-		padding: 14px 16px 20px;
-	}
+html.is-layout-narrow footer {
+	margin-left: 0;
+	padding: 14px 16px 20px;
+}
 
-	.o-form-row > label {
-		flex: 0 0 100%;
-		text-align: left;
-	}
+html.is-layout-narrow .o-form-row > label {
+	flex: 0 0 100%;
+	text-align: left;
+}
 
-	.o-form-actions {
-		padding-left: 0;
-	}
+html.is-layout-narrow .o-form-actions {
+	padding-left: 0;
+}
 
-	.o-input {
-		max-width: none;
-		width: 100%;
-	}
+html.is-layout-narrow .o-input {
+	max-width: none;
+	width: 100%;
+}
 
-	.o-table {
-		display: block;
-		overflow-x: auto;
-		-webkit-overflow-scrolling: touch;
-	}
+html.is-layout-narrow .o-table {
+	display: block;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
 }
 
 /* Hide cascade mobile brand hide rule conflict */
@@ -1758,39 +1757,37 @@ a:hover {
 	}
 }
 
-/* Mobile dropdowns: animate flyout */
-@media screen and (max-width: 900px) {
-	header {
-		animation: bw-topbar-in var(--dur-slow) var(--ease-out) both;
-	}
+/* Top-bar dropdowns: animate flyout (layout-narrow shell) */
+html.is-layout-narrow header {
+	animation: bw-topbar-in var(--dur-slow) var(--ease-out) both;
+}
 
-	header .dropdown-menu,
-	header .nav .dropdown-menu {
-		max-height: none;
-		opacity: 0;
-		visibility: hidden;
-		transform: translateY(8px) scale(0.98);
-		pointer-events: none;
-		overflow: visible;
-		transition:
-			opacity 0.35s ease,
-			transform 0.4s var(--ease-out),
-			visibility 0s linear 0.35s;
-	}
+html.is-layout-narrow header .dropdown-menu,
+html.is-layout-narrow header .nav .dropdown-menu {
+	max-height: none;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(8px) scale(0.98);
+	pointer-events: none;
+	overflow: visible;
+	transition:
+		opacity 0.35s ease,
+		transform 0.4s var(--ease-out),
+		visibility 0s linear 0.35s;
+}
 
-	header .dropdown.open > .dropdown-menu {
-		max-height: none;
-		opacity: 1;
-		visibility: visible;
-		transform: translateY(0) scale(1);
-		pointer-events: auto;
-		margin: 0;
-		padding: 6px;
-		transition:
-			opacity 0.35s ease,
-			transform 0.4s var(--ease-out),
-			visibility 0s;
-	}
+html.is-layout-narrow header .dropdown.open > .dropdown-menu {
+	max-height: none;
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0) scale(1);
+	pointer-events: auto;
+	margin: 0;
+	padding: 6px;
+	transition:
+		opacity 0.35s ease,
+		transform 0.4s var(--ease-out),
+		visibility 0s;
 }
 
 /* Kill cascade hover flyouts — click (.open) only */
@@ -1819,20 +1816,18 @@ header .dropdown.open > .dropdown-menu {
 	overflow: hidden !important;
 }
 
-@media screen and (max-width: 900px) {
-	header .dropdown:hover:not(.open) > .dropdown-menu,
-	header .dropdown:not(.open) > .dropdown-menu {
-		transform: translateY(8px) scale(0.98) !important;
-		padding: 0 !important;
-	}
+html.is-layout-narrow header .dropdown:hover:not(.open) > .dropdown-menu,
+html.is-layout-narrow header .dropdown:not(.open) > .dropdown-menu {
+	transform: translateY(8px) scale(0.98) !important;
+	padding: 0 !important;
+}
 
-	header .dropdown.open > .dropdown-menu {
-		max-height: none !important;
-		margin: 0 !important;
-		padding: 6px !important;
-		transform: translateY(0) scale(1) !important;
-		overflow: visible !important;
-	}
+html.is-layout-narrow header .dropdown.open > .dropdown-menu {
+	max-height: none !important;
+	margin: 0 !important;
+	padding: 6px !important;
+	transform: translateY(0) scale(1) !important;
+	overflow: visible !important;
 }
 
 /* ============================================================
@@ -2749,25 +2744,23 @@ html.bw-theme-ready .alert-message {
 		box-shadow 0.4s ease;
 }
 
-@media screen and (max-width: 900px) {
-	.bw-theme-switch {
-		margin-top: 0;
-		padding: 6px 8px;
-		order: 3;
-	}
+html.is-layout-narrow .bw-theme-switch {
+	margin-top: 0;
+	padding: 6px 8px;
+	order: 3;
+}
 
-	.bw-theme-toggle {
-		width: auto;
-		padding: 8px 10px;
-	}
+html.is-layout-narrow .bw-theme-toggle {
+	width: auto;
+	padding: 8px 10px;
+}
 
-	.bw-theme-toggle-text {
-		display: none;
-	}
+html.is-layout-narrow .bw-theme-toggle-text {
+	display: none;
+}
 
-	header .pull-right {
-		order: 4;
-	}
+html.is-layout-narrow header .pull-right {
+	order: 4;
 }
 
 /* Reduced motion */
@@ -2874,36 +2867,205 @@ html.bw-theme-ready .alert-message {
 	filter: brightness(1.05);
 }
 
-/* Overview grid */
+/* Overview / page grid — flex + min-width (wrap only when too narrow) */
 .o-row {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: stretch;
 	margin: 0 -6px;
 }
 
 .o-col {
 	padding: 6px;
 	box-sizing: border-box;
+	min-width: 0; /* allow canvas/content to shrink inside flex item */
 }
 
-.o-col-3 { width: 25%; }
-.o-col-4 { width: 33.333%; }
-.o-col-6 { width: 50%; }
-.o-col-8 { width: 66.666%; }
-.o-col-12 { width: 100%; }
-
-@media (max-width: 1100px) {
-	.o-col-3, .o-col-4 { width: 50%; }
-	.o-col-6, .o-col-8 { width: 100%; }
+/*
+ * Percentage flex-basis keeps 3/4/6/8 share when both fit.
+ * min-width forces wrap instead of crushing (no special media for col-8=100%).
+ * max-width:100% lets a wrapped column fill the next line.
+ */
+.o-col-3 {
+	flex: 1 1 25%;
+	max-width: 100%;
+	min-width: min(100%, 160px);
+}
+.o-col-4 {
+	flex: 1 1 33.333%;
+	max-width: 100%;
+	min-width: min(100%, 240px);
+}
+.o-col-6 {
+	flex: 1 1 50%;
+	max-width: 100%;
+	min-width: min(100%, 240px);
+}
+.o-col-8 {
+	flex: 2 1 66.666%;
+	max-width: 100%;
+	min-width: min(100%, 320px);
+}
+.o-col-12 {
+	flex: 1 1 100%;
+	width: 100%;
+	max-width: 100%;
 }
 
+/* Phone: force single column */
 @media (max-width: 700px) {
-	.o-col-3, .o-col-4, .o-col-6 { width: 100%; }
+	.o-col-3,
+	.o-col-4,
+	.o-col-6,
+	.o-col-8 {
+		flex: 1 1 100%;
+		width: 100%;
+		min-width: 100%;
+	}
+}
+
+/*
+ * Overview dashboard — data-span layout (scheme B)
+ *   Span unit = one "screen slot" (0.5 half, 1 full).
+ *   normal  : pack capacity 1 → row holds up to 2 half-cards (0.5+0.5)
+ *   wide2x  : pack capacity 2 → row holds up to 3 cards (0.5+0.5+1)
+ *   charts  : full-width .o-charts-strip + inner 3:7 pair (never split across rows)
+ * JS updateDashUnit() sets max-width / --o-dash-unit / mode class
+ */
+.o-overview {
+	--o-base: 1100px;
+	--o-dash-unit: var(--o-base);
+	--o-pack-capacity: 1; /* 1 = normal, 2 = wide (allows 3 cards / row) */
+	width: 100%;
+	max-width: min(100%, var(--o-dash-unit, var(--o-base)));
+	margin-left: auto;
+	margin-right: auto;
+	box-sizing: border-box;
+}
+
+.o-overview .o-row.o-dash {
+	/* single flex bin: columns auto-wrap by data-span widths */
+	align-items: stretch;
+}
+
+/*
+ * Normal (pack capacity 1): width% = span / 1 * 100
+ *   0.5 → 50%, 1 → 100%
+ */
+.o-overview .o-col[data-span="0.5"] {
+	flex: 0 0 50%;
+	width: 50%;
+	max-width: 50%;
+	min-width: 0;
+}
+.o-overview .o-col[data-span="1"] {
+	flex: 0 0 100%;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+}
+
+/*
+ * Wide (pack capacity 2): width% = span / 2 * 100 for unit tiles
+ *   0.5 → 25%, 1 → 50%  ⇒  0.5+0.5+1 = 100% → three cards on one row
+ *   span=1 uses flex-grow so a lone full-unit card still fills the row
+ */
+.o-overview.is-wide2x {
+	--o-pack-capacity: 2;
+}
+.o-overview.is-wide2x .o-col[data-span="0.5"] {
+	flex: 0 0 25%;
+	width: 25%;
+	max-width: 25%;
+	min-width: 0;
+}
+.o-overview.is-wide2x .o-col[data-span="1"] {
+	flex: 1 0 50%;
+	width: 50%;
+	max-width: 100%;
+	min-width: 0;
+}
+
+/* Chart strip always full dash row; JS forces 100% even when pack capacity is 2 */
+.o-overview .o-col.o-charts-strip {
+	flex: 0 0 100% !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	min-width: 0;
+}
+
+/*
+ * Inner 3:7 pair — flex basis 0 + min-width 0 so content cannot force wrap
+ * (fixes wide mode pie/rate stacking when title/canvas min-content > 30%)
+ */
+.o-charts-pair {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	width: 100%;
+	min-width: 0;
+	margin: 0 -6px;
+	box-sizing: border-box;
+}
+.o-charts-tile {
+	min-width: 0;
+	padding: 0 6px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+}
+.o-charts-tile > .o-card {
+	flex: 1 1 auto;
+	width: 100%;
+	min-width: 0;
+}
+.o-charts-pie {
+	flex: 3 1 0;
+	width: 0; /* ratio from flex-grow only */
+	max-width: 30%;
+}
+.o-charts-rate {
+	flex: 7 1 0;
+	width: 0;
+	max-width: 70%;
+}
+
+/* Narrow: ignore all spans — one card per row; chart pair stacks */
+.o-overview.is-narrow .o-col[data-span] {
+	flex: 0 0 100% !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	min-width: 0;
+}
+.o-overview.is-narrow .o-charts-pair {
+	flex-direction: column;
+	flex-wrap: nowrap;
+	margin: 0;
+}
+.o-overview.is-narrow .o-charts-pie,
+.o-overview.is-narrow .o-charts-rate {
+	flex: 0 0 auto;
+	width: 100%;
+	max-width: 100%;
+	padding: 0;
+	margin-bottom: 12px;
+}
+.o-overview.is-narrow .o-charts-rate {
+	margin-bottom: 0;
 }
 
 .o-overview .o-card {
 	min-height: 110px;
 	height: 100%;
+}
+
+/* Cards that contain chart boxes: column flex so boxes share remaining height */
+.o-card > .o-chart-box {
+	flex: 1 1 auto;
+}
+.o-card:has(> .o-chart-box) {
+	display: flex;
+	flex-direction: column;
 }
 
 .o-profile {
@@ -3001,9 +3163,59 @@ html.bw-theme-ready .alert-message {
 .o-popover dt { width: 72px; color: var(--bw-gray-500); flex-shrink: 0; }
 .o-popover dd { margin: 0; color: var(--bw-gray-900); }
 
-.o-chart-box { height: 280px; position: relative; }
-.o-chart-box.sm { height: 160px; }
-.o-chart-box canvas { width: 100% !important; height: 100% !important; }
+/*
+ * Chart containers: min-height floor only.
+ * overview.js _layoutChartBoxes() writes exact height from measured card size.
+ */
+.o-chart-box {
+	position: relative;
+	min-height: 180px;
+	height: 280px; /* fallback before first layout pass */
+	border-radius: var(--radius-sm, 6px);
+	background: linear-gradient(180deg, var(--bw-gray-50, #f7fafc) 0%, var(--bw-white, #fff) 48%);
+	border: 1px solid var(--bw-gray-200, #dce6f0);
+	/* Tips use position:fixed (see overview.js) so hidden is safe for radius clip */
+	overflow: hidden;
+}
+.o-chart-box.sm {
+	min-height: 96px;
+	height: 140px;
+	margin-top: 0;
+	flex: 1 1 0;
+}
+.o-chart-box.sm + .o-chart-box.sm {
+	margin-top: 8px;
+}
+.o-chart-box canvas {
+	display: block;
+	width: 100% !important;
+	height: 100% !important;
+	image-rendering: auto;
+}
+
+/* Fixed to viewport — not clipped by .o-chart-box overflow */
+.o-chart-tip {
+	display: none;
+	position: fixed;
+	z-index: 1200;
+	pointer-events: none;
+	background: rgba(26, 36, 51, 0.92);
+	color: #fff;
+	padding: 6px 10px;
+	border-radius: 6px;
+	font-size: 12px;
+	line-height: 1.4;
+	white-space: normal;
+	max-width: min(280px, calc(100vw - 16px));
+	word-break: break-word;
+	box-shadow: 0 4px 14px rgba(15, 79, 150, 0.22);
+	backdrop-filter: blur(4px);
+}
+
+.o-overview .o-card-title .o-select,
+.o-overview .o-card-title select.o-select {
+	margin-left: auto;
+}
 
 .o-select {
 	border: 1px solid var(--bw-gray-200, #dce6f0);
@@ -3012,6 +3224,18 @@ html.bw-theme-ready .alert-message {
 	font-size: 12px;
 	color: var(--bw-gray-700);
 	background: var(--bw-white);
+}
+
+:root[data-darkmode="true"] .o-chart-box,
+:root[data-theme="dark"] .o-chart-box {
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+	border-color: var(--bw-gray-200);
+}
+
+:root[data-darkmode="true"] .o-chart-tip,
+:root[data-theme="dark"] .o-chart-tip {
+	background: rgba(8, 14, 24, 0.92);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .colorG { color: var(--bw-success, #0d9f6e); }

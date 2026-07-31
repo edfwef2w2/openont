@@ -32,6 +32,26 @@
 				document.documentElement.setAttribute('data-darkmode', 'false');
 				document.documentElement.setAttribute('data-theme', 'light');
 			}
+			/* Layout mode: same thirds as overview (window / screen)
+			   >2/3 wide2x · >1/3 normal · ≤1/3 narrow → sidebar becomes top bar */
+			try {
+				var screenW = 1920;
+				if (window.screen)
+					screenW = window.screen.availWidth || window.screen.width || screenW;
+				if (!screenW || screenW < 1) screenW = 1920;
+				var winW = window.innerWidth || document.documentElement.clientWidth || screenW;
+				if (winW < 1) winW = screenW;
+				var ratio = winW / screenW;
+				var mode = ratio > 2 / 3 ? 'wide2x' : (ratio > 1 / 3 ? 'normal' : 'narrow');
+				var html = document.documentElement;
+				html.setAttribute('data-layout-mode', mode);
+				html.classList.toggle('is-layout-narrow', mode === 'narrow');
+				html.classList.toggle('is-layout-wide2x', mode === 'wide2x');
+				html.classList.toggle('is-layout-normal', mode === 'normal');
+			} catch (e2) {
+				document.documentElement.setAttribute('data-layout-mode', 'normal');
+				document.documentElement.classList.add('is-layout-normal');
+			}
 			try {
 				if (sessionStorage.getItem('openont-sidebar-ready'))
 					document.documentElement.classList.add('bw-sidebar-static');
