@@ -20,7 +20,8 @@
 		<meta charset="utf-8" />
 		<script>
 		/* Apply theme before paint to avoid FOUC.
-		   Enter anim: play on first visit / refresh; skip only when path changes (page switch). */
+		   Sidebar enter anim: first visit / new session only.
+		   Content enter anim: every page load (including same-menu re-click). */
 		(function () {
 			try {
 				var key = 'openont-theme-dark';
@@ -32,11 +33,9 @@
 				document.documentElement.setAttribute('data-theme', 'light');
 			}
 			try {
-				var path = location.pathname + location.search + location.hash;
-				var prev = sessionStorage.getItem('openont-nav-path');
-				if (prev != null && prev !== path)
-					document.documentElement.classList.add('bw-nav-static');
-				sessionStorage.setItem('openont-nav-path', path);
+				if (sessionStorage.getItem('openont-sidebar-ready'))
+					document.documentElement.classList.add('bw-sidebar-static');
+				sessionStorage.setItem('openont-sidebar-ready', '1');
 			} catch (e) { /* ignore */ }
 		})();
 		</script>

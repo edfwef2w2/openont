@@ -192,11 +192,22 @@ header {
 	animation: bw-sidebar-in var(--dur-slow) var(--ease-out) both;
 }
 
-/* Enter anim off only on path change (see header.ut session path gate) */
-html.bw-nav-static header,
-html.bw-nav-static header .nav > li,
-html.bw-nav-static #maincontent,
-html.bw-nav-static #maincontent.container {
+/* During indicator/theme FLIP: no scrollbar flash from temporary overflow */
+header.bw-flipping {
+	overflow-x: hidden !important;
+	overflow-y: hidden !important;
+	scrollbar-width: none;
+}
+header.bw-flipping::-webkit-scrollbar {
+	width: 0 !important;
+	height: 0 !important;
+	display: none !important;
+}
+
+/* Sidebar enter anim off after first paint this session (see header.ut).
+   Content (#maincontent) always keeps its enter animation. */
+html.bw-sidebar-static header,
+html.bw-sidebar-static header .nav > li {
 	animation: none !important;
 	animation-delay: 0s !important;
 }
@@ -250,6 +261,20 @@ header .nav,
 	gap: 2px;
 }
 
+/* Soft fade-in when async menu becomes visible (avoids white-text flash) */
+#topmenu.nav {
+	opacity: 0;
+}
+
+#topmenu.nav.bw-menu-ready {
+	opacity: 1;
+	transition: opacity 0.25s ease;
+}
+
+html.bw-sidebar-static #topmenu.nav.bw-menu-ready {
+	transition: opacity 0.2s ease;
+}
+
 header .nav > li,
 #topmenu.nav > li {
 	float: none;
@@ -284,9 +309,9 @@ header .nav a,
 	outline: none !important;
 	box-shadow: none;
 	-webkit-tap-highlight-color: transparent;
+	/* No color transition — avoids white-text flash on page switch */
 	transition:
 		background var(--dur-fast) ease,
-		color var(--dur-fast) ease,
 		transform var(--dur-fast) var(--ease-out);
 }
 
@@ -483,6 +508,8 @@ header .dropdown-menu .active > a:hover {
 	flex-shrink: 0;
 	padding: 8px 12px 4px;
 	margin-top: auto;
+	/* FLIP in script.js uses transform when #indicators changes */
+	will-change: transform;
 }
 
 .bw-theme-toggle {
@@ -567,6 +594,8 @@ header .pull-right {
 
 header [data-indicator],
 header .label {
+	display: inline-flex;
+	align-items: center;
 	margin: 0;
 	padding: 4px 8px;
 	font-size: 10px;
@@ -577,11 +606,72 @@ header .label {
 	letter-spacing: 0.02em;
 }
 
+/* Indicator motion is driven by script.js FLIP (same dy as Dark mode) */
+header [data-indicator] {
+	will-change: transform, opacity;
+}
+
+/* Pre-paint hide while FLIP arms — prevents "System" flash at final position */
+header [data-indicator].bw-indicator-pending {
+	opacity: 0 !important;
+	visibility: hidden !important;
+}
+
 header [data-indicator][data-style="active"],
 header .label.notice {
 	background: rgba(143, 196, 240, 0.25);
 	color: #fff;
 	border: 1px solid rgba(143, 196, 240, 0.4);
+}
+
+/* Exit clones: fixed layer after real nodes are removed (fade-out + dy).
+   Must mirror header [data-indicator] including ::before icon — clones
+   are outside <header>, so header [data-indicator]::before does not apply. */
+.bw-indicator-exit-layer {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 960;
+}
+.bw-indicator-exit-clone {
+	display: inline-flex;
+	align-items: center;
+	margin: 0;
+	padding: 4px 8px;
+	font-size: 10px;
+	font-weight: 700;
+	font-family: var(--font-ui, system-ui, sans-serif);
+	letter-spacing: 0.02em;
+	text-transform: none;
+	border-radius: 999px;
+	background: rgba(143, 196, 240, 0.25);
+	color: #fff;
+	border: 1px solid rgba(143, 196, 240, 0.4);
+	box-shadow: none;
+	line-height: 1.2;
+	white-space: nowrap;
+	will-change: transform, opacity;
+}
+/* Same icon as header [data-indicator]::before — keep for full fade-out */
+.bw-indicator-exit-clone::before {
+	content: "";
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	margin-right: 5px;
+	flex-shrink: 0;
+	vertical-align: -1px;
+	background: currentColor;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bw-theme-switch,
+	header [data-indicator],
+	.bw-indicator-exit-clone {
+		will-change: auto;
+	}
 }
 
 /* ============================================================
@@ -704,12 +794,18 @@ header .label.notice {
 	line-height: 2.15em;
 }
 
+/* Neutral hover/focus — kill cascade blue focus ring (border-color !important) */
 .btn:hover,
-.cbi-button:hover {
+.btn:focus,
+.btn:focus-visible,
+.cbi-button:hover,
+.cbi-button:focus,
+.cbi-button:focus-visible {
 	background: var(--bw-gray-50);
-	border-color: var(--bw-gray-300);
+	border-color: var(--bw-gray-300) !important;
 	color: var(--bw-gray-900);
-	box-shadow: var(--shadow-md);
+	box-shadow: var(--shadow-md) !important;
+	outline: none !important;
 	transform: translateY(-1px);
 }
 
@@ -735,17 +831,34 @@ header .label.notice {
 }
 
 .btn.primary:hover,
+.btn.primary:focus,
+.btn.primary:focus-visible,
 .cbi-button-action:hover,
+.cbi-button-action:focus,
+.cbi-button-action:focus-visible,
 .cbi-button-apply:hover,
+.cbi-button-apply:focus,
+.cbi-button-apply:focus-visible,
 .cbi-button-reload:hover,
+.cbi-button-reload:focus,
+.cbi-button-reload:focus-visible,
 .cbi-button-edit:hover,
+.cbi-button-edit:focus,
+.cbi-button-edit:focus-visible,
 .cbi-page-actions .cbi-button-apply:hover,
+.cbi-page-actions .cbi-button-apply:focus,
+.cbi-page-actions .cbi-button-apply:focus-visible,
 .cbi-section-actions .cbi-button-edit:hover,
-.o-btn-primary:hover {
+.cbi-section-actions .cbi-button-edit:focus,
+.cbi-section-actions .cbi-button-edit:focus-visible,
+.o-btn-primary:hover,
+.o-btn-primary:focus,
+.o-btn-primary:focus-visible {
 	background: linear-gradient(180deg, var(--bw-blue-600), var(--bw-blue-700));
-	border-color: var(--bw-blue-700);
+	border-color: var(--bw-blue-700) !important;
 	color: #fff;
-	box-shadow: 0 4px 14px rgba(26, 127, 212, 0.35);
+	box-shadow: 0 4px 14px rgba(26, 127, 212, 0.35) !important;
+	outline: none !important;
 }
 
 /* Success — save / add */
@@ -760,13 +873,44 @@ header .label.notice {
 }
 
 .cbi-button-positive:hover,
+.cbi-button-positive:focus,
+.cbi-button-positive:focus-visible,
 .cbi-button-save:hover,
+.cbi-button-save:focus,
+.cbi-button-save:focus-visible,
 .cbi-button-add:hover,
-.cbi-button-fieldadd:hover {
+.cbi-button-add:focus,
+.cbi-button-add:focus-visible,
+.cbi-button-fieldadd:hover,
+.cbi-button-fieldadd:focus,
+.cbi-button-fieldadd:focus-visible {
 	background: linear-gradient(180deg, #0b8a5f, #09704d);
-	border-color: #086344;
+	border-color: #086344 !important;
 	color: #fff;
-	box-shadow: 0 4px 14px rgba(13, 159, 110, 0.35);
+	box-shadow: 0 4px 14px rgba(13, 159, 110, 0.35) !important;
+	outline: none !important;
+}
+
+/* Cascade forces Apply/Reset + Save to white fill — restore solid green (issue 7) */
+.cbi-page-actions .cbi-button-apply + .cbi-button-save,
+.cbi-page-actions .cbi-button-negative + .cbi-button-save {
+	background: linear-gradient(180deg, var(--bw-success), #0b8a5f);
+	border-color: #0a7a54;
+	color: #fff;
+	box-shadow: 0 2px 8px rgba(13, 159, 110, 0.28);
+}
+
+.cbi-page-actions .cbi-button-apply + .cbi-button-save:hover,
+.cbi-page-actions .cbi-button-apply + .cbi-button-save:focus,
+.cbi-page-actions .cbi-button-apply + .cbi-button-save:focus-visible,
+.cbi-page-actions .cbi-button-negative + .cbi-button-save:hover,
+.cbi-page-actions .cbi-button-negative + .cbi-button-save:focus,
+.cbi-page-actions .cbi-button-negative + .cbi-button-save:focus-visible {
+	background: linear-gradient(180deg, #0b8a5f, #09704d);
+	border-color: #086344 !important;
+	color: #fff;
+	box-shadow: 0 4px 14px rgba(13, 159, 110, 0.35) !important;
+	outline: none !important;
 }
 
 /* Danger — remove / reset */
@@ -783,15 +927,28 @@ header .label.notice {
 }
 
 .cbi-button-negative:hover,
+.cbi-button-negative:focus,
+.cbi-button-negative:focus-visible,
 .cbi-button-remove:hover,
+.cbi-button-remove:focus,
+.cbi-button-remove:focus-visible,
 .cbi-button-reset:hover,
+.cbi-button-reset:focus,
+.cbi-button-reset:focus-visible,
 .btn.danger:hover,
+.btn.danger:focus,
+.btn.danger:focus-visible,
 .btn.error:hover,
-.cbi-section-remove .cbi-button:hover {
+.btn.error:focus,
+.btn.error:focus-visible,
+.cbi-section-remove .cbi-button:hover,
+.cbi-section-remove .cbi-button:focus,
+.cbi-section-remove .cbi-button:focus-visible {
 	background: linear-gradient(180deg, #c0163c, #a01232);
-	border-color: #8f102c;
+	border-color: #8f102c !important;
 	color: #fff;
-	box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35);
+	box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35) !important;
+	outline: none !important;
 }
 
 /* Warning */
@@ -804,11 +961,16 @@ header .label.notice {
 }
 
 .btn.warning:hover,
-.cbi-button-warning:hover {
+.btn.warning:focus,
+.btn.warning:focus-visible,
+.cbi-button-warning:hover,
+.cbi-button-warning:focus,
+.cbi-button-warning:focus-visible {
 	background: linear-gradient(180deg, var(--bw-warn), #b45309);
-	border-color: #92400e;
+	border-color: #92400e !important;
 	color: #fff;
-	box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+	box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35) !important;
+	outline: none !important;
 }
 
 /* Alert strip buttons stay warn-toned (not generic blue hover) */
@@ -821,11 +983,16 @@ header .label.notice {
 }
 
 .alert-message .btn:hover,
-.alert-message .cbi-button:hover {
+.alert-message .btn:focus,
+.alert-message .btn:focus-visible,
+.alert-message .cbi-button:hover,
+.alert-message .cbi-button:focus,
+.alert-message .cbi-button:focus-visible {
 	background: #fffbeb;
-	border-color: #d97706;
+	border-color: #d97706 !important;
 	color: #78350f;
-	box-shadow: var(--shadow-md);
+	box-shadow: var(--shadow-md) !important;
+	outline: none !important;
 }
 
 .alert-message.warning .btn,
@@ -836,10 +1003,16 @@ header .label.notice {
 }
 
 .alert-message.warning .btn:hover,
-.alert-message.warning .cbi-button:hover {
+.alert-message.warning .btn:focus,
+.alert-message.warning .btn:focus-visible,
+.alert-message.warning .cbi-button:hover,
+.alert-message.warning .cbi-button:focus,
+.alert-message.warning .cbi-button:focus-visible {
 	background: #fef3c7;
-	border-color: var(--bw-warn);
+	border-color: var(--bw-warn) !important;
 	color: #78350f;
+	box-shadow: var(--shadow-md) !important;
+	outline: none !important;
 }
 
 /* Section toolbar (Refresh) — space before following list/table */
@@ -905,12 +1078,34 @@ select:focus {
 	background-color: var(--bw-blue-50);
 }
 
-/* Page actions bar */
+/* Form field spacing */
+.cbi-value {
+	margin-bottom: 16px;
+}
+
+.cbi-value-field > .cbi-button,
+.cbi-value-field > .btn,
+.cbi-value-field > button {
+	margin-top: 8px;
+}
+
+fieldset {
+	margin-bottom: 12px;
+}
+
+/* Page actions bar — spacing above form fields (no enter anim) */
 .actions,
 .cbi-page-actions {
 	background: var(--bw-blue-50);
 	border-top: 1px solid var(--bw-gray-200);
 	border-radius: 0 0 var(--radius-md) var(--radius-md);
+	margin-top: 18px;
+	padding: 16px 20px;
+}
+
+.cbi-section-node + .cbi-page-actions,
+.cbi-section-node + .actions {
+	margin-top: 18px;
 }
 
 /* Footer */
@@ -2113,13 +2308,14 @@ header a[href*="openont-ipgroup"] { --bw-icon: url("data:image/svg+xml,%3Csvg xm
 	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='6' width='20' height='12' rx='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
-/* Indicator pill icon */
+/* Indicator pill icon (header live + exit clones share geometry via flex) */
 header [data-indicator]::before {
 	content: "";
 	display: inline-block;
 	width: 10px;
 	height: 10px;
 	margin-right: 5px;
+	flex-shrink: 0;
 	vertical-align: -1px;
 	background: currentColor;
 	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E") center / contain no-repeat;
@@ -2319,12 +2515,22 @@ header .nav a::before {
 :root[data-darkmode="true"] .o-btn:hover,
 :root[data-theme="dark"] .o-btn:hover,
 :root[data-darkmode="true"] .btn:hover,
+:root[data-darkmode="true"] .btn:focus,
+:root[data-darkmode="true"] .btn:focus-visible,
 :root[data-theme="dark"] .btn:hover,
+:root[data-theme="dark"] .btn:focus,
+:root[data-theme="dark"] .btn:focus-visible,
 :root[data-darkmode="true"] .cbi-button:hover,
-:root[data-theme="dark"] .cbi-button:hover {
+:root[data-darkmode="true"] .cbi-button:focus,
+:root[data-darkmode="true"] .cbi-button:focus-visible,
+:root[data-theme="dark"] .cbi-button:hover,
+:root[data-theme="dark"] .cbi-button:focus,
+:root[data-theme="dark"] .cbi-button:focus-visible {
 	background: var(--bw-gray-200);
-	border-color: var(--bw-gray-300);
+	border-color: var(--bw-gray-300) !important;
 	color: var(--bw-gray-900);
+	box-shadow: var(--shadow-md) !important;
+	outline: none !important;
 }
 
 :root[data-darkmode="true"] .btn.primary,
