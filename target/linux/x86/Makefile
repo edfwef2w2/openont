@@ -16,10 +16,16 @@ KERNELNAME:=bzImage
 
 include $(INCLUDE_DIR)/target.mk
 
-DEFAULT_PACKAGES += \
-	partx-utils mkf2fs \
+# Soft-router NIC defaults: vendor Realtek (r8168/r81xx) instead of
+# in-tree r8169, plus common Intel/VM NIC modules.
+DEFAULT_PACKAGES += fdisk mkf2fs partx-utils \
 	e2fsprogs kmod-button-hotplug \
-	grub2-bios-setup
+	kmod-e1000e kmod-i40e kmod-igb kmod-igbvf kmod-igc \
+	kmod-ixgbe kmod-ixgbevf kmod-pcnet32 kmod-tulip kmod-vmxnet3 \
+	kmod-r8101 kmod-r8125 kmod-r8126 kmod-r8168 \
+	kmod-8139cp kmod-8139too kmod-fs-f2fs kmod-usb-hid kmod-usb-net \
+	kmod-usb-net-asix kmod-usb-net-asix-ax88179 kmod-usb-net-rtl8150 \
+	kmod-usb-net-rtl8152 grub2-bios-setup i915-firmware-dmc
 
 $(eval $(call BuildTarget))
 
