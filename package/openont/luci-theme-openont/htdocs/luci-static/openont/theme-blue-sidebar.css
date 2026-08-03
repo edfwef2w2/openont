@@ -3096,12 +3096,15 @@ html.is-layout-narrow header .pull-right {
 	flex-direction: column;
 }
 
+/* Status card: use .o-card.o-profile so theme can override dark .o-card surface */
+.o-card.o-profile,
 .o-profile {
 	background: linear-gradient(135deg, var(--bw-success, #0d9f6e) 0%, #0a8a5e 100%);
 	color: #fff;
 	border: none !important;
 }
 
+.o-card.o-profile.offline,
 .o-profile.offline {
 	background: linear-gradient(135deg, var(--bw-danger, #e11d48) 0%, #c0163c 100%);
 }
@@ -3277,10 +3280,29 @@ html.is-layout-narrow header .pull-right {
 		var(--bw-gray-50);
 }
 
+/*
+ * Dark mode: :root[data-darkmode] .o-card (surface) outranks bare .o-profile.
+ * Re-apply success/danger gradients with higher specificity + dark tokens.
+ */
+:root[data-darkmode="true"] .o-card.o-profile,
+:root[data-theme="dark"] .o-card.o-profile {
+	background: linear-gradient(135deg, var(--bw-success, #34d399) 0%, #059669 100%);
+	color: #fff;
+	border-color: transparent;
+	box-shadow: var(--shadow-md);
+}
+
+:root[data-darkmode="true"] .o-card.o-profile.offline,
+:root[data-theme="dark"] .o-card.o-profile.offline {
+	background: linear-gradient(135deg, var(--bw-danger, #fb7185) 0%, #e11d48 100%);
+}
+
 :root[data-darkmode="true"] .o-profile .state,
 :root[data-theme="dark"] .o-profile .state,
 :root[data-darkmode="true"] .o-profile .name,
-:root[data-theme="dark"] .o-profile .name {
+:root[data-theme="dark"] .o-profile .name,
+:root[data-darkmode="true"] .o-profile .uptime,
+:root[data-theme="dark"] .o-profile .uptime {
 	color: #fff;
 }
 
