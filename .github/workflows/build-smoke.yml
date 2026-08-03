@@ -42,8 +42,6 @@ jobs:
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont
             package/openont/luci-mod-openont/root/etc/init.d/openont-stats
             package/openont/luci-mod-openont/root/usr/sbin/openont-statsd
-            package/openont/luci-mod-openont/root/usr/sbin/openont-appclass
-            package/openont/luci-mod-openont/root/usr/share/openont/app-class.conf
             package/openont/luci-mod-openont/root/usr/share/rpcd/acl.d/luci-mod-openont.json
             package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/overview.js
@@ -57,6 +55,12 @@ jobs:
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/crud-table.js
             package/openont/luci-mod-openont/po/zh_Hans/openont.po
             package/openont/luci-mod-openont/po/templates/openont.pot
+            package/openont/openont-dpi/Makefile
+            package/openont/openont-dpi/src/openont-dpi.c
+            package/openont/openont-dpi/src/classify.c
+            package/openont/openont-dpi/src/classify.h
+            package/openont/openont-dpi/files/dpi-nft.sh
+            package/openont/openont-dpi/files/dpi-buckets.conf
             package/openont/luci-theme-openont/htdocs/luci-static/openont/cascade.css
             package/openont/luci-theme-openont/htdocs/luci-static/openont/theme-blue-sidebar.css
             package/openont/luci-theme-openont/htdocs/luci-static/openont/script.js
@@ -69,6 +73,11 @@ jobs:
           for f in "${files[@]}"; do
             test -f "$f" || { echo "missing: $f" >&2; exit 1; }
           done
+          # DNS keyword classifier removed in favor of openont-dpi
+          test ! -f package/openont/luci-mod-openont/root/usr/sbin/openont-appclass \
+            || { echo "openont-appclass must not exist (replaced by openont-dpi)" >&2; exit 1; }
+          test ! -f package/openont/luci-mod-openont/root/usr/share/openont/app-class.conf \
+            || { echo "app-class.conf must not exist (replaced by dpi-buckets.conf)" >&2; exit 1; }
           test ! -d samples || { echo "samples/ must not exist" >&2; exit 1; }
           # Stock overview source must not live in-tree (installed by Makefile overwrite only)
           test ! -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/status/overview.js \
@@ -99,7 +108,7 @@ jobs:
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont
             package/openont/luci-mod-openont/root/etc/init.d/openont-stats
             package/openont/luci-mod-openont/root/usr/sbin/openont-statsd
-            package/openont/luci-mod-openont/root/usr/sbin/openont-appclass
+            package/openont/openont-dpi/files/dpi-nft.sh
             package/openont/openont-core/files/usr/sbin/openont-port
             package/openont/openont-core/files/usr/sbin/openont-address
             package/openont/openont-core/files/usr/sbin/openont-nat
@@ -129,10 +138,16 @@ jobs:
       - name: Config selects OpenONT packages
         run: |
           set -euo pipefail
-          for pkg in openont-core openont-base luci-mod-openont luci-theme-openont; do
+          for pkg in openont-core openont-base openont-dpi luci-mod-openont luci-theme-openont; do
             grep -q "^CONFIG_PACKAGE_${pkg}=y" configs/openont.common.config \
               || { echo "missing CONFIG_PACKAGE_${pkg}=y in openont.common.config" >&2; exit 1; }
           done
+          grep -q 'openont-dpi' package/openont/luci-mod-openont/Makefile \
+            || { echo "luci-mod-openont must DEPEND on openont-dpi" >&2; exit 1; }
+          grep -q 'dpi_status' package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont \
+            || { echo "rpcd must expose dpi_status" >&2; exit 1; }
+          grep -q 'flow.class' package/openont/luci-mod-openont/root/usr/sbin/openont-statsd \
+            || { echo "statsd must read DPI flow.class labels" >&2; exit 1; }
           # Must not enable stock themes or luci meta that pulls stock theme
           if grep -E '^CONFIG_PACKAGE_luci-theme-bootstrap=y' configs/openont.common.config; then
             echo "bootstrap theme must not be enabled" >&2
@@ -194,6 +209,7 @@ jobs:
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont \
             package/openont/luci-mod-openont/root/usr/sbin/openont-statsd \
             package/openont/luci-mod-openont/root/etc/init.d/openont-stats \
+            package/openont/openont-dpi/files/dpi-nft.sh \
             package/openont/openont-base/files/etc/uci-defaults/* \
             package/openont/luci-theme-openont/root/etc/uci-defaults/* \
             scripts/openont/apply-config.sh
@@ -201,3 +217,16 @@ jobs:
             sh -n "$f"
           done
           echo "syntax ok"
+
+      - name: DPI C sources compile (host smoke)
+        run: |
+          set -euo pipefail
+          # Syntax/link smoke on Ubuntu host — validates C builds against libnetfilter-queue.
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libnetfilter-queue-dev libnfnetlink-dev libmnl-dev
+          cc -Wall -Wextra -O2 -o /tmp/openont-dpi-smoke \
+            package/openont/openont-dpi/src/openont-dpi.c \
+            package/openont/openont-dpi/src/classify.c \
+            -lnetfilter_queue -lnfnetlink -lmnl
+          test -x /tmp/openont-dpi-smoke
+          echo "dpi C compile ok"
