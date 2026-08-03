@@ -867,15 +867,26 @@ return view.extend({
 	},
 
 	/**
-	 * Place tooltip with position:fixed and clamp to viewport edges
-	 * so text is never clipped by .o-chart-box { overflow:hidden }.
+	 * Place tooltip with position:fixed on document.body so card transform /
+	 * overflow:hidden cannot clip or reparent fixed coordinates.
+	 * Overview visual layout is unchanged — only tip host moves.
 	 */
+	_ensureTipHost: function (tip) {
+		if (!tip || !document.body)
+			return tip;
+		if (tip.parentNode !== document.body)
+			document.body.appendChild(tip);
+		return tip;
+	},
+
 	_placeChartTip: function (tip, clientX, clientY) {
 		if (!tip) return;
+		tip = this._ensureTipHost(tip);
 		var pad = 8;
 		var gap = 12;
 		tip.style.display = 'block';
 		tip.style.position = 'fixed';
+		tip.style.zIndex = '10050';
 		/* Measure after show (wrap/max-width applied) */
 		var tw = tip.offsetWidth || 120;
 		var th = tip.offsetHeight || 32;
@@ -985,14 +996,15 @@ return view.extend({
 	_showRateTips: function (ev, sourceCanvas, pt) {
 		var tipUp = document.getElementById('o-rate-tip-up');
 		var tipDown = document.getElementById('o-rate-tip-down');
-		if (!tipUp || !tipDown || !pt) return;
+		if (!tipUp || !pt) return;
 
 		var time = fmtClock(pt.t);
-		tipUp.textContent = time + '  ' + _('Upload') + '：' + fmtRate(pt.tx);
-		tipDown.textContent = time + '  ' + _('Download') + '：' + fmtRate(pt.rx);
-		/* Stack slightly so dual tips do not fully overlap */
+		/* Single tip: both directions — avoids dual fixed tips fighting layout */
+		tipUp.textContent = time + '  ' + _('Upload') + '：' + fmtRate(pt.tx) +
+			'  ' + _('Download') + '：' + fmtRate(pt.rx);
 		this._placeChartTip(tipUp, ev.clientX, ev.clientY);
-		this._placeChartTip(tipDown, ev.clientX, ev.clientY + 28);
+		if (tipDown)
+			tipDown.style.display = 'none';
 	},
 
 	_hideRateTips: function () {

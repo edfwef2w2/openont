@@ -488,6 +488,51 @@ msgstr "拨号、挂断或重拨 PPPoE WAN 接口。"
 msgid "Configure firewall flow offloading to improve forwarding performance."
 msgstr "配置防火墙流量卸载以提升转发性能。"
 
+msgid "Application DPI"
+msgstr "应用 DPI"
+
+msgid "Traffic distribution on the overview uses deep packet inspection (TLS SNI, HTTP Host, L7 signatures) via NFQUEUE. Flow offload may reduce classification coverage for already-offloaded flows."
+msgstr "概览页的流量分布使用深度包检测（TLS SNI、HTTP Host、L7 特征）经 NFQUEUE 分类。流量卸载可能降低已卸载流的识别覆盖率。"
+
+msgid "DPI engine"
+msgstr "DPI 引擎"
+
+msgid "DPI binary installed"
+msgstr "DPI 程序已安装"
+
+msgid "DPI running"
+msgstr "DPI 运行中"
+
+msgid "DPI mode"
+msgstr "DPI 模式"
+
+msgid "Flows seen"
+msgstr "已见流数"
+
+msgid "Flows classified"
+msgstr "已分类流数"
+
+msgid "Labeled flow entries"
+msgstr "流标签条目"
+
+msgid "Queue packets"
+msgstr "队列报文数"
+
+msgid "Queue drops"
+msgstr "队列丢弃"
+
+msgid "Last sample classified"
+msgstr "最近采样已分类"
+
+msgid "Last sample unclassified"
+msgstr "最近采样未分类"
+
+msgid "Yes"
+msgstr "是"
+
+msgid "No"
+msgstr "否"
+
 msgid "Forward external ports to internal hosts. Use IP groups to restrict source addresses."
 msgstr "将外部端口转发到内部主机。可用 IP 组限制源地址。"
 

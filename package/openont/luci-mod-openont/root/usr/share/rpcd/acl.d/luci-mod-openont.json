@@ -4,7 +4,7 @@
 		"read": {
 			"ubus": {
 				"openont": [
-					"status", "overview", "history",
+					"status", "overview", "history", "dpi_status",
 					"port_status", "port_set", "port_add", "port_del_port", "port_del",
 					"ipgroup_list", "ipgroup_set", "ipgroup_del",
 					"portmap_list", "portmap_add", "portmap_del", "portmap_enable", "portmap_disable",
