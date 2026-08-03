@@ -80,6 +80,72 @@
 			<a class="brand" href="{{ ctx.authsession ? dispatcher.build_url('admin/status/overview') : '#' }}">OpenONT</a>
 			{% if (ctx.authsession): %}
 			<ul class="nav" id="topmenu" style="display:none"></ul>
+			<script>
+			/* Sync-hydrate sidebar from last session paint so hard nav is not empty. */
+			(function () {
+				try {
+					var el = document.getElementById('topmenu');
+					var html = sessionStorage.getItem('openont-topmenu-html');
+					if (!el || !html)
+						return;
+					el.innerHTML = html;
+					el.style.display = '';
+					el.classList.add('bw-menu-ready');
+					document.documentElement.classList.add('bw-menu-hydrated');
+
+					/* Re-tag active/open from data-page before async menu replaces tree */
+					var dp = (document.body && document.body.getAttribute('data-page')) || '';
+					var parts = dp.split('-').filter(Boolean);
+					if (!parts.length)
+						return;
+					var want = parts[0] === 'admin' ? parts : ['admin'].concat(parts);
+					var links = el.querySelectorAll('a[href]');
+					var best = null;
+					function pathOk(href, segs) {
+						if (!href || href === '#') return false;
+						try {
+							var a = document.createElement('a');
+							a.href = href;
+							var p = (a.pathname || '').split('/').filter(Boolean);
+							var idx = p.lastIndexOf('luci');
+							var rest = idx >= 0 ? p.slice(idx + 1) : p;
+							if (rest.length < segs.length) return false;
+							for (var i = 0; i < segs.length; i++)
+								if (rest[i] !== segs[i]) return false;
+							return true;
+						} catch (e) { return false; }
+					}
+					Array.prototype.forEach.call(el.querySelectorAll('li.active, li.open'), function (li) {
+						li.classList.remove('active');
+						li.classList.remove('open');
+						var ma = li.querySelector(':scope > a.menu');
+						if (ma) ma.setAttribute('aria-expanded', 'false');
+					});
+					Array.prototype.forEach.call(links, function (a) {
+						var href = a.getAttribute('href');
+						if (pathOk(href, want) || (want.length >= 3 && pathOk(href, want.slice(0, 3)))) {
+							if (!best || href.length >= best.getAttribute('href').length)
+								best = a;
+						}
+					});
+					if (!best && want.length >= 2) {
+						Array.prototype.forEach.call(links, function (a) {
+							if (pathOk(a.getAttribute('href'), want.slice(0, 2)))
+								best = a;
+						});
+					}
+					if (best && best.parentElement) {
+						best.parentElement.classList.add('active');
+						var drop = best.closest('li.dropdown');
+						if (drop) {
+							drop.classList.add('open');
+							var menuA = drop.querySelector(':scope > a.menu');
+							if (menuA) menuA.setAttribute('aria-expanded', 'true');
+						}
+					}
+				} catch (e) { /* ignore */ }
+			})();
+			</script>
 			<div class="bw-theme-switch" id="bw-theme-switch">
 				<button type="button" class="bw-theme-toggle" id="bw-theme-toggle"
 					aria-pressed="false" title="{{ _('Toggle light / dark mode') }}">

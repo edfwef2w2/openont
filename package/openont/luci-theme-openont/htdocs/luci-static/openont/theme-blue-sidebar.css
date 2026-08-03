@@ -511,6 +511,18 @@ header .dropdown.open > .dropdown-menu > li:nth-child(7) { transition-delay: 0.2
 header .dropdown.open > .dropdown-menu > li:nth-child(8) { transition-delay: 0.32s; }
 header .dropdown.open > .dropdown-menu > li:nth-child(n+9) { transition-delay: 0.36s; }
 
+/*
+ * Hard navigation / session-static sidebar: skip expand enter animation.
+ * User accordion clicks re-enable motion via header.bw-user-nav-anim (script.js).
+ */
+html.bw-sidebar-static header:not(.bw-user-nav-anim) .dropdown-menu,
+html.bw-sidebar-static header:not(.bw-user-nav-anim) .dropdown.open > .dropdown-menu,
+html.bw-sidebar-static header:not(.bw-user-nav-anim) .dropdown-menu > li,
+html.bw-sidebar-static header:not(.bw-user-nav-anim) .dropdown.open > .dropdown-menu > li {
+	transition: none !important;
+	transition-delay: 0s !important;
+}
+
 /* Active item: blue fill only, no left blue bar, same box size as idle */
 header .dropdown-menu .active > a,
 header .dropdown-menu .active > a:hover {

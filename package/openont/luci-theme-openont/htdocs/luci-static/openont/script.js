@@ -191,6 +191,33 @@
 		});
 	}
 
+	var TOPMENU_SNAP_KEY = 'openont-topmenu-html';
+	var userNavAnimTimer = null;
+
+	function enableUserNavAnim() {
+		var hdr = document.querySelector('header');
+		if (!hdr)
+			return;
+		hdr.classList.add('bw-user-nav-anim');
+		if (userNavAnimTimer)
+			clearTimeout(userNavAnimTimer);
+		/* Cover longest expand transition (~0.6s + stagger) */
+		userNavAnimTimer = setTimeout(function () {
+			userNavAnimTimer = null;
+			hdr.classList.remove('bw-user-nav-anim');
+			persistTopmenuSnapshot();
+		}, 750);
+	}
+
+	function persistTopmenuSnapshot() {
+		var top = document.getElementById('topmenu');
+		if (!top || !top.children.length)
+			return;
+		try {
+			sessionStorage.setItem(TOPMENU_SNAP_KEY, top.innerHTML);
+		} catch (e) { /* ignore quota / private mode */ }
+	}
+
 	function onMenuClick(ev) {
 		var a = ev.target.closest && ev.target.closest('a.menu');
 		if (!a || !document.getElementById('topmenu') || !document.getElementById('topmenu').contains(a))
@@ -203,6 +230,8 @@
 		ev.preventDefault();
 		ev.stopPropagation();
 
+		enableUserNavAnim();
+
 		var open = li.classList.contains('open');
 		closeAllDropdowns(null);
 		if (!open) {
@@ -211,6 +240,7 @@
 		} else {
 			a.setAttribute('aria-expanded', 'false');
 		}
+		persistTopmenuSnapshot();
 	}
 
 	/**
@@ -249,6 +279,7 @@
 		if (top && top.children.length) {
 			wrapNavLabels();
 			top.classList.add('bw-menu-ready');
+			persistTopmenuSnapshot();
 		}
 	}
 
@@ -258,6 +289,11 @@
 			document._bwAccordion = true;
 			document.addEventListener('click', onMenuClick, true);
 		}
+		/*
+		 * When menu-openont already set active/open (or hydrate retagged),
+		 * still run markActiveAndOpen as a path-accurate fallback after
+		 * L.env is available — it only changes classes, not structure.
+		 */
 		markActiveAndOpen();
 		markMenuReady();
 	}
@@ -809,12 +845,15 @@
 	else
 		boot();
 
-	/* Re-run active/open after async menu render */
+	/* Re-run active/open + snapshot after async menu render */
 	document.addEventListener('openont-menu-ready', function () {
 		initAccordion();
 	});
 
-	/* Fallback if custom event is missed */
+	/*
+	 * Short fallback if custom event is missed (hydrated pages already
+	 * have children; still need L.env-based active correction once).
+	 */
 	var tries = 0;
 	var timer = setInterval(function () {
 		tries++;
@@ -822,10 +861,10 @@
 		if (top && top.children.length) {
 			initAccordion();
 			clearInterval(timer);
-		} else if (tries > 40) {
+		} else if (tries > 20) {
 			clearInterval(timer);
 		}
-	}, 100);
+	}, 50);
 
 	window.openontDetectLayoutMode = detectLayoutMode;
 	window.openontApplyLayoutShell = applyLayoutShell;

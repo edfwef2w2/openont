@@ -4,6 +4,7 @@
 
 /**
  * OpenONT menu renderer — LuCI-compatible main / tab / mode menus.
+ * Sets active/open while building so theme script does not need a second paint.
  */
 return baseclass.extend({
 	__init__() {
@@ -66,29 +67,71 @@ return baseclass.extend({
 		return ul;
 	},
 
+	/**
+	 * @param {string} url  Path segments joined without leading slash, e.g. admin/status
+	 * @param {number} level  0 = top categories, 1 = pages under a category
+	 */
 	renderMainMenu(tree, url, level) {
-		const ul = level ? E('ul', { 'class': 'dropdown-menu' }) : document.querySelector('#topmenu');
-		if (!ul)
+		const path = (L.env && L.env.dispatchpath) ? L.env.dispatchpath : [];
+		const liveTop = !level ? document.querySelector('#topmenu') : null;
+		/* Build top-level into a detached ul so replace is one paint */
+		const ul = level
+			? E('ul', { 'class': 'dropdown-menu' })
+			: E('ul', { 'class': 'nav', 'id': 'topmenu' });
+		if (!level && !liveTop)
 			return E([]);
 
 		const children = ui.menu.getChildren(tree);
 
 		if (children.length == 0 || level > 1)
-			return E([]);
+			return level ? ul : E([]);
 
 		children.forEach(child => {
-			const submenu = this.renderMainMenu(child, url + '/' + child.name, (level || 0) + 1);
-			const subclass = (!level && submenu.firstElementChild) ? 'dropdown' : '';
-			const linkclass = (!level && submenu.firstElementChild) ? 'menu' : '';
-			const linkurl = submenu.firstElementChild ? '#' : L.url(url, child.name);
+			const childUrl = url + '/' + child.name;
+			const submenu = this.renderMainMenu(child, childUrl, (level || 0) + 1);
+			const hasSub = !!(submenu && submenu.firstElementChild);
+			const subclass = (!level && hasSub) ? 'dropdown' : '';
+			const linkclass = (!level && hasSub) ? 'menu' : '';
+			const linkurl = hasSub ? '#' : L.url(url, child.name);
 
-			const li = E('li', { 'class': subclass }, [
+			let isOpen = false;
+			let isActive = false;
+
+			if (!level) {
+				/* Category row: open when current dispatch is under this category */
+				if (path[0] === 'admin' && path[1] === child.name)
+					isOpen = hasSub;
+				else if (path[0] === child.name)
+					isOpen = hasSub;
+
+				/* Leaf at top level (no submenu) */
+				if (!hasSub) {
+					const segs = childUrl.split('/');
+					isActive = path.length >= segs.length &&
+						segs.every(function (seg, i) { return path[i] === seg; });
+				}
+			} else {
+				/* Page under category */
+				const segs = childUrl.split('/');
+				isActive = path.length >= segs.length &&
+					segs.every(function (seg, i) { return path[i] === seg; });
+			}
+
+			const classes = [];
+			if (subclass)
+				classes.push(subclass);
+			if (isOpen)
+				classes.push('open');
+			if (isActive)
+				classes.push('active');
+
+			const li = E('li', { 'class': classes.length ? classes.join(' ') : null }, [
 				E('a', {
-					'class': linkclass,
+					'class': linkclass || null,
 					'href': linkurl,
-					'aria-expanded': subclass ? 'false' : null
+					'aria-expanded': subclass ? (isOpen ? 'true' : 'false') : null
 				}, [
-					_(child.title),
+					_(child.title)
 				]),
 				submenu
 			]);
@@ -96,7 +139,18 @@ return baseclass.extend({
 			ul.appendChild(li);
 		});
 
-		ul.style.display = '';
+		if (!level && liveTop) {
+			/* Preserve ready class / display; swap children in one step */
+			const ready = liveTop.classList.contains('bw-menu-ready');
+			while (liveTop.firstChild)
+				liveTop.removeChild(liveTop.firstChild);
+			while (ul.firstChild)
+				liveTop.appendChild(ul.firstChild);
+			liveTop.style.display = '';
+			if (ready)
+				liveTop.classList.add('bw-menu-ready');
+			return liveTop;
+		}
 
 		return ul;
 	},
