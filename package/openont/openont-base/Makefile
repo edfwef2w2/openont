@@ -19,7 +19,7 @@ define Package/openont-base
   SECTION:=base
   CATEGORY:=Base system
   TITLE:=OpenONT product defaults
-  DEPENDS:=+openont-core +openont-port +luci-base +luci-theme-openont +luci-mod-openont
+  DEPENDS:=+openont-core +openont-stats +luci-base +luci-theme-openont +luci-mod-openont
   PKGARCH:=all
 endef
 

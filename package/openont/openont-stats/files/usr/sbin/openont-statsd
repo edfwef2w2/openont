@@ -1,20 +1,20 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0
 # Sample WAN rates + per-app byte deltas via DPI flow labels (openont-dpi).
-# Labels: /tmp/openont-stats/flow.class and/or conntrack mark bits 16..23.
+# Authority: flow.class bucket names (buckets.schema). Mark is secondary.
 
-STATS_DIR="/tmp/openont-stats"
-HIST_FILE="$STATS_DIR/history.jsonl"
-RATES_FILE="$STATS_DIR/rates.json"
-FLOW_FILE="$STATS_DIR/flow.class"
-CONN_STATE="$STATS_DIR/conn_bytes.state"
-DPI_META="$STATS_DIR/dpi_meta.json"
+. /usr/lib/openont/stats-paths.sh 2>/dev/null || true
+. /usr/share/openont/buckets.sh 2>/dev/null || true
+
+STATS_DIR="${OPENONT_STATS_DIR:-/tmp/openont-stats}"
+HIST_FILE="${OPENONT_HIST_FILE:-$STATS_DIR/history.jsonl}"
+RATES_FILE="${OPENONT_RATES_FILE:-$STATS_DIR/rates.json}"
+FLOW_FILE="${OPENONT_FLOW_FILE:-$STATS_DIR/flow.class}"
+CONN_STATE="${OPENONT_CONN_STATE:-$STATS_DIR/conn_bytes.state}"
+MARK_SHIFT="${OPENONT_DPI_MARK_SHIFT:-16}"
 INTERVAL=5
 MAX_AGE=86400
 FINE_AGE=3600
-
-# mark bits 16..23 → bucket (must match openont-dpi)
-# 1=http 2=video 3=game 4=download 5=file 6=im 7=common 8=other_app 9=speedtest 0=unknown
 
 mkdir -p "$STATS_DIR"
 
@@ -55,7 +55,8 @@ sum_stat() {
 	echo "$sum"
 }
 
-# Output: http video game download file im common other_app speedtest unknown
+# Output order matches buckets.schema ids 1..9 then unknown (id 0 last for cut fields)
+# http video game download file im common other_app speedtest unknown
 compute_app_deltas() {
 	local ct="" f
 	for f in /proc/net/nf_conntrack /proc/net/ip_conntrack; do
@@ -66,7 +67,8 @@ compute_app_deltas() {
 		return
 	fi
 
-	awk -v flowf="$FLOW_FILE" -v statef="$CONN_STATE" '
+	# bid2name must match buckets.schema (generated openont_bid2name / gen-buckets)
+	awk -v flowf="$FLOW_FILE" -v statef="$CONN_STATE" -v mshift="$MARK_SHIFT" '
 	function priv(ip) {
 		if (ip ~ /^10\./ || ip ~ /^192\.168\./ || ip ~ /^127\./) return 1
 		if (ip ~ /^172\.(1[6-9]|2[0-9]|3[0-1])\./) return 1
@@ -89,16 +91,10 @@ compute_app_deltas() {
 		while ((getline line < flowf) > 0) {
 			n = split(line, a, " ")
 			if (n < 6) continue
-			# proto src dst sport dport bucket
 			k1 = a[1] " " a[2] " " a[3] " " a[4] " " a[5]
 			k2 = a[1] " " a[3] " " a[2] " " a[5] " " a[4]
 			flow[k1] = a[6]
 			flow[k2] = a[6]
-			# also index by remote IP alone as weak sticky
-			if (a[2] !~ /^10\./ && a[2] !~ /^192\.168\./ && a[2] !~ /^127\./)
-				byip[a[2]] = a[6]
-			if (a[3] !~ /^10\./ && a[3] !~ /^192\.168\./ && a[3] !~ /^127\./)
-				byip[a[3]] = a[6]
 		}
 		close(flowf)
 	}
@@ -128,6 +124,8 @@ compute_app_deltas() {
 		load_flow()
 		load_state()
 		http = video = game = download = fileb = im = common = other_app = speedtest = unknown = 0
+		div = 1
+		for (i = 0; i < mshift; i++) div *= 2
 	}
 	{
 		proto = ""; src1 = ""; dst1 = ""; sp1 = 0; dp1 = 0; bytes = 0; mark = 0
@@ -144,7 +142,6 @@ compute_app_deltas() {
 			} else if ($i ~ /^bytes=/) {
 				bytes += substr($i, 7) + 0
 			} else if ($i ~ /^mark=/) {
-				# decimal mark=N (busybox awk: no strtonum/and/rshift)
 				mark = substr($i, 6) + 0
 			}
 		}
@@ -162,23 +159,16 @@ compute_app_deltas() {
 		if (delta <= 0) next
 
 		cat = ""
-		# 1) DPI flow table (5-tuple either direction)
+		# 1) authoritative: DPI flow.class (either direction)
 		if (key in flow) cat = flow[key]
 		if (cat == "") {
 			krev = proto " " dst1 " " src1 " " dp1 " " sp1
 			if (krev in flow) cat = flow[krev]
 		}
-		# 2) packet/ct mark from openont-dpi (bits 16..23) → id = (mark/65536)%256
-		if (cat == "" && mark > 0) {
-			bid = int(mark / 65536) % 256
+		# 2) secondary: mark bits (OPENONT_DPI_MARK_SHIFT)
+		if (cat == "" && mark > 0 && div > 0) {
+			bid = int(mark / div) % 256
 			if (bid > 0) cat = bid2name(bid)
-		}
-		# 3) sticky by remote IP
-		if (cat == "") {
-			remote = dst1
-			if (priv(dst1) && !priv(src1)) remote = src1
-			if (!priv(dst1) && priv(src1)) remote = dst1
-			if (remote in byip) cat = byip[remote]
 		}
 		if (cat == "") cat = "unknown"
 		add_cat(cat, delta)
@@ -226,7 +216,6 @@ prev_rx=$(sum_stat rx)
 prev_tx=$(sum_stat tx)
 prev_t=$(date +%s)
 
-# prime conn state (no traffic counted)
 for f in /proc/net/nf_conntrack /proc/net/ip_conntrack; do
 	[ -f "$f" ] || continue
 	awk '

@@ -1,0 +1,15 @@
+# OpenONT traffic bucket contract (single source of truth)
+# Format: id|name|color
+# Packet mark: bits 16..23 hold id  (OPENONT_DPI_MARK_SHIFT=16, MASK=0x00FF0000)
+# Consumers: openont-dpi, openont-statsd, LuCI overview (via generated artifacts)
+#
+0|unknown|#7f8c8d
+1|http|#0088cc
+2|video|#e74c3c
+3|game|#9b59b6
+4|download|#27ae60
+5|file|#16a085
+6|im|#3498db
+7|common|#95a5a6
+8|other_app|#f39c12
+9|speedtest|#e67e22

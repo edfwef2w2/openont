@@ -40,8 +40,6 @@ jobs:
             package/openont/openont-core/files/usr/sbin/openont-pppoe
             package/openont/luci-mod-openont/Makefile
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont
-            package/openont/luci-mod-openont/root/etc/init.d/openont-stats
-            package/openont/luci-mod-openont/root/usr/sbin/openont-statsd
             package/openont/luci-mod-openont/root/usr/share/rpcd/acl.d/luci-mod-openont.json
             package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/overview.js
@@ -53,14 +51,28 @@ jobs:
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/pppoe.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/rpc-helper.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/crud-table.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/chart-common.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/chart-pie.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/chart-rate.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/dash-layout.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/buckets.js
             package/openont/luci-mod-openont/po/zh_Hans/openont.po
             package/openont/luci-mod-openont/po/templates/openont.pot
             package/openont/openont-dpi/Makefile
             package/openont/openont-dpi/src/openont-dpi.c
             package/openont/openont-dpi/src/classify.c
             package/openont/openont-dpi/src/classify.h
+            package/openont/openont-dpi/src/buckets.gen.h
             package/openont/openont-dpi/files/dpi-nft.sh
             package/openont/openont-dpi/files/dpi-buckets.conf
+            package/openont/openont-stats/Makefile
+            package/openont/openont-stats/files/usr/sbin/openont-statsd
+            package/openont/openont-stats/files/etc/init.d/openont-stats
+            package/openont/openont-stats/files/usr/lib/openont/stats_rpc.sh
+            package/openont/openont-stats/files/usr/lib/openont/stats-paths.sh
+            package/openont/openont-stats/files/usr/share/openont/buckets.schema
+            package/openont/openont-stats/files/usr/share/openont/buckets.sh
+            package/openont/openont-stats/files/usr/share/openont/buckets.json
             package/openont/luci-theme-openont/htdocs/luci-static/openont/cascade.css
             package/openont/luci-theme-openont/htdocs/luci-static/openont/theme-blue-sidebar.css
             package/openont/luci-theme-openont/htdocs/luci-static/openont/script.js
@@ -69,6 +81,7 @@ jobs:
             configs/openont-x86_64.config
             configs/openont-armsr_armv8.config
             scripts/openont/apply-config.sh
+            scripts/openont/gen-buckets.py
           )
           for f in "${files[@]}"; do
             test -f "$f" || { echo "missing: $f" >&2; exit 1; }
@@ -78,6 +91,13 @@ jobs:
             || { echo "openont-appclass must not exist (replaced by openont-dpi)" >&2; exit 1; }
           test ! -f package/openont/luci-mod-openont/root/usr/share/openont/app-class.conf \
             || { echo "app-class.conf must not exist (replaced by dpi-buckets.conf)" >&2; exit 1; }
+          # stats daemon must not live in luci-mod
+          test ! -f package/openont/luci-mod-openont/root/usr/sbin/openont-statsd \
+            || { echo "openont-statsd must live in openont-stats package" >&2; exit 1; }
+          test ! -f package/openont/luci-mod-openont/root/etc/init.d/openont-stats \
+            || { echo "openont-stats init must live in openont-stats package" >&2; exit 1; }
+          test ! -d package/openont/openont-port \
+            || { echo "empty openont-port meta package must be removed" >&2; exit 1; }
           test ! -d samples || { echo "samples/ must not exist" >&2; exit 1; }
           # Stock overview source must not live in-tree (installed by Makefile overwrite only)
           test ! -f package/openont/luci-mod-openont/htdocs/luci-static/resources/view/status/overview.js \
@@ -106,8 +126,8 @@ jobs:
           # Must be 100755 in git — luci.mk installs root/ with cp -pR.
           exec_files=(
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont
-            package/openont/luci-mod-openont/root/etc/init.d/openont-stats
-            package/openont/luci-mod-openont/root/usr/sbin/openont-statsd
+            package/openont/openont-stats/files/etc/init.d/openont-stats
+            package/openont/openont-stats/files/usr/sbin/openont-statsd
             package/openont/openont-dpi/files/dpi-nft.sh
             package/openont/openont-core/files/usr/sbin/openont-port
             package/openont/openont-core/files/usr/sbin/openont-address
@@ -138,16 +158,24 @@ jobs:
       - name: Config selects OpenONT packages
         run: |
           set -euo pipefail
-          for pkg in openont-core openont-base openont-dpi luci-mod-openont luci-theme-openont; do
+          for pkg in openont-core openont-base openont-dpi openont-stats luci-mod-openont luci-theme-openont; do
             grep -q "^CONFIG_PACKAGE_${pkg}=y" configs/openont.common.config \
               || { echo "missing CONFIG_PACKAGE_${pkg}=y in openont.common.config" >&2; exit 1; }
           done
-          grep -q 'openont-dpi' package/openont/luci-mod-openont/Makefile \
-            || { echo "luci-mod-openont must DEPEND on openont-dpi" >&2; exit 1; }
-          grep -q 'dpi_status' package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont \
-            || { echo "rpcd must expose dpi_status" >&2; exit 1; }
-          grep -q 'flow.class' package/openont/luci-mod-openont/root/usr/sbin/openont-statsd \
+          grep -q 'openont-stats' package/openont/luci-mod-openont/Makefile \
+            || { echo "luci-mod-openont must DEPEND on openont-stats" >&2; exit 1; }
+          grep -q 'stats_rpc.sh' package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont \
+            || { echo "rpcd must source stats_rpc.sh" >&2; exit 1; }
+          grep -q 'flow.class\|FLOW_FILE' package/openont/openont-stats/files/usr/sbin/openont-statsd \
             || { echo "statsd must read DPI flow.class labels" >&2; exit 1; }
+          grep -q 'http|' package/openont/openont-stats/files/usr/share/openont/buckets.schema \
+            || { echo "buckets.schema missing http bucket" >&2; exit 1; }
+          # overview must stay lean after split
+          ov_lines=$(wc -l < package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/overview.js)
+          if [ "$ov_lines" -gt 500 ]; then
+            echo "overview.js too large ($ov_lines lines); keep chart/layout modules extracted" >&2
+            exit 1
+          fi
           # Must not enable stock themes or luci meta that pulls stock theme
           if grep -E '^CONFIG_PACKAGE_luci-theme-bootstrap=y' configs/openont.common.config; then
             echo "bootstrap theme must not be enabled" >&2
@@ -207,8 +235,9 @@ jobs:
             package/openont/openont-core/files/usr/lib/openont/*.sh \
             package/openont/openont-core/files/usr/sbin/openont-* \
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont \
-            package/openont/luci-mod-openont/root/usr/sbin/openont-statsd \
-            package/openont/luci-mod-openont/root/etc/init.d/openont-stats \
+            package/openont/openont-stats/files/usr/sbin/openont-statsd \
+            package/openont/openont-stats/files/etc/init.d/openont-stats \
+            package/openont/openont-stats/files/usr/lib/openont/*.sh \
             package/openont/openont-dpi/files/dpi-nft.sh \
             package/openont/openont-base/files/etc/uci-defaults/* \
             package/openont/luci-theme-openont/root/etc/uci-defaults/* \
@@ -217,6 +246,18 @@ jobs:
             sh -n "$f"
           done
           echo "syntax ok"
+
+      - name: Bucket schema codegen check
+        run: |
+          set -euo pipefail
+          python3 scripts/openont/gen-buckets.py
+          git diff --exit-code -- \
+            package/openont/openont-stats/files/usr/share/openont/buckets.gen.h \
+            package/openont/openont-stats/files/usr/share/openont/buckets.sh \
+            package/openont/openont-stats/files/usr/share/openont/buckets.json \
+            package/openont/openont-dpi/src/buckets.gen.h \
+            || { echo "buckets artifacts out of date; run scripts/openont/gen-buckets.py" >&2; exit 1; }
+          echo "bucket codegen ok"
 
       - name: DPI C sources compile (host smoke)
         run: |

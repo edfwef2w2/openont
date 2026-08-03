@@ -14,49 +14,6 @@ static void str_lower(char *s)
 		*s = (char)tolower((unsigned char)*s);
 }
 
-uint8_t oo_bucket_id(const char *name)
-{
-	if (!name || !*name)
-		return OO_B_UNKNOWN;
-	if (!strcmp(name, "http"))
-		return OO_B_HTTP;
-	if (!strcmp(name, "video"))
-		return OO_B_VIDEO;
-	if (!strcmp(name, "game"))
-		return OO_B_GAME;
-	if (!strcmp(name, "download"))
-		return OO_B_DOWNLOAD;
-	if (!strcmp(name, "file"))
-		return OO_B_FILE;
-	if (!strcmp(name, "im"))
-		return OO_B_IM;
-	if (!strcmp(name, "common"))
-		return OO_B_COMMON;
-	if (!strcmp(name, "other_app"))
-		return OO_B_OTHER;
-	if (!strcmp(name, "speedtest"))
-		return OO_B_SPEEDTEST;
-	if (!strcmp(name, "unknown"))
-		return OO_B_UNKNOWN;
-	return OO_B_UNKNOWN;
-}
-
-const char *oo_bucket_name(uint8_t id)
-{
-	switch (id) {
-	case OO_B_HTTP: return "http";
-	case OO_B_VIDEO: return "video";
-	case OO_B_GAME: return "game";
-	case OO_B_DOWNLOAD: return "download";
-	case OO_B_FILE: return "file";
-	case OO_B_IM: return "im";
-	case OO_B_COMMON: return "common";
-	case OO_B_OTHER: return "other_app";
-	case OO_B_SPEEDTEST: return "speedtest";
-	default: return "unknown";
-	}
-}
-
 static int cmp_entry_len_desc(const void *a, const void *b)
 {
 	const struct oo_map_entry *ea = a, *eb = b;
@@ -128,7 +85,7 @@ int oo_classifier_load(struct oo_classifier *c, const char *path)
 		e->tlen = (uint8_t)strlen(e->token);
 		e->id = oo_bucket_id(e->bucket);
 		if (e->id == OO_B_UNKNOWN && strcmp(e->bucket, "unknown") != 0)
-			e->id = OO_B_OTHER;
+			e->id = OO_B_OTHER_APP;
 		c->n_entries++;
 	}
 	fclose(fp);

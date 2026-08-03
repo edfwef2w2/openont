@@ -31,9 +31,7 @@
 #define BUCKET_CONF_USR "/etc/openont/dpi-buckets.conf"
 #define DEFAULT_QUEUE 10
 
-/* packet mark: bits 16..23 = bucket id (1..9), non-zero means labeled */
-#define MARK_SHIFT 16
-#define MARK_MASK  0x00FF0000u
+/* packet mark: bits OPENONT_DPI_MARK_SHIFT.. — see buckets.gen.h */
 
 struct flow_key {
 	uint8_t family; /* 4 or 6 */
@@ -264,7 +262,7 @@ static uint32_t bucket_to_mark(uint8_t id)
 {
 	if (id == OO_B_UNKNOWN)
 		return 0;
-	return ((uint32_t)id << MARK_SHIFT) & MARK_MASK;
+	return ((uint32_t)id << OPENONT_DPI_MARK_SHIFT) & OPENONT_DPI_MARK_MASK;
 }
 
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
