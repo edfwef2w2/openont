@@ -19,7 +19,7 @@ return view.extend({
 	},
 
 	render: function (data) {
-		return new CRUDTable({
+		return new CRUDTable.Table({
 			title: _('IP Groups'),
 			description: _('Named lists of IP addresses or networks used by port mapping access control.'),
 			sectionTitle: _('Groups'),

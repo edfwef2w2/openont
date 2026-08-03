@@ -1,4 +1,5 @@
 'use strict';
+'require baseclass';
 'require openont.chart-common as cc';
 
 function directChartBoxes(card) {
@@ -212,10 +213,11 @@ function bindChartResize(view) {
 	});
 }
 
-return {
+return baseclass.extend({
+	__name__: 'openont.dash-layout',
 	updateDashUnit: updateDashUnit,
 	applySpanLayout: applySpanLayout,
 	layoutChartBoxes: layoutChartBoxes,
 	bindChartResize: bindChartResize,
 	directChartBoxes: directChartBoxes
-};
+});

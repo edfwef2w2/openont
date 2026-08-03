@@ -44,7 +44,7 @@ return view.extend({
 	},
 
 	render: function (data) {
-		return new CRUDTable({
+		return new CRUDTable.Table({
 			title: _('Port Mapping'),
 			description: _('Forward external ports to internal hosts. Use IP groups to restrict source addresses.'),
 			sectionTitle: _('Mappings'),

@@ -1,4 +1,5 @@
 'use strict';
+'require baseclass';
 'require openont.chart-common as cc';
 'require openont.buckets as buckets';
 
@@ -155,8 +156,9 @@ function bindPieHover(view) {
 	});
 }
 
-return {
+return baseclass.extend({
+	__name__: 'openont.chart-pie',
 	drawPie: drawPie,
 	bindPieHover: bindPieHover,
 	appLabel: appLabel
-};
+});

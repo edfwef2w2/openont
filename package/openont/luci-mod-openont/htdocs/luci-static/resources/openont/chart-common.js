@@ -1,4 +1,5 @@
 'use strict';
+'require baseclass';
 
 function fmtRate(bps) {
 	if (bps == null || isNaN(bps)) return '0 B/s';
@@ -142,7 +143,8 @@ function hideTip(tip) {
 	if (tip) tip.style.display = 'none';
 }
 
-return {
+return baseclass.extend({
+	__name__: 'openont.chart-common',
 	fmtRate: fmtRate,
 	fmtBytes: fmtBytes,
 	rateParts: rateParts,
@@ -155,4 +157,4 @@ return {
 	ensureTipHost: ensureTipHost,
 	placeChartTip: placeChartTip,
 	hideTip: hideTip
-};
+});

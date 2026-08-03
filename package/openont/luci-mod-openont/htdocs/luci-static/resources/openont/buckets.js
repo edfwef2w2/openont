@@ -1,5 +1,6 @@
 'use strict';
-/* GENERATED-aligned with buckets.schema — colors/ids from buckets.json */
+'require baseclass';
+/* Aligned with buckets.schema — colors/ids from buckets.json */
 
 var DATA = {
 	mark_shift: 16,
@@ -17,18 +18,20 @@ var DATA = {
 	]
 };
 
-function keys() {
-	return DATA.buckets.map(function (b) { return b.name; });
-}
+return baseclass.extend({
+	__name__: 'openont.buckets',
 
-function colors() {
-	var m = {};
-	DATA.buckets.forEach(function (b) { m[b.name] = b.color; });
-	return m;
-}
+	keys: function () {
+		return DATA.buckets.map(function (b) { return b.name; });
+	},
 
-return {
-	data: DATA,
-	keys: keys,
-	colors: colors
-};
+	colors: function () {
+		var m = {};
+		DATA.buckets.forEach(function (b) { m[b.name] = b.color; });
+		return m;
+	},
+
+	getData: function () {
+		return DATA;
+	}
+});

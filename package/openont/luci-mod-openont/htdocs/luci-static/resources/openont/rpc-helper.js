@@ -1,4 +1,5 @@
 'use strict';
+'require baseclass';
 'require rpc';
 
 /**
@@ -63,8 +64,9 @@ function rejectIfFailed(res) {
 	return res;
 }
 
-return {
+return baseclass.extend({
+	__name__: 'openont.rpc-helper',
 	declareMap: declareMap,
 	declareCrud: declareCrud,
 	rejectIfFailed: rejectIfFailed
-};
+});

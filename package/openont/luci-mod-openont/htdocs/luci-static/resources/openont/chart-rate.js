@@ -1,4 +1,5 @@
 'use strict';
+'require baseclass';
 'require openont.chart-common as cc';
 
 function drawLine(view, id, pts, key, color, label) {
@@ -179,8 +180,9 @@ function hideRateTips() {
 	cc.hideTip(document.getElementById('o-rate-tip-down'));
 }
 
-return {
+return baseclass.extend({
+	__name__: 'openont.chart-rate',
 	drawRateCharts: drawRateCharts,
 	bindRateHover: bindRateHover,
 	drawLine: drawLine
-};
+});

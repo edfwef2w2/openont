@@ -1,9 +1,10 @@
 'use strict';
+'require baseclass';
 
 /**
  * Config-driven CRUD table for OpenONT LuCI views.
  *
- * new CRUDTable(cfg).render(loadResult) → root DOM node
+ * new Module.Table(cfg).render(loadResult) → root DOM node
  *
  * cfg highlights:
  *   title, description, sectionTitle, emptyText
@@ -17,32 +18,35 @@
  *   afterFields(editBox, widgets, self)
  */
 
-function CRUDTable(cfg) {
-	this.cfg = cfg || {};
-	this.rows = [];
-	this.ctx = {};
-	this.tbody = null;
-	this.editBox = null;
-	this.filterEl = null;
-	this.searchEl = null;
-	this._searchTimer = null;
-}
+var Table = baseclass.extend({
+	__name__: 'openont.CRUDTable',
 
-CRUDTable.prototype._getRows = function (loadResult) {
-	if (typeof this.cfg.getRows === 'function')
-		return this.cfg.getRows(loadResult) || [];
-	if (loadResult && Array.isArray(loadResult.items))
-		return loadResult.items;
-	return [];
-};
+	__init__: function (cfg) {
+		this.cfg = cfg || {};
+		this.rows = [];
+		this.ctx = {};
+		this.tbody = null;
+		this.editBox = null;
+		this.filterEl = null;
+		this.searchEl = null;
+		this._searchTimer = null;
+	},
 
-CRUDTable.prototype._getContext = function (loadResult) {
-	if (typeof this.cfg.getContext === 'function')
-		return this.cfg.getContext(loadResult) || {};
-	return {};
-};
+	_getRows: function (loadResult) {
+		if (typeof this.cfg.getRows === 'function')
+			return this.cfg.getRows(loadResult) || [];
+		if (loadResult && Array.isArray(loadResult.items))
+			return loadResult.items;
+		return [];
+	},
 
-CRUDTable.prototype._cellText = function (col, row) {
+	_getContext: function (loadResult) {
+		if (typeof this.cfg.getContext === 'function')
+			return this.cfg.getContext(loadResult) || {};
+		return {};
+	},
+
+	_cellText: function (col, row) {
 	var v;
 	if (typeof col.format === 'function')
 		v = col.format(row, this.ctx);
@@ -53,9 +57,9 @@ CRUDTable.prototype._cellText = function (col, row) {
 	if (v == null || v === '')
 		return '—';
 	return v;
-};
+},
 
-CRUDTable.prototype._handleSaveRpc = function (promise, errEl) {
+	_handleSaveRpc: function (promise, errEl) {
 	return promise.then(function (res) {
 		if (res && res.ok === false) {
 			if (errEl) {
@@ -67,15 +71,15 @@ CRUDTable.prototype._handleSaveRpc = function (promise, errEl) {
 			location.reload();
 		}
 	});
-};
+},
 
-CRUDTable.prototype._reloadAfter = function (promise) {
+	_reloadAfter: function (promise) {
 	return promise.then(function () {
 		location.reload();
 	});
-};
+},
 
-CRUDTable.prototype._fieldWidget = function (field, row) {
+	_fieldWidget: function (field, row) {
 	var type = field.type || 'text';
 	var raw;
 
@@ -140,9 +144,9 @@ CRUDTable.prototype._fieldWidget = function (field, row) {
 		placeholder: field.placeholder || '',
 		disabled: field.disabled ? 'disabled' : null
 	});
-};
+},
 
-CRUDTable.prototype._readFields = function (fields, widgets) {
+	_readFields: function (fields, widgets) {
 	var values = {};
 	for (var i = 0; i < fields.length; i++) {
 		var f = fields[i];
@@ -157,9 +161,9 @@ CRUDTable.prototype._readFields = function (fields, widgets) {
 		values[f.key] = v;
 	}
 	return values;
-};
+},
 
-CRUDTable.prototype._showEdit = function (row) {
+	_showEdit: function (row) {
 	var self = this;
 	var cfg = this.cfg;
 	var fields = cfg.fields || [];
@@ -209,9 +213,9 @@ CRUDTable.prototype._showEdit = function (row) {
 			click: function () { editBox.style.display = 'none'; }
 		}, [ _('Cancel') ])
 	]));
-};
+},
 
-CRUDTable.prototype._rowActionNodes = function (row) {
+	_rowActionNodes: function (row) {
 	var self = this;
 	var cfg = this.cfg;
 	var actions = cfg.rowActions || [ { id: 'edit' }, { id: 'delete' } ];
@@ -294,9 +298,9 @@ CRUDTable.prototype._rowActionNodes = function (row) {
 	}
 
 	return nodes;
-};
+},
 
-CRUDTable.prototype._matchesFilter = function (row) {
+	_matchesFilter: function (row) {
 	var cfg = this.cfg;
 	var tb = cfg.toolbar || {};
 
@@ -321,9 +325,9 @@ CRUDTable.prototype._matchesFilter = function (row) {
 	}
 
 	return true;
-};
+},
 
-CRUDTable.prototype._renderRows = function () {
+	_renderRows: function () {
 	var self = this;
 	var cfg = this.cfg;
 	var cols = cfg.columns || [];
@@ -356,9 +360,9 @@ CRUDTable.prototype._renderRows = function () {
 	}
 
 	tbody.appendChild(frag);
-};
+},
 
-CRUDTable.prototype._scheduleRenderRows = function () {
+	_scheduleRenderRows: function () {
 	var self = this;
 	if (this._searchTimer)
 		window.clearTimeout(this._searchTimer);
@@ -366,9 +370,9 @@ CRUDTable.prototype._scheduleRenderRows = function () {
 		self._searchTimer = null;
 		self._renderRows();
 	}, 120);
-};
+},
 
-CRUDTable.prototype.render = function (loadResult) {
+	render: function (loadResult) {
 	var self = this;
 	var cfg = this.cfg;
 	var cols = cfg.columns || [];
@@ -437,6 +441,10 @@ CRUDTable.prototype.render = function (loadResult) {
 
 	this._renderRows();
 	return map;
-};
+}
+});
 
-return CRUDTable;
+return baseclass.extend({
+	__name__: 'openont.crud-table',
+	Table: Table
+});

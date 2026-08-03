@@ -27,7 +27,7 @@ return view.extend({
 	},
 
 	render: function (data) {
-		return new CRUDTable({
+		return new CRUDTable.Table({
 			title: _('DMZ Host'),
 			description: _('Expose an internal host on WAN. Only one enabled DMZ host is recommended.'),
 			sectionTitle: _('Hosts'),
