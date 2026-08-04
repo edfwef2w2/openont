@@ -1,7 +1,8 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0
-# Sample WAN rates + per-app byte deltas via DPI flow labels (openont-dpi).
-# Authority: flow.class bucket names (buckets.schema). Mark is secondary.
+# Sample WAN rates + per-app byte deltas.
+# Authority: ip_class.map (remote IP → bucket). Optional game_udp + weak ports.
+# flow.class is not used for byte accounting (5-tuple breaks on source-port churn).
 
 . /usr/lib/openont/stats-paths.sh 2>/dev/null || true
 . /usr/share/openont/buckets.sh 2>/dev/null || true
@@ -9,9 +10,11 @@
 STATS_DIR="${OPENONT_STATS_DIR:-/tmp/openont-stats}"
 HIST_FILE="${OPENONT_HIST_FILE:-$STATS_DIR/history.jsonl}"
 RATES_FILE="${OPENONT_RATES_FILE:-$STATS_DIR/rates.json}"
-FLOW_FILE="${OPENONT_FLOW_FILE:-$STATS_DIR/flow.class}"
+MAP_FILE="${OPENONT_IP_CLASS_MAP:-$STATS_DIR/ip_class.map}"
 CONN_STATE="${OPENONT_CONN_STATE:-$STATS_DIR/conn_bytes.state}"
-MARK_SHIFT="${OPENONT_DPI_MARK_SHIFT:-16}"
+CONF_SYS="/usr/share/openont/app-class.conf"
+CONF_USR="/etc/openont/app-class.conf"
+GAME_UDP_FILE="$STATS_DIR/game_udp.txt"
 INTERVAL=5
 MAX_AGE=86400
 FINE_AGE=3600
@@ -22,6 +25,35 @@ enable_acct() {
 	if [ -w /proc/sys/net/netfilter/nf_conntrack_acct ]; then
 		echo 1 > /proc/sys/net/netfilter/nf_conntrack_acct 2>/dev/null || true
 	fi
+}
+
+load_game_udp() {
+	local conf line ports a b p
+	: > "$GAME_UDP_FILE"
+	for conf in "$CONF_SYS" "$CONF_USR"; do
+		[ -f "$conf" ] || continue
+		while IFS= read -r line || [ -n "$line" ]; do
+			line=${line%%#*}
+			line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+			case "$line" in
+			game_udp\|*)
+				ports=$(echo "$line" | cut -d'|' -f2)
+				case "$ports" in
+				*-*)
+					a=${ports%-*}; b=${ports#*-}
+					a=$(echo "$a" | tr -cd '0-9')
+					b=$(echo "$b" | tr -cd '0-9')
+					[ -n "$a" ] && [ -n "$b" ] && echo "$a $b" >> "$GAME_UDP_FILE"
+					;;
+				*)
+					p=$(echo "$ports" | tr -cd '0-9')
+					[ -n "$p" ] && echo "$p $p" >> "$GAME_UDP_FILE"
+					;;
+				esac
+				;;
+			esac
+		done < "$conf"
+	done
 }
 
 list_wan_devs() {
@@ -55,8 +87,7 @@ sum_stat() {
 	echo "$sum"
 }
 
-# Output order matches buckets.schema ids 1..9 then unknown (id 0 last for cut fields)
-# http video game download file im common other_app speedtest unknown
+# Output: http video game download file im common other_app speedtest unknown
 compute_app_deltas() {
 	local ct="" f
 	for f in /proc/net/nf_conntrack /proc/net/ip_conntrack; do
@@ -67,36 +98,37 @@ compute_app_deltas() {
 		return
 	fi
 
-	# bid2name must match buckets.schema (generated openont_bid2name / gen-buckets)
-	awk -v flowf="$FLOW_FILE" -v statef="$CONN_STATE" -v mshift="$MARK_SHIFT" '
+	awk -v mapf="$MAP_FILE" -v guf="$GAME_UDP_FILE" -v statef="$CONN_STATE" -v now="$(date +%s)" '
 	function priv(ip) {
 		if (ip ~ /^10\./ || ip ~ /^192\.168\./ || ip ~ /^127\./) return 1
 		if (ip ~ /^172\.(1[6-9]|2[0-9]|3[0-1])\./) return 1
 		if (ip ~ /^fc/ || ip ~ /^fd/ || ip ~ /^fe80:/ || ip == "::1") return 1
 		return 0
 	}
-	function bid2name(id) {
-		if (id == 1) return "http"
-		if (id == 2) return "video"
-		if (id == 3) return "game"
-		if (id == 4) return "download"
-		if (id == 5) return "file"
-		if (id == 6) return "im"
-		if (id == 7) return "common"
-		if (id == 8) return "other_app"
-		if (id == 9) return "speedtest"
-		return "unknown"
-	}
-	function load_flow() {
-		while ((getline line < flowf) > 0) {
+	function load_map() {
+		while ((getline line < mapf) > 0) {
 			n = split(line, a, " ")
-			if (n < 6) continue
-			k1 = a[1] " " a[2] " " a[3] " " a[4] " " a[5]
-			k2 = a[1] " " a[3] " " a[2] " " a[5] " " a[4]
-			flow[k1] = a[6]
-			flow[k2] = a[6]
+			if (n >= 2) ipclass[a[1]] = a[2]
 		}
-		close(flowf)
+		close(mapf)
+	}
+	function load_gudp() {
+		ng = 0
+		while ((getline line < guf) > 0) {
+			n = split(line, a, " ")
+			if (n >= 1) {
+				ng++
+				g1[ng] = a[1] + 0
+				g2[ng] = (n >= 2 ? a[2] + 0 : a[1] + 0)
+			}
+		}
+		close(guf)
+	}
+	function in_gudp(p, i) {
+		p = p + 0
+		for (i = 1; i <= ng; i++)
+			if (p >= g1[i] && p <= g2[i]) return 1
+		return 0
 	}
 	function load_state() {
 		while ((getline line < statef) > 0) {
@@ -120,15 +152,21 @@ compute_app_deltas() {
 		else if (cat == "speedtest") speedtest += delta
 		else unknown += delta
 	}
+	function weak_port(proto, sp, dp) {
+		if (dp == 80 || sp == 80 || dp == 443 || sp == 443 || dp == 8080 || sp == 8080)
+			return "http"
+		if (dp == 53 || sp == 53 || dp == 123 || sp == 123 || dp == 22 || sp == 22)
+			return "common"
+		return ""
+	}
 	BEGIN {
-		load_flow()
+		load_map()
+		load_gudp()
 		load_state()
 		http = video = game = download = fileb = im = common = other_app = speedtest = unknown = 0
-		div = 1
-		for (i = 0; i < mshift; i++) div *= 2
 	}
 	{
-		proto = ""; src1 = ""; dst1 = ""; sp1 = 0; dp1 = 0; bytes = 0; mark = 0
+		proto = ""; src1 = ""; dst1 = ""; sp1 = 0; dp1 = 0; bytes = 0
 		for (i = 1; i <= NF; i++) {
 			if ($i == "tcp" || $i == "udp" || $i == "icmp" || $i == "icmpv6") proto = $i
 			else if ($i ~ /^src=/) {
@@ -141,12 +179,14 @@ compute_app_deltas() {
 				if (dp1 == 0) dp1 = substr($i, 7) + 0
 			} else if ($i ~ /^bytes=/) {
 				bytes += substr($i, 7) + 0
-			} else if ($i ~ /^mark=/) {
-				mark = substr($i, 6) + 0
 			}
 		}
 		if (proto == "" || src1 == "" || dst1 == "") next
 		if (priv(src1) && priv(dst1)) next
+
+		remote = dst1
+		if (priv(dst1) && !priv(src1)) remote = src1
+		if (!priv(dst1) && priv(src1)) remote = dst1
 
 		key = proto " " src1 " " dst1 " " sp1 " " dp1
 		cur[key] = bytes
@@ -158,17 +198,17 @@ compute_app_deltas() {
 		}
 		if (delta <= 0) next
 
-		cat = ""
-		# 1) authoritative: DPI flow.class (either direction)
-		if (key in flow) cat = flow[key]
-		if (cat == "") {
-			krev = proto " " dst1 " " src1 " " dp1 " " sp1
-			if (krev in flow) cat = flow[krev]
+		cat = ipclass[remote]
+		if (cat == "" || cat == "unknown") {
+			if (proto == "udp" && (in_gudp(sp1) || in_gudp(dp1))) {
+				cat = "game"
+				ipclass[remote] = "game"
+				print remote, "game", now >> mapf
+			}
 		}
-		# 2) secondary: mark bits (OPENONT_DPI_MARK_SHIFT)
-		if (cat == "" && mark > 0 && div > 0) {
-			bid = int(mark / div) % 256
-			if (bid > 0) cat = bid2name(bid)
+		if (cat == "" || cat == "unknown") {
+			w = weak_port(proto, sp1, dp1)
+			if (w != "") cat = w
 		}
 		if (cat == "") cat = "unknown"
 		add_cat(cat, delta)
@@ -210,7 +250,8 @@ trim_history() {
 }
 
 enable_acct
-touch "$CONN_STATE" "$FLOW_FILE"
+load_game_udp
+touch "$CONN_STATE" "$MAP_FILE"
 
 prev_rx=$(sum_stat rx)
 prev_tx=$(sum_stat tx)
@@ -276,5 +317,6 @@ while true; do
 	if [ $((loop_n % 60)) -eq 0 ]; then
 		trim_history "$now"
 		enable_acct
+		load_game_udp
 	fi
 done

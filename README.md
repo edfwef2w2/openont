@@ -68,6 +68,17 @@ openont-offload status
 
 First boot applies the recommended mode once.
 
+## Application traffic classification
+
+Overview pie chart buckets come from **remote IP → class** (`/tmp/openont-stats/ip_class.map`):
+
+1. **DNS** (`openont-classify`): dnsmasq query log + `app-class.conf` keywords  
+2. **Payload DPI** (`openont-dpi`): TLS SNI / HTTP Host upgrades the same IP map  
+3. **statsd**: conntrack byte deltas attributed by remote IP (+ `game_udp` ports)
+
+Web diagnostics: **Status → Application DPI**.  
+Categories match historical names: `http` `video` `game` `download` `file` `im` `common` `other_app` `speedtest` `unknown`.
+
 ## PPPoE dial / redial
 
 Web: **Network → PPPoE Dial**

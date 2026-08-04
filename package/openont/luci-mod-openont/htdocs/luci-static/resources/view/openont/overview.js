@@ -5,6 +5,7 @@
 'require openont.chart-common as cc';
 'require openont.chart-pie as chartPie';
 'require openont.chart-rate as chartRate';
+'require openont.chart-hover as chartHover';
 'require openont.dash-layout as dashLayout';
 
 var callOverview = rpc.declare({
@@ -180,8 +181,7 @@ return view.extend({
 		this._applyHistory(hist);
 		this._setPieTitle(hist);
 
-		chartPie.bindPieHover(this);
-		chartRate.bindRateHover(this);
+		chartHover.bind(this, root);
 		dashLayout.bindChartResize(this);
 		this._scheduleChartPaint();
 
@@ -218,6 +218,7 @@ return view.extend({
 			dashLayout.layoutChartBoxes(this._overviewRoot || document.querySelector('.o-overview'));
 			chartPie.drawPie(this, this._lastApps || {});
 			chartRate.drawRateCharts(this);
+			chartHover.resync(this);
 		} finally {
 			this._paintingCharts = false;
 		}
@@ -282,6 +283,7 @@ return view.extend({
 		this._renderIfaces(ov.interfaces || []);
 		this._pushRate(ov.tx_bps || 0, ov.rx_bps || 0);
 		chartRate.drawRateCharts(this);
+		chartHover.resync(this);
 	},
 
 	_pushRate: function (tx, rx) {
@@ -320,6 +322,7 @@ return view.extend({
 			self._lastApps = (h && h.apps) || {};
 			chartPie.drawPie(self, self._lastApps);
 			self._setPieTitle(h || {});
+			chartHover.resync(self);
 		});
 	},
 

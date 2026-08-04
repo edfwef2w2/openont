@@ -3248,13 +3248,15 @@ html.is-layout-narrow header .pull-right {
 	width: 100% !important;
 	height: 100% !important;
 	image-rendering: auto;
+	touch-action: none;
 }
 
-/* Fixed to viewport — not clipped by .o-chart-box overflow */
+/* Fixed to viewport — not clipped by .o-chart-box overflow.
+   z-index only matters while tip is shown (display:none when idle). */
 .o-chart-tip {
 	display: none;
 	position: fixed;
-	z-index: 1200;
+	z-index: 10050;
 	pointer-events: none;
 	background: rgba(26, 36, 51, 0.92);
 	color: #fff;

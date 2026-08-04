@@ -68,6 +68,9 @@ int oo_classifier_load(struct oo_classifier *c, const char *path)
 		}
 		if (!*tok || !*bucket)
 			continue;
+		/* statsd-only directives */
+		if (!strcmp(tok, "game_udp"))
+			continue;
 		if (c->n_entries >= c->cap) {
 			size_t ncap = c->cap * 2;
 			struct oo_map_entry *ne = realloc(c->entries, ncap * sizeof(*ne));

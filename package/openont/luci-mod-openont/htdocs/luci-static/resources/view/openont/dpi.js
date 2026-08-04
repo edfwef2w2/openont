@@ -42,6 +42,18 @@ return view.extend({
 					E('td', { class: 'td' }, [ dpi.dpi_mode || '—' ])
 				]),
 				E('tr', { class: 'tr' }, [
+					E('td', { class: 'td' }, [ _('DNS classify running') ]),
+					E('td', { class: 'td' }, [ yn(!!dpi.classify_running) ])
+				]),
+				E('tr', { class: 'tr' }, [
+					E('td', { class: 'td' }, [ _('IP class map entries') ]),
+					E('td', { class: 'td' }, [ String(dpi.map_entries != null ? dpi.map_entries : 0) ])
+				]),
+				E('tr', { class: 'tr' }, [
+					E('td', { class: 'td' }, [ _('DNS log present') ]),
+					E('td', { class: 'td' }, [ yn(!!dpi.dns_log_ok) ])
+				]),
+				E('tr', { class: 'tr' }, [
 					E('td', { class: 'td' }, [ _('Flows seen') ]),
 					E('td', { class: 'td' }, [ String(dpi.flows_seen != null ? dpi.flows_seen : 0) ])
 				]),

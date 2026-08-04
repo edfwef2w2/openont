@@ -119,46 +119,8 @@ function drawPie(view, apps) {
 	});
 }
 
-function bindPieHover(view) {
-	var canvas = document.getElementById('o-pie-canvas');
-	var tip = document.getElementById('o-pie-tip');
-	if (!canvas || !tip) return;
-
-	function hit(ev) {
-		var rect = canvas.getBoundingClientRect();
-		var x = ev.clientX - rect.left;
-		var y = ev.clientY - rect.top;
-		var slices = view._pieSlices || [];
-		for (var i = 0; i < slices.length; i++) {
-			var s = slices[i];
-			var dx = x - s.cx, dy = y - s.cy;
-			var dist = Math.sqrt(dx * dx + dy * dy);
-			if (dist > s.r || dist < (s.rInner || 0)) continue;
-			var ang = Math.atan2(dy, dx);
-			var a0 = s.a0, a1 = s.a1;
-			while (ang < a0) ang += Math.PI * 2;
-			if (ang <= a1) return s;
-		}
-		return null;
-	}
-
-	canvas.addEventListener('mousemove', function (ev) {
-		var s = hit(ev);
-		if (!s) {
-			cc.hideTip(tip);
-			return;
-		}
-		tip.textContent = s.label + '：' + cc.fmtBytes(s.value);
-		cc.placeChartTip(tip, ev.clientX, ev.clientY);
-	});
-	canvas.addEventListener('mouseleave', function () {
-		cc.hideTip(tip);
-	});
-}
-
 return baseclass.extend({
 	__name__: 'openont.chart-pie',
 	drawPie: drawPie,
-	bindPieHover: bindPieHover,
 	appLabel: appLabel
 });

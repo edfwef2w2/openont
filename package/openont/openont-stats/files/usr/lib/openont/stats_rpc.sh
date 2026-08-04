@@ -11,9 +11,10 @@ HIST_FILE="${OPENONT_HIST_FILE:-$STATS_DIR/history.jsonl}"
 rpc_dpi_status() {
 	local meta_file="$STATS_DIR/dpi_meta.json"
 	local flow_file="$STATS_DIR/flow.class"
-	local engine="payload-dpi" mode="sample" running=0
+	local map_file="${OPENONT_IP_CLASS_MAP:-$STATS_DIR/ip_class.map}"
+	local engine="payload-dpi" mode="sample" running=0 classify_running=0
 	local flows_seen=0 flows_classified=0 queue_pkts=0 queue_drops=0 queue_num=10
-	local flow_entries=0
+	local flow_entries=0 map_entries=0 dns_log_ok=0
 	local http=0 video=0 game=0 download=0 fileb=0 im=0 common=0 other_app=0 speedtest=0 unknown=0
 	local total=0 classified=0 classified_ratio=0 unknown_ratio=0
 
@@ -29,12 +30,13 @@ rpc_dpi_status() {
 			true|1) running=1 ;;
 		esac
 	fi
-	# process alive counts as running even if meta lagging
 	pidof openont-dpi >/dev/null 2>&1 && running=1
+	pidof openont-classify >/dev/null 2>&1 && classify_running=1
 
 	[ -f "$flow_file" ] && flow_entries=$(grep -c . "$flow_file" 2>/dev/null || echo 0)
+	[ -f "$map_file" ] && map_entries=$(grep -c . "$map_file" 2>/dev/null || echo 0)
+	[ -f "$STATS_DIR/dns.log" ] && dns_log_ok=1
 
-	# latest sample ratios from history tail (last line apps)
 	if [ -f "$HIST_FILE" ]; then
 		local last
 		last=$(tail -n 1 "$HIST_FILE" 2>/dev/null)
@@ -63,6 +65,7 @@ rpc_dpi_status() {
 	json_add_string classifier "$engine"
 	json_add_string engine "$engine"
 	json_add_boolean dpi_running "$running"
+	json_add_boolean classify_running "$classify_running"
 	json_add_string dpi_mode "$mode"
 	json_add_int flows_seen "${flows_seen:-0}"
 	json_add_int flows_classified "${flows_classified:-0}"
@@ -70,6 +73,8 @@ rpc_dpi_status() {
 	json_add_int queue_drops "${queue_drops:-0}"
 	json_add_int queue_num "${queue_num:-10}"
 	json_add_int flow_entries "${flow_entries:-0}"
+	json_add_int map_entries "${map_entries:-0}"
+	json_add_boolean dns_log_ok "$dns_log_ok"
 	json_add_int classified_ratio "$classified_ratio"
 	json_add_int unknown_ratio "$unknown_ratio"
 	json_add_int last_sample_total "$total"

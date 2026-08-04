@@ -18,6 +18,11 @@ function drawLine(view, id, pts, key, color, label) {
 	var pads = cc.ratePads(w, ctx, ticks);
 	view._lastRatePads = pads;
 	view._lastRateMaxV = maxV;
+	if (!view._geom)
+		view._geom = { rate: {} };
+	if (!view._geom.rate)
+		view._geom.rate = {};
+	view._geom.rate[id] = { pads: pads, maxV: maxV };
 
 	var padL = pads.L, padR = pads.R, padT = pads.T, padB = pads.B;
 	var plotW = w - padL - padR, plotH = h - padT - padB;
@@ -121,68 +126,8 @@ function drawRateCharts(view) {
 	drawLine(view, 'o-rate-down-canvas', view._rateWindow, 'rx', downColor, _('Download'));
 }
 
-function bindRateHover(view) {
-	var up = document.getElementById('o-rate-up-canvas');
-	var down = document.getElementById('o-rate-down-canvas');
-	if (!up || !down) return;
-
-	function onMove(ev, canvas) {
-		var pts = view._rateWindow || [];
-		if (pts.length < 1) return;
-		var rect = canvas.getBoundingClientRect();
-		var maxV = view._lastRateMaxV || 1;
-		var pads = view._lastRatePads || cc.ratePads(rect.width, null, null);
-		var padL = pads.L, padR = pads.R;
-		var plotW = Math.max(1, rect.width - padL - padR);
-		var x = ev.clientX - rect.left;
-		var t0 = pts[0].t, t1 = pts[pts.length - 1].t;
-		if (t1 <= t0) t1 = t0 + 1;
-		var ratio = (x - padL) / plotW;
-		if (ratio < 0) ratio = 0;
-		if (ratio > 1) ratio = 1;
-		var t = t0 + ratio * (t1 - t0);
-		var best = 0, bestD = Infinity;
-		for (var i = 0; i < pts.length; i++) {
-			var d = Math.abs(pts[i].t - t);
-			if (d < bestD) { bestD = d; best = i; }
-		}
-		view._hoverIdx = best;
-		drawRateCharts(view);
-		showRateTips(ev, pts[best]);
-	}
-
-	function onLeave() {
-		view._hoverIdx = -1;
-		drawRateCharts(view);
-		hideRateTips();
-	}
-
-	up.addEventListener('mousemove', function (ev) { onMove(ev, up); });
-	down.addEventListener('mousemove', function (ev) { onMove(ev, down); });
-	up.addEventListener('mouseleave', onLeave);
-	down.addEventListener('mouseleave', onLeave);
-}
-
-function showRateTips(ev, pt) {
-	var tipUp = document.getElementById('o-rate-tip-up');
-	var tipDown = document.getElementById('o-rate-tip-down');
-	if (!tipUp || !pt) return;
-	var time = cc.fmtClock(pt.t);
-	tipUp.textContent = time + '  ' + _('Upload') + '：' + cc.fmtRate(pt.tx) +
-		'  ' + _('Download') + '：' + cc.fmtRate(pt.rx);
-	cc.placeChartTip(tipUp, ev.clientX, ev.clientY);
-	if (tipDown)
-		cc.hideTip(tipDown);
-}
-
-function hideRateTips() {
-	cc.hideTip(document.getElementById('o-rate-tip-up'));
-	cc.hideTip(document.getElementById('o-rate-tip-down'));
-}
-
 return baseclass.extend({
 	__name__: 'openont.chart-rate',
 	drawRateCharts: drawRateCharts,
-	bindRateHover: bindRateHover,
 	drawLine: drawLine
 });

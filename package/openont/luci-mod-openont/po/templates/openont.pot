@@ -504,6 +504,15 @@ msgstr ""
 msgid "DPI mode"
 msgstr ""
 
+msgid "DNS classify running"
+msgstr ""
+
+msgid "IP class map entries"
+msgstr ""
+
+msgid "DNS log present"
+msgstr ""
+
 msgid "Flows seen"
 msgstr ""
 

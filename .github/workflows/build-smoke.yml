@@ -54,8 +54,10 @@ jobs:
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/chart-common.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/chart-pie.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/chart-rate.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/chart-hover.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/dash-layout.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/buckets.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dpi.js
             package/openont/luci-mod-openont/po/zh_Hans/openont.po
             package/openont/luci-mod-openont/po/templates/openont.pot
             package/openont/openont-dpi/Makefile
@@ -67,12 +69,14 @@ jobs:
             package/openont/openont-dpi/files/dpi-buckets.conf
             package/openont/openont-stats/Makefile
             package/openont/openont-stats/files/usr/sbin/openont-statsd
+            package/openont/openont-stats/files/usr/sbin/openont-classify
             package/openont/openont-stats/files/etc/init.d/openont-stats
             package/openont/openont-stats/files/usr/lib/openont/stats_rpc.sh
             package/openont/openont-stats/files/usr/lib/openont/stats-paths.sh
             package/openont/openont-stats/files/usr/share/openont/buckets.schema
             package/openont/openont-stats/files/usr/share/openont/buckets.sh
             package/openont/openont-stats/files/usr/share/openont/buckets.json
+            package/openont/openont-stats/files/usr/share/openont/app-class.conf
             package/openont/luci-theme-openont/htdocs/luci-static/openont/cascade.css
             package/openont/luci-theme-openont/htdocs/luci-static/openont/theme-blue-sidebar.css
             package/openont/luci-theme-openont/htdocs/luci-static/openont/script.js
@@ -86,11 +90,15 @@ jobs:
           for f in "${files[@]}"; do
             test -f "$f" || { echo "missing: $f" >&2; exit 1; }
           done
-          # DNS keyword classifier removed in favor of openont-dpi
+          # Classify lives in openont-stats (not luci-mod legacy paths)
           test ! -f package/openont/luci-mod-openont/root/usr/sbin/openont-appclass \
-            || { echo "openont-appclass must not exist (replaced by openont-dpi)" >&2; exit 1; }
+            || { echo "openont-appclass must not exist (use openont-classify in openont-stats)" >&2; exit 1; }
           test ! -f package/openont/luci-mod-openont/root/usr/share/openont/app-class.conf \
-            || { echo "app-class.conf must not exist (replaced by dpi-buckets.conf)" >&2; exit 1; }
+            || { echo "app-class.conf must live under openont-stats package" >&2; exit 1; }
+          test -f package/openont/openont-stats/files/usr/share/openont/app-class.conf \
+            || { echo "openont-stats app-class.conf required" >&2; exit 1; }
+          test -f package/openont/openont-stats/files/usr/sbin/openont-classify \
+            || { echo "openont-classify required" >&2; exit 1; }
           # stats daemon must not live in luci-mod
           test ! -f package/openont/luci-mod-openont/root/usr/sbin/openont-statsd \
             || { echo "openont-statsd must live in openont-stats package" >&2; exit 1; }
@@ -128,6 +136,7 @@ jobs:
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont
             package/openont/openont-stats/files/etc/init.d/openont-stats
             package/openont/openont-stats/files/usr/sbin/openont-statsd
+            package/openont/openont-stats/files/usr/sbin/openont-classify
             package/openont/openont-dpi/files/dpi-nft.sh
             package/openont/openont-core/files/usr/sbin/openont-port
             package/openont/openont-core/files/usr/sbin/openont-address
@@ -166,8 +175,10 @@ jobs:
             || { echo "luci-mod-openont must DEPEND on openont-stats" >&2; exit 1; }
           grep -q 'stats_rpc.sh' package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont \
             || { echo "rpcd must source stats_rpc.sh" >&2; exit 1; }
-          grep -q 'flow.class\|FLOW_FILE' package/openont/openont-stats/files/usr/sbin/openont-statsd \
-            || { echo "statsd must read DPI flow.class labels" >&2; exit 1; }
+          grep -q 'ip_class\|MAP_FILE\|ipclass' package/openont/openont-stats/files/usr/sbin/openont-statsd \
+            || { echo "statsd must attribute bytes via ip_class map" >&2; exit 1; }
+          grep -q 'game_udp' package/openont/openont-stats/files/usr/sbin/openont-statsd \
+            || { echo "statsd must support game_udp ports" >&2; exit 1; }
           grep -q 'http|' package/openont/openont-stats/files/usr/share/openont/buckets.schema \
             || { echo "buckets.schema missing http bucket" >&2; exit 1; }
           # overview must stay lean after split
@@ -236,6 +247,7 @@ jobs:
             package/openont/openont-core/files/usr/sbin/openont-* \
             package/openont/luci-mod-openont/root/usr/libexec/rpcd/openont \
             package/openont/openont-stats/files/usr/sbin/openont-statsd \
+            package/openont/openont-stats/files/usr/sbin/openont-classify \
             package/openont/openont-stats/files/etc/init.d/openont-stats \
             package/openont/openont-stats/files/usr/lib/openont/*.sh \
             package/openont/openont-dpi/files/dpi-nft.sh \

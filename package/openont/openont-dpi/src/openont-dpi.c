@@ -26,10 +26,14 @@
 
 #define STATS_DIR "/tmp/openont-stats"
 #define FLOW_FILE STATS_DIR "/flow.class"
+#define MAP_FILE STATS_DIR "/ip_class.map"
 #define META_FILE STATS_DIR "/dpi_meta.json"
+#define CLASS_CONF_SYS "/usr/share/openont/app-class.conf"
+#define CLASS_CONF_USR "/etc/openont/app-class.conf"
 #define BUCKET_CONF_SYS "/usr/share/openont/dpi-buckets.conf"
 #define BUCKET_CONF_USR "/etc/openont/dpi-buckets.conf"
 #define DEFAULT_QUEUE 10
+#define FLOW_TTL_SEC 600
 
 /* packet mark: bits OPENONT_DPI_MARK_SHIFT.. — see buckets.gen.h */
 
@@ -88,24 +92,64 @@ static int key_eq(const struct flow_key *a, const struct flow_key *b)
 	       memcmp(a->daddr, b->daddr, a->family == 6 ? 16 : 4) == 0;
 }
 
+static void flow_evict_oldest(void)
+{
+	size_t i, best = 0;
+	time_t oldest = 0;
+	int found = 0;
+	for (i = 0; i < FLOW_TAB; i++) {
+		if (!g_flows[i].ts)
+			continue;
+		if (!found || g_flows[i].ts < oldest) {
+			oldest = g_flows[i].ts;
+			best = i;
+			found = 1;
+		}
+	}
+	if (found)
+		memset(&g_flows[best], 0, sizeof(g_flows[best]));
+}
+
 static struct flow_entry *flow_get(const struct flow_key *k, int create)
 {
 	uint32_t h = key_hash(k) % FLOW_TAB;
 	uint32_t i;
+	time_t now = time(NULL);
+
 	for (i = 0; i < FLOW_TAB; i++) {
 		uint32_t idx = (h + i) % FLOW_TAB;
 		struct flow_entry *e = &g_flows[idx];
+		if (e->ts != 0 && e->ts + FLOW_TTL_SEC < now) {
+			memset(e, 0, sizeof(*e));
+		}
 		if (e->ts == 0) {
 			if (!create)
 				return NULL;
 			memset(e, 0, sizeof(*e));
 			e->key = *k;
-			e->ts = time(NULL);
+			e->ts = now;
 			g_flows_seen++;
 			return e;
 		}
-		if (key_eq(&e->key, k))
+		if (key_eq(&e->key, k)) {
+			e->ts = now;
 			return e;
+		}
+	}
+	if (!create)
+		return NULL;
+	/* table full — drop oldest and place at first probe slot */
+	flow_evict_oldest();
+	for (i = 0; i < FLOW_TAB; i++) {
+		uint32_t idx = (h + i) % FLOW_TAB;
+		struct flow_entry *e = &g_flows[idx];
+		if (e->ts == 0) {
+			memset(e, 0, sizeof(*e));
+			e->key = *k;
+			e->ts = now;
+			g_flows_seen++;
+			return e;
+		}
 	}
 	return NULL;
 }
@@ -117,6 +161,39 @@ static void addr_to_str(const struct flow_key *k, int src, char *buf, size_t sz)
 		inet_ntop(AF_INET6, a, buf, (socklen_t)sz);
 	else
 		inet_ntop(AF_INET, a, buf, (socklen_t)sz);
+}
+
+/* Sticky remote IP → bucket for statsd (append; classify merges on TTL). */
+static void ip_map_put(const struct flow_key *k, uint8_t bucket)
+{
+	char remote[64];
+	FILE *fp;
+	const char *name;
+	int lan_src;
+
+	if (bucket == OO_B_UNKNOWN)
+		return;
+	name = oo_bucket_name(bucket);
+	if (!name || !strcmp(name, "unknown"))
+		return;
+
+	lan_src = 0;
+	if (k->family == 4) {
+		const uint8_t *s = k->saddr;
+		if (s[0] == 10 ||
+		    (s[0] == 192 && s[1] == 168) ||
+		    (s[0] == 172 && s[1] >= 16 && s[1] <= 31))
+			lan_src = 1;
+	}
+	addr_to_str(k, lan_src ? 0 : 1, remote, sizeof(remote));
+	if (!remote[0] || !strcmp(remote, "0.0.0.0"))
+		return;
+
+	fp = fopen(MAP_FILE, "a");
+	if (!fp)
+		return;
+	fprintf(fp, "%s %s %ld\n", remote, name, (long)time(NULL));
+	fclose(fp);
 }
 
 /* Rewrite flow.class from in-memory table (simple, small scale) */
@@ -330,9 +407,9 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		fe->ts = time(NULL);
 		g_flows_classified++;
 		mark = bucket_to_mark(bucket);
+		ip_map_put(&key, bucket);
 	} else if (fe->pkts >= 12) {
-		/* give up — leave unknown, stop wasting CPU (mark stays 0 → still queued;
-		 * nft still queues first 12 only for established) */
+		/* give up — leave unknown; free slot soon via TTL */
 		fe->done = 1;
 		fe->bucket = OO_B_UNKNOWN;
 	}
@@ -352,6 +429,11 @@ accept:
 
 static int load_conf(void)
 {
+	/* Prefer unified app-class.conf (token|bucket); fall back to dpi-buckets. */
+	if (access(CLASS_CONF_USR, R_OK) == 0)
+		return oo_classifier_load(&g_cls, CLASS_CONF_USR);
+	if (access(CLASS_CONF_SYS, R_OK) == 0)
+		return oo_classifier_load(&g_cls, CLASS_CONF_SYS);
 	if (access(BUCKET_CONF_USR, R_OK) == 0)
 		return oo_classifier_load(&g_cls, BUCKET_CONF_USR);
 	return oo_classifier_load(&g_cls, BUCKET_CONF_SYS);

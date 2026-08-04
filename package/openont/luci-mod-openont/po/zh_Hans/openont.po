@@ -506,6 +506,15 @@ msgstr "DPI 运行中"
 msgid "DPI mode"
 msgstr "DPI 模式"
 
+msgid "DNS classify running"
+msgstr "DNS 分类运行中"
+
+msgid "IP class map entries"
+msgstr "IP 分类表条目"
+
+msgid "DNS log present"
+msgstr "DNS 日志存在"
+
 msgid "Flows seen"
 msgstr "已见流数"
 
