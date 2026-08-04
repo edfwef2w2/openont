@@ -10,6 +10,17 @@
 			"acl": [ "luci-mod-openont" ]
 		}
 	},
+	"admin/status/openont-dpi": {
+		"title": "Application DPI",
+		"order": 2,
+		"action": {
+			"type": "view",
+			"path": "openont/dpi"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
 	"admin/network/openont-ports": {
 		"title": "Port Binding",
 		"order": 5,

@@ -486,6 +486,51 @@ msgstr ""
 msgid "Configure firewall flow offloading to improve forwarding performance."
 msgstr ""
 
+msgid "Application DPI"
+msgstr ""
+
+msgid "Traffic distribution on the overview uses deep packet inspection (TLS SNI, HTTP Host, L7 signatures) via NFQUEUE. Flow offload may reduce classification coverage for already-offloaded flows."
+msgstr ""
+
+msgid "DPI engine"
+msgstr ""
+
+msgid "DPI binary installed"
+msgstr ""
+
+msgid "DPI running"
+msgstr ""
+
+msgid "DPI mode"
+msgstr ""
+
+msgid "Flows seen"
+msgstr ""
+
+msgid "Flows classified"
+msgstr ""
+
+msgid "Labeled flow entries"
+msgstr ""
+
+msgid "Queue packets"
+msgstr ""
+
+msgid "Queue drops"
+msgstr ""
+
+msgid "Last sample classified"
+msgstr ""
+
+msgid "Last sample unclassified"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
 msgid "Forward external ports to internal hosts. Use IP groups to restrict source addresses."
 msgstr ""
 

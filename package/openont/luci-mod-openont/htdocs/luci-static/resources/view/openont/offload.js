@@ -4,7 +4,6 @@
 
 var callDetect = rpc.declare({ object: 'openont', method: 'offload_detect', expect: { '': {} } });
 var callSet = rpc.declare({ object: 'openont', method: 'offload_set', params: [ 'mode' ] });
-var callDpi = rpc.declare({ object: 'openont', method: 'dpi_status', expect: { '': {} } });
 
 var MODES = [ 'off', 'software', 'hardware' ];
 
@@ -17,92 +16,25 @@ function modeLabel(m) {
 	}
 }
 
-function yn(v) {
-	return v ? _('Yes') : _('No');
-}
-
 return view.extend({
 	handleSaveApply: null,
 	handleSave: null,
 	handleReset: null,
 
 	load: function () {
-		return Promise.all([
-			callDetect(),
-			callDpi().catch(function () { return {}; })
-		]);
+		return callDetect();
 	},
 
 	render: function (data) {
-		var state = data[0] || {};
-		var dpi = data[1] || {};
+		var state = data || {};
 		var err = E('div', { class: 'alert-message', style: 'display:none' });
 		var statusNode = E('div', { class: 'cbi-section-node' });
 		var radioBox = E('div', { class: 'cbi-section-node' });
-		var dpiNode = E('div', { class: 'cbi-section-node' });
 
 		function modeDisabled(m) {
 			if (m === 'software' && !state.software_supported) return true;
 			if (m === 'hardware' && (!state.software_supported || !state.hardware_supported)) return true;
 			return false;
-		}
-
-		function renderDpi(d) {
-			dpi = d || {};
-			dpiNode.innerHTML = '';
-			dpiNode.appendChild(E('div', { class: 'cbi-map-descr' }, [
-				_('Traffic distribution on the overview uses deep packet inspection (TLS SNI, HTTP Host, L7 signatures) via NFQUEUE. Flow offload may reduce classification coverage for already-offloaded flows.')
-			]));
-			dpiNode.appendChild(E('table', { class: 'table' }, [
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('DPI engine') ]),
-					E('td', { class: 'td' }, [ dpi.engine || dpi.classifier || '—' ])
-				]),
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('DPI binary installed') ]),
-					E('td', { class: 'td' }, [ yn(!!dpi.binary_present) ])
-				]),
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('DPI running') ]),
-					E('td', { class: 'td' }, [ yn(!!dpi.dpi_running) ])
-				]),
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('DPI mode') ]),
-					E('td', { class: 'td' }, [ dpi.dpi_mode || '—' ])
-				]),
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('Flows seen') ]),
-					E('td', { class: 'td' }, [ String(dpi.flows_seen != null ? dpi.flows_seen : 0) ])
-				]),
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('Flows classified') ]),
-					E('td', { class: 'td' }, [ String(dpi.flows_classified != null ? dpi.flows_classified : 0) ])
-				]),
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('Labeled flow entries') ]),
-					E('td', { class: 'td' }, [ String(dpi.flow_entries != null ? dpi.flow_entries : 0) ])
-				]),
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('Queue packets') ]),
-					E('td', { class: 'td' }, [ String(dpi.queue_pkts != null ? dpi.queue_pkts : 0) ])
-				]),
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('Queue drops') ]),
-					E('td', { class: 'td' }, [ String(dpi.queue_drops != null ? dpi.queue_drops : 0) ])
-				]),
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('Last sample classified') ]),
-					E('td', { class: 'td' }, [
-						String(dpi.classified_ratio != null ? dpi.classified_ratio : 0) + '%'
-					])
-				]),
-				E('tr', { class: 'tr' }, [
-					E('td', { class: 'td' }, [ _('Last sample unclassified') ]),
-					E('td', { class: 'td' }, [
-						String(dpi.unknown_ratio != null ? dpi.unknown_ratio : 0) + '%'
-					])
-				])
-			]));
 		}
 
 		function renderStatus(d) {
@@ -171,7 +103,6 @@ return view.extend({
 
 		buildRadios();
 		renderStatus(state);
-		renderDpi(dpi);
 
 		return E('div', { class: 'cbi-map' }, [
 			E('h2', { name: 'content' }, [ _('Flow Offload') ]),
@@ -185,24 +116,16 @@ return view.extend({
 					E('button', {
 						class: 'cbi-button',
 						click: function () {
-							Promise.all([
-								callDetect(),
-								callDpi().catch(function () { return {}; })
-							]).then(function (res) {
-								renderStatus(res[0]);
+							callDetect().then(function (d) {
+								renderStatus(d);
 								buildRadios();
-								renderStatus(res[0]);
-								renderDpi(res[1]);
+								renderStatus(d);
 								err.style.display = 'none';
 							});
 						}
 					}, [ _('Refresh') ])
 				]),
 				statusNode
-			]),
-			E('div', { class: 'cbi-section' }, [
-				E('h3', {}, [ _('Application DPI') ]),
-				dpiNode
 			]),
 			E('div', { class: 'cbi-section' }, [
 				E('h3', {}, [ _('Mode') ]),
