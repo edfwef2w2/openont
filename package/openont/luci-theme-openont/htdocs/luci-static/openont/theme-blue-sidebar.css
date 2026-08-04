@@ -34,6 +34,13 @@
 	--bw-info:     #1a7fd4;
 	--bw-info-bg:  #e8f3fc;
 
+	/* Overview status profile card (fill + on-fill; independent of --bw-success text) */
+	--bw-profile-from: #0d9f6e;
+	--bw-profile-to:   #0a8a5e;
+	--bw-profile-offline-from: #e11d48;
+	--bw-profile-offline-to:   #c0163c;
+	--bw-on-profile: #fff;
+
 	/* Layout */
 	--sidebar-width: 240px;
 	--sidebar-bg: linear-gradient(180deg, var(--bw-blue-800) 0%, var(--bw-blue-900) 100%);
@@ -113,6 +120,13 @@
 	--bw-danger-bg: rgba(251, 113, 133, 0.12);
 	--bw-info:     #4da3ef;
 	--bw-info-bg:  rgba(77, 163, 239, 0.14);
+
+	/* Profile fills stay dark enough for white on-profile text (not light --bw-success) */
+	--bw-profile-from: #059669;
+	--bw-profile-to:   #047857;
+	--bw-profile-offline-from: #e11d48;
+	--bw-profile-offline-to:   #be123c;
+	--bw-on-profile: #fff;
 
 	--sidebar-bg: linear-gradient(180deg, #071422 0%, #040a12 100%);
 	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -2469,8 +2483,9 @@ header .nav a::before {
 	border-right-color: rgba(255, 255, 255, 0.04);
 }
 
-:root[data-darkmode="true"] .o-card,
-:root[data-theme="dark"] .o-card {
+/* Exclude status profile: it owns gradient fill via --bw-profile-* tokens */
+:root[data-darkmode="true"] .o-card:not(.o-profile),
+:root[data-theme="dark"] .o-card:not(.o-profile) {
 	background: var(--bw-white);
 	border-color: var(--bw-gray-200);
 	box-shadow: var(--shadow-md);
@@ -3096,17 +3111,28 @@ html.is-layout-narrow header .pull-right {
 	flex-direction: column;
 }
 
-/* Status card: use .o-card.o-profile so theme can override dark .o-card surface */
+/*
+ * Status profile: single ownership of surface + label color via tokens.
+ * Dark generic .o-card:not(.o-profile) must not repaint this card.
+ */
 .o-card.o-profile,
 .o-profile {
-	background: linear-gradient(135deg, var(--bw-success, #0d9f6e) 0%, #0a8a5e 100%);
-	color: #fff;
+	background: linear-gradient(135deg, var(--bw-profile-from) 0%, var(--bw-profile-to) 100%);
+	color: var(--bw-on-profile);
 	border: none !important;
+	box-shadow: var(--shadow-md);
 }
 
 .o-card.o-profile.offline,
 .o-profile.offline {
-	background: linear-gradient(135deg, var(--bw-danger, #e11d48) 0%, #c0163c 100%);
+	background: linear-gradient(135deg, var(--bw-profile-offline-from) 0%, var(--bw-profile-offline-to) 100%);
+}
+
+.o-profile .name,
+.o-profile .state,
+.o-profile .state small,
+.o-profile .uptime {
+	color: inherit;
 }
 
 .o-profile .name { font-size: 13px; opacity: 0.95; margin: 0; }
@@ -3278,32 +3304,6 @@ html.is-layout-narrow header .pull-right {
 		radial-gradient(ellipse 50% 40% at 85% 10%, rgba(77, 163, 239, 0.1), transparent 55%),
 		radial-gradient(ellipse 40% 35% at 10% 90%, rgba(13, 79, 150, 0.08), transparent 50%),
 		var(--bw-gray-50);
-}
-
-/*
- * Dark mode: :root[data-darkmode] .o-card (surface) outranks bare .o-profile.
- * Re-apply success/danger gradients with higher specificity + dark tokens.
- */
-:root[data-darkmode="true"] .o-card.o-profile,
-:root[data-theme="dark"] .o-card.o-profile {
-	background: linear-gradient(135deg, var(--bw-success, #34d399) 0%, #059669 100%);
-	color: #fff;
-	border-color: transparent;
-	box-shadow: var(--shadow-md);
-}
-
-:root[data-darkmode="true"] .o-card.o-profile.offline,
-:root[data-theme="dark"] .o-card.o-profile.offline {
-	background: linear-gradient(135deg, var(--bw-danger, #fb7185) 0%, #e11d48 100%);
-}
-
-:root[data-darkmode="true"] .o-profile .state,
-:root[data-theme="dark"] .o-profile .state,
-:root[data-darkmode="true"] .o-profile .name,
-:root[data-theme="dark"] .o-profile .name,
-:root[data-darkmode="true"] .o-profile .uptime,
-:root[data-theme="dark"] .o-profile .uptime {
-	color: #fff;
 }
 
 :root[data-darkmode="true"] .o-stat-grid .num,
