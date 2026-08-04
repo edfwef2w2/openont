@@ -3,11 +3,18 @@
 'require openont.chart-common as cc';
 'require openont.chart-rate as chartRate';
 
-function moveTipsToBody() {
-	['o-pie-tip', 'o-rate-tip-up', 'o-rate-tip-down'].forEach(function (id) {
-		var el = document.getElementById(id);
-		if (el)
-			cc.ensureTipHost(el);
+function moveTipsToBody(root) {
+	var tips = [];
+	if (root && root.querySelectorAll)
+		tips = root.querySelectorAll('.o-chart-tip');
+	if (!tips.length) {
+		['o-pie-tip', 'o-rate-tip-up', 'o-rate-tip-down'].forEach(function (id) {
+			var el = document.getElementById(id);
+			if (el) tips = Array.prototype.concat.call(tips, [el]);
+		});
+	}
+	Array.prototype.forEach.call(tips, function (el) {
+		cc.ensureTipHost(el);
 	});
 }
 
@@ -38,7 +45,6 @@ function hitPie(view, clientX, clientY) {
 		ang = Math.atan2(dy, dx);
 		a0 = s.a0;
 		a1 = s.a1;
-		/* normalize ang into [a0, a0+2π) */
 		while (ang < a0)
 			ang += twoPi;
 		while (ang >= a0 + twoPi)
@@ -49,15 +55,21 @@ function hitPie(view, clientX, clientY) {
 	return null;
 }
 
+function sharedPads(view, width) {
+	var rate = view._geom && view._geom.rate;
+	if (rate && rate.shared && rate.shared.pads)
+		return rate.shared.pads;
+	if (view._lastRatePads)
+		return view._lastRatePads;
+	return cc.ratePads(width || 640, null, null);
+}
+
 function hitRate(view, canvas, clientX, clientY) {
 	var pts = view._rateWindow || [];
 	if (!canvas || pts.length < 1)
 		return null;
 	var loc = localXY(canvas, clientX, clientY);
-	var id = canvas.id || '';
-	var geom = (view._geom && view._geom.rate && view._geom.rate[id]) || null;
-	var pads = (geom && geom.pads) || view._lastRatePads ||
-		cc.ratePads(loc.rect.width, null, null);
+	var pads = sharedPads(view, loc.rect.width);
 	var padL = pads.L, padR = pads.R;
 	var plotW = Math.max(1, loc.rect.width - padL - padR);
 	var ratio = (loc.x - padL) / plotW;
@@ -132,8 +144,10 @@ function onPointerMove(view, ev) {
 			hideAllTips();
 			return;
 		}
-		view._hoverIdx = hit.idx;
-		chartRate.drawRateCharts(view);
+		if (view._hoverIdx !== hit.idx) {
+			view._hoverIdx = hit.idx;
+			chartRate.drawRateCharts(view);
+		}
 		showRateTip(ev, hit.pt);
 	}
 }
@@ -152,7 +166,7 @@ function onPointerLeave(view, ev) {
 }
 
 function bind(view, root) {
-	moveTipsToBody();
+	moveTipsToBody(root);
 	view._hoverIdx = -1;
 	view._pointer = null;
 	view._geom = view._geom || { rate: {} };
@@ -171,7 +185,6 @@ function bind(view, root) {
 		onPointerMove(view, ev);
 	});
 	strip.addEventListener('pointerleave', function (ev) {
-		/* leave strip entirely */
 		if (ev.target === strip) {
 			view._pointer = null;
 			view._hoverIdx = -1;
@@ -179,20 +192,29 @@ function bind(view, root) {
 			hideAllTips();
 		}
 	});
-	/* canvas-level leave for accurate tip hide */
-	['o-pie-canvas', 'o-rate-up-canvas', 'o-rate-down-canvas'].forEach(function (id) {
-		var c = document.getElementById(id);
-		if (!c)
-			return;
-		c.addEventListener('pointerleave', function (ev) {
-			onPointerLeave(view, ev);
+
+	/* Prefer root-scoped nodes (works while detached); fall back after mount. */
+	function attachCanvasLeave() {
+		['o-pie-canvas', 'o-rate-up-canvas', 'o-rate-down-canvas'].forEach(function (id) {
+			var c = (root && root.querySelector) ? root.querySelector('#' + id) : null;
+			if (!c)
+				c = document.getElementById(id);
+			if (!c || c._oHoverLeave)
+				return;
+			c._oHoverLeave = true;
+			c.addEventListener('pointerleave', function (ev) {
+				onPointerLeave(view, ev);
+			});
 		});
-	});
+		moveTipsToBody(root);
+	}
+	attachCanvasLeave();
+	requestAnimationFrame(attachCanvasLeave);
 }
 
 function resync(view) {
 	var p = view && view._pointer;
-	if (!p)
+	if (!p || view._paintingCharts)
 		return;
 	var fake = { clientX: p.clientX, clientY: p.clientY, target: null };
 	if (p.kind === 'pie') {
@@ -208,20 +230,11 @@ function resync(view) {
 	}
 }
 
-function noteRateGeom(view, canvasId, pads, maxV) {
-	if (!view._geom)
-		view._geom = { rate: {} };
-	if (!view._geom.rate)
-		view._geom.rate = {};
-	view._geom.rate[canvasId] = { pads: pads, maxV: maxV };
-}
-
 return baseclass.extend({
 	__name__: 'openont.chart-hover',
 	bind: bind,
 	resync: resync,
 	hitPie: hitPie,
 	hitRate: hitRate,
-	noteRateGeom: noteRateGeom,
 	moveTipsToBody: moveTipsToBody
 });

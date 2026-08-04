@@ -71,15 +71,20 @@
 		} catch (e) { /* ignore */ }
 
 		var btn = document.getElementById('bw-theme-toggle');
-		if (!btn)
-			return;
+		if (btn) {
+			btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+			var label = btn.querySelector('.bw-theme-toggle-text');
+			/* Label + icon = mode you will switch TO (not current) */
+			if (label)
+				label.textContent = dark ? tr('Light mode') : tr('Dark mode');
+			btn.title = tr('Toggle light / dark mode');
+		}
 
-		btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-		var label = btn.querySelector('.bw-theme-toggle-text');
-		/* Label + icon = mode you will switch TO (not current) */
-		if (label)
-			label.textContent = dark ? tr('Light mode') : tr('Dark mode');
-		btn.title = tr('Toggle light / dark mode');
+		try {
+			document.dispatchEvent(new CustomEvent('openont-theme-change', {
+				detail: { dark: !!dark }
+			}));
+		} catch (e2) { /* ignore */ }
 	}
 
 	function initThemeToggle() {

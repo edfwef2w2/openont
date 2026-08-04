@@ -2,20 +2,61 @@
 'require baseclass';
 'require openont.chart-common as cc';
 
-function drawLine(view, id, pts, key, color, label) {
+function seriesMax(pts, key) {
+	var maxV = 1;
+	(pts || []).forEach(function (p) {
+		if (p[key] > maxV) maxV = p[key];
+	});
+	return maxV * 1.15;
+}
+
+function measureCanvasWidth() {
+	var canvas = document.getElementById('o-rate-up-canvas') ||
+		document.getElementById('o-rate-down-canvas');
+	if (!canvas)
+		return 640;
+	var rect = canvas.getBoundingClientRect();
+	var w = Math.max(1, Math.round(rect.width));
+	if (w <= 1 && canvas.clientWidth)
+		w = canvas.clientWidth;
+	if (w <= 1)
+		w = parseInt(canvas.getAttribute('width'), 10) || 640;
+	return w;
+}
+
+function sharedRatePads(view, pts) {
+	var w = measureCanvasWidth();
+	/* Offscreen-free measure: ratePads only needs ctx.font + measureText */
+	var probe = document.createElement('canvas').getContext('2d');
+	var maxTx = seriesMax(pts, 'tx');
+	var maxRx = seriesMax(pts, 'rx');
+	var padsUp = cc.ratePads(w, probe, cc.rateAxisTicks(maxTx));
+	var padsDn = cc.ratePads(w, probe, cc.rateAxisTicks(maxRx));
+	var pads = {
+		L: Math.max(padsUp.L, padsDn.L),
+		R: padsUp.R,
+		T: padsUp.T,
+		B: padsUp.B
+	};
+	view._lastRatePads = pads;
+	view._geom = view._geom || { rate: {} };
+	view._geom.rate = view._geom.rate || {};
+	view._geom.rate.shared = { pads: pads };
+	return { pads: pads, maxTx: maxTx, maxRx: maxRx };
+}
+
+function drawLine(view, id, pts, key, color, label, pads, maxV) {
 	var canvas = document.getElementById(id);
 	var fit = cc.fitCanvas(canvas);
 	if (!fit) return;
 	var ctx = fit.ctx, w = fit.w, h = fit.h;
 
-	var maxV = 1;
-	(pts || []).forEach(function (p) {
-		if (p[key] > maxV) maxV = p[key];
-	});
-	maxV = maxV * 1.15;
+	if (!(maxV > 0))
+		maxV = seriesMax(pts, key);
+	if (!pads)
+		pads = cc.ratePads(w, ctx, cc.rateAxisTicks(maxV));
 
 	var ticks = cc.rateAxisTicks(maxV);
-	var pads = cc.ratePads(w, ctx, ticks);
 	view._lastRatePads = pads;
 	view._lastRateMaxV = maxV;
 	if (!view._geom)
@@ -107,7 +148,7 @@ function drawLine(view, id, pts, key, color, label) {
 		ctx.beginPath();
 		ctx.arc(hxy.x, hxy.y, 4, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.strokeStyle = cc.themeColor('--bw-white', '#fff');
+		ctx.strokeStyle = '#ffffff';
 		ctx.lineWidth = 1.5;
 		ctx.stroke();
 	}
@@ -120,14 +161,19 @@ function drawLine(view, id, pts, key, color, label) {
 }
 
 function drawRateCharts(view) {
+	var pts = view._rateWindow || [];
+	var shared = sharedRatePads(view, pts);
 	var upColor = cc.themeColor('--bw-warn', '#d97706');
 	var downColor = cc.themeColor('--bw-blue-500', '#1a7fd4');
-	drawLine(view, 'o-rate-up-canvas', view._rateWindow, 'tx', upColor, _('Upload'));
-	drawLine(view, 'o-rate-down-canvas', view._rateWindow, 'rx', downColor, _('Download'));
+	drawLine(view, 'o-rate-up-canvas', pts, 'tx', upColor, _('Upload'),
+		shared.pads, shared.maxTx);
+	drawLine(view, 'o-rate-down-canvas', pts, 'rx', downColor, _('Download'),
+		shared.pads, shared.maxRx);
 }
 
 return baseclass.extend({
 	__name__: 'openont.chart-rate',
 	drawRateCharts: drawRateCharts,
-	drawLine: drawLine
+	drawLine: drawLine,
+	sharedRatePads: sharedRatePads
 });

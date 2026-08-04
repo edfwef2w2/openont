@@ -12,7 +12,7 @@ LUCI_DEPENDS:=+luci-base +luci-mod-status +openont-core +openont-stats
 LUCI_PKGARCH:=all
 
 PKG_LICENSE:=Apache-2.0
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 
 # Force executable bits (Windows checkouts often lose +x).
 # Install also overwrites stock status/overview.js (single install path).

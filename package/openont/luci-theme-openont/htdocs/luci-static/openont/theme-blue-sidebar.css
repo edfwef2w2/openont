@@ -121,12 +121,13 @@
 	--bw-info:     #4da3ef;
 	--bw-info-bg:  rgba(77, 163, 239, 0.14);
 
-	/* Profile fills stay dark enough for white on-profile text (not light --bw-success) */
+	/* Profile fills stay dark enough for light on-profile text (not light --bw-success) */
 	--bw-profile-from: #059669;
 	--bw-profile-to:   #047857;
 	--bw-profile-offline-from: #e11d48;
 	--bw-profile-offline-to:   #be123c;
-	--bw-on-profile: #fff;
+	/* Distinct from pure white so light→dark switch is visible; emerald-50 mint */
+	--bw-on-profile: #ecfdf5;
 
 	--sidebar-bg: linear-gradient(180deg, #071422 0%, #040a12 100%);
 	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -2098,6 +2099,7 @@ header a[href*="/status/nftables"] { --bw-icon: url("data:image/svg+xml,%3Csvg x
 header a[href*="/status/logs"] { --bw-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='8' y1='13' x2='16' y2='13'/%3E%3Cline x1='8' y1='17' x2='12' y2='17'/%3E%3C/svg%3E"); }
 header a[href*="/status/processes"] { --bw-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M9 9h6M9 13h6M9 17h4'/%3E%3C/svg%3E"); }
 header a[href*="/status/realtime"] { --bw-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='22 12 18 12 15 21 9 3 6 12 2 12'/%3E%3C/svg%3E"); }
+header a[href*="/status/openont-dpi"] { --bw-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Cpath d='M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14'/%3E%3C/svg%3E"); }
 
 /* System submenu */
 header a[href*="/system/system"] { --bw-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='3' width='20' height='14' rx='2'/%3E%3Cline x1='8' y1='21' x2='16' y2='21'/%3E%3Cline x1='12' y1='17' x2='12' y2='21'/%3E%3C/svg%3E"); }
@@ -3114,6 +3116,7 @@ html.is-layout-narrow header .pull-right {
 /*
  * Status profile: single ownership of surface + label color via tokens.
  * Dark generic .o-card:not(.o-profile) must not repaint this card.
+ * --bw-on-profile differs in light (#fff) vs dark (#ecfdf5).
  */
 .o-card.o-profile,
 .o-profile {
@@ -3132,7 +3135,7 @@ html.is-layout-narrow header .pull-right {
 .o-profile .state,
 .o-profile .state small,
 .o-profile .uptime {
-	color: inherit;
+	color: var(--bw-on-profile) !important;
 }
 
 .o-profile .name { font-size: 13px; opacity: 0.95; margin: 0; }
@@ -3145,6 +3148,11 @@ html.is-layout-narrow header .pull-right {
 .o-rate-line.up .val { color: var(--bw-warn, #d97706); }
 .o-rate-line.down .val { color: var(--bw-blue-500, #1a7fd4); }
 .o-rate-line .unit { font-size: 12px; color: var(--bw-gray-500, #6b7f93); margin-left: 4px; }
+.o-rate-side-lbl {
+	margin-left: 8px;
+	font-size: 12px;
+	color: var(--bw-gray-500, #6b7f93);
+}
 
 .o-stat-grid { display: flex; flex-wrap: wrap; text-align: center; }
 .o-stat-grid > div { flex: 1; min-width: 80px; padding: 6px; }

@@ -76,9 +76,15 @@ rpc_overview() {
 	[ "$wan_ok" -eq 0 ] && ip route 2>/dev/null | grep -q '^default ' && wan_ok=1
 
 	local hosts conns rem start limit used
-	hosts=$(grep -c . /tmp/dhcp.leases 2>/dev/null || echo 0)
-	[ "$hosts" -eq 0 ] && hosts=$(ip -4 neigh show 2>/dev/null | grep -c lladdr || echo 0)
+	# grep -c prints 0 but exits 1 on no match; never use "|| echo 0" (doubles the value).
+	hosts=$(grep -c . /tmp/dhcp.leases 2>/dev/null || true)
+	hosts=${hosts:-0}
+	if [ "$hosts" -eq 0 ]; then
+		hosts=$(ip -4 neigh show 2>/dev/null | grep -c lladdr || true)
+		hosts=${hosts:-0}
+	fi
 	conns=$(cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null || echo 0)
+	conns=${conns:-0}
 	start=100; limit=150
 	for r in $(list_role lan); do
 		s=$(uci -q get "dhcp.$r.start"); l=$(uci -q get "dhcp.$r.limit")
@@ -86,8 +92,9 @@ rpc_overview() {
 		[ -n "$l" ] && limit=$l
 		break
 	done
-	used=$(grep -c . /tmp/dhcp.leases 2>/dev/null || echo 0)
-	rem=$((limit-used)); [ "$rem" -lt 0 ] && rem=0
+	used=$(grep -c . /tmp/dhcp.leases 2>/dev/null || true)
+	used=${used:-0}
+	rem=$((limit - used)); [ "$rem" -lt 0 ] && rem=0
 
 	# ports payload from lib
 	ports_json=$(openont_port_status_json 2>/dev/null || echo '{}')

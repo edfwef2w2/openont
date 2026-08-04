@@ -33,8 +33,14 @@ rpc_dpi_status() {
 	pidof openont-dpi >/dev/null 2>&1 && running=1
 	pidof openont-classify >/dev/null 2>&1 && classify_running=1
 
-	[ -f "$flow_file" ] && flow_entries=$(grep -c . "$flow_file" 2>/dev/null || echo 0)
-	[ -f "$map_file" ] && map_entries=$(grep -c . "$map_file" 2>/dev/null || echo 0)
+	if [ -f "$flow_file" ]; then
+		flow_entries=$(grep -c . "$flow_file" 2>/dev/null || true)
+		flow_entries=${flow_entries:-0}
+	fi
+	if [ -f "$map_file" ]; then
+		map_entries=$(grep -c . "$map_file" 2>/dev/null || true)
+		map_entries=${map_entries:-0}
+	fi
 	[ -f "$STATS_DIR/dns.log" ] && dns_log_ok=1
 
 	if [ -f "$HIST_FILE" ]; then

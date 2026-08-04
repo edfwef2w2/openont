@@ -79,12 +79,12 @@ return view.extend({
 				E('div', { class: 'o-rate-line up' }, [
 					E('span', { class: 'val', id: 'o-tx-val' }, [ tx.v ]),
 					E('span', { class: 'unit', id: 'o-tx-unit' }, [ tx.u ]),
-					E('span', { style: 'margin-left:8px;color:#888;font-size:12px' }, [ _('Upload') ])
+					E('span', { class: 'o-rate-side-lbl' }, [ _('Upload') ])
 				]),
 				E('div', { class: 'o-rate-line down' }, [
 					E('span', { class: 'val', id: 'o-rx-val' }, [ rx.v ]),
 					E('span', { class: 'unit', id: 'o-rx-unit' }, [ rx.u ]),
-					E('span', { style: 'margin-left:8px;color:#888;font-size:12px' }, [ _('Download') ])
+					E('span', { class: 'o-rate-side-lbl' }, [ _('Download') ])
 				])
 			])
 		]));
@@ -186,6 +186,9 @@ return view.extend({
 		this._scheduleChartPaint();
 
 		document.addEventListener('openont-layout-mode', function () {
+			self._scheduleChartPaint();
+		});
+		document.addEventListener('openont-theme-change', function () {
 			self._scheduleChartPaint();
 		});
 
