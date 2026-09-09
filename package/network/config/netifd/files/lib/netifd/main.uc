@@ -12,7 +12,6 @@ uloop.guard(ex_handler);
 libubus.guard(ex_handler);
 
 let ubus = netifd.ubus = libubus.connect();
-let wireless;
 let proto_mod;
 
 function uci_ctx()
@@ -28,7 +27,7 @@ function config_init()
 {
 	let ctx = uci_ctx();
 
-	for (let mod in [ wireless, proto_mod ]) {
+	for (let mod in [ proto_mod ]) {
 		try {
 			mod?.config_init(ctx);
 		} catch (e) {
@@ -39,20 +38,14 @@ function config_init()
 
 function config_start()
 {
-	if (wireless)
-		wireless.config_start();
 }
 
 function check_interfaces()
 {
-	if (wireless)
-		wireless.check_interfaces();
 }
 
 function hotplug(name, add)
 {
-	if (wireless)
-		wireless.hotplug(name, add);
 }
 
 function ex_wrap(cb)
@@ -73,17 +66,6 @@ netifd.cb = {
 	config_start: ex_wrap(config_start),
 	check_interfaces: ex_wrap(check_interfaces),
 };
-
-const wireless_module = dirname(sourcepath()) + "/wireless.uc";
-if (access(wireless_module, "r")) {
-	try {
-		wireless = loadfile(wireless_module)();
-	} catch (e) {
-		netifd.log(netifd.L_WARNING, `Error loading wireless module: ${e}\n${e.stacktrace[0].context}\n`);
-	}
-} else {
-	netifd.log(netifd.L_WARNING, `Wireless module not found\n`);
-}
 
 const proto_module = dirname(sourcepath()) + "/proto.uc";
 if (access(proto_module, "r")) {

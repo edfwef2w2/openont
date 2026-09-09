@@ -37,7 +37,6 @@ reload_service() {
 }
 
 stop_service() {
-	[ -x /sbin/wifi ] && /sbin/wifi down
 	ifdown -a
 	sleep 1
 }
@@ -133,8 +132,8 @@ validate_switch_vlan()
 
 service_triggers()
 {
-	procd_add_reload_trigger network wireless
-	procd_add_reload_data_trigger network-device network-interface bridge-vlan wifi-device wifi-iface
+	procd_add_reload_trigger network
+	procd_add_reload_data_trigger network-device network-interface bridge-vlan
 
 	procd_open_validate
 	validate_atm_bridge_section

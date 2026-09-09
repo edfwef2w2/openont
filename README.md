@@ -12,7 +12,7 @@ Repository: https://github.com/edfwef2w2/openont
 - Port mapping and DMZ (split from firewall UI)
 - **Allow-access IP groups** for port mapping
 - Custom OpenONT theme; **Status → Overview** is the OpenONT dashboard (replaces stock LuCI status overview)
-- No wireless NIC / Wi-Fi stack (no drivers, hostapd, or wireless UI); no package-manager / theme switcher in UI
+- No wireless NIC / Wi-Fi stack in source (no mac80211, hostapd, or in-tree PCIe Wi-Fi drivers); no package-manager / theme switcher in UI
 
 ## Port binding (CLI ≡ Web)
 

@@ -25,6 +25,8 @@ PKG_ASLR_PIE_REGULAR:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+CMAKE_OPTIONS += -DIWINFO_SUPPORT=OFF
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/include/rpcd $(1)/usr/include/
@@ -103,5 +105,4 @@ endef
 $(eval $(call BuildPackage,rpcd))
 $(eval $(call BuildPlugin,file,,Provides ubus calls for file and directory operations.))
 $(eval $(call BuildPlugin,rpcsys,,Provides ubus calls for sysupgrade and password changing.))
-$(eval $(call BuildPlugin,iwinfo,+libiwinfo,Provides ubus calls for accessing iwinfo data.,libiwinfo (>=2023.01.21)))
 $(eval $(call BuildPlugin,ucode,+libucode,Allows implementing plugins using ucode scripts.))

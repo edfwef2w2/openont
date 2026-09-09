@@ -1,0 +1,22 @@
+From: OpenONT
+Subject: net: omit in-tree WLAN, mac80211, and wireless PCI drivers
+
+Do not descend into net/wireless, net/mac80211, or drivers/net/wireless.
+PCIe Wi-Fi (iwlwifi, rtw88/rtw89, ath*, mt76, brcmfmac, mwifiex) then
+cannot be built even if the corresponding Kconfig symbols are enabled.
+
+--- a/net/Makefile
++++ b/net/Makefile
+@@ -46,6 +46,4 @@
+ obj-$(CONFIG_RDS)		+= rds/
+-obj-$(CONFIG_WIRELESS)		+= wireless/
+-obj-$(CONFIG_MAC80211)		+= mac80211/
+ obj-$(CONFIG_TIPC)		+= tipc/
+ obj-$(CONFIG_NETLABEL)		+= netlabel/
+--- a/drivers/net/Makefile
++++ b/drivers/net/Makefile
+@@ -74,4 +74,3 @@
+ obj-$(CONFIG_WAN) += wan/
+-obj-$(CONFIG_WLAN) += wireless/
+ obj-$(CONFIG_IEEE802154) += ieee802154/
+ obj-$(CONFIG_WWAN) += wwan/

@@ -85,7 +85,10 @@ jobs:
             configs/openont-x86_64.config
             configs/openont-armsr_armv8.config
             scripts/openont/apply-config.sh
+            scripts/openont/strip-luci-wireless.sh
             scripts/openont/gen-buckets.py
+            target/linux/generic/hack-6.18/652-net-omit-in-tree-wlan-and-mac80211.patch
+            target/linux/generic/hack-6.12/652-net-omit-in-tree-wlan-and-mac80211.patch
           )
           for f in "${files[@]}"; do
             test -f "$f" || { echo "missing: $f" >&2; exit 1; }
@@ -148,6 +151,7 @@ jobs:
             package/openont/openont-base/files/etc/profile.d/openont.sh
             package/openont/luci-theme-openont/root/etc/uci-defaults/30_luci-theme-openont
             scripts/openont/apply-config.sh
+            scripts/openont/strip-luci-wireless.sh
           )
           fail=0
           for f in "${exec_files[@]}"; do
@@ -198,21 +202,33 @@ jobs:
             || { echo "common config should not select luci meta package" >&2; exit 1; }
           grep -q 'CONFIG_PACKAGE_luci-light is not set' configs/openont.common.config \
             || { echo "common config should not select luci-light meta package" >&2; exit 1; }
-          # Wireless NIC stack must stay out of OpenONT images
+          # Wireless NIC stack must be absent from source (not config-off / menu hide)
           test ! -d package/kernel/mac80211 \
             || { echo "package/kernel/mac80211 must be removed" >&2; exit 1; }
           test ! -d package/network/config/wifi-scripts \
             || { echo "package/network/config/wifi-scripts must be removed" >&2; exit 1; }
           test ! -d package/network/services/hostapd \
             || { echo "package/network/services/hostapd must be removed" >&2; exit 1; }
-          for pkg in wifi-scripts wpad hostapd kmod-cfg80211 kmod-mac80211 kmod-iwlwifi kmod-rtw88; do
-            grep -q "CONFIG_PACKAGE_${pkg} is not set" configs/openont.common.config \
-              || { echo "common config must disable ${pkg}" >&2; exit 1; }
-          done
-          grep -q '"admin/network/wireless"' package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json \
-            || { echo "menu must disable admin/network/wireless" >&2; exit 1; }
+          test ! -d package/network/utils/iwinfo \
+            || { echo "package/network/utils/iwinfo must be removed" >&2; exit 1; }
+          grep -q 'obj-$(CONFIG_WLAN) += wireless/' \
+            target/linux/generic/hack-6.18/652-net-omit-in-tree-wlan-and-mac80211.patch \
+            || { echo "kernel hack must omit drivers/net/wireless" >&2; exit 1; }
+          grep -q 'obj-$(CONFIG_MAC80211)' \
+            target/linux/generic/hack-6.18/652-net-omit-in-tree-wlan-and-mac80211.patch \
+            || { echo "kernel hack must omit net/mac80211" >&2; exit 1; }
+          if grep -q 'admin/network/wireless' package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json; then
+            echo "do not hide wireless in OpenONT menu JSON; strip luci sources instead" >&2
+            exit 1
+          fi
+          if grep -E 'CONFIG_PACKAGE_(wpad|kmod-iwlwifi|kmod-mac80211) is not set' configs/openont.common.config; then
+            echo "do not disable wireless via seed config; packages must be gone" >&2
+            exit 1
+          fi
           grep -q 'openont_is_wireless_netdev' package/openont/openont-core/files/usr/lib/openont/port.sh \
             || { echo "port.sh must reject wireless netdevs" >&2; exit 1; }
+          grep -q 'strip-luci-wireless' scripts/openont/apply-config.sh \
+            || { echo "apply-config must strip luci wireless sources" >&2; exit 1; }
           echo "config selection ok"
 
       - name: Theme and overview sources
@@ -268,7 +284,8 @@ jobs:
             package/openont/openont-dpi/files/dpi-nft.sh \
             package/openont/openont-base/files/etc/uci-defaults/* \
             package/openont/luci-theme-openont/root/etc/uci-defaults/* \
-            scripts/openont/apply-config.sh
+            scripts/openont/apply-config.sh \
+            scripts/openont/strip-luci-wireless.sh
           do
             sh -n "$f"
           done

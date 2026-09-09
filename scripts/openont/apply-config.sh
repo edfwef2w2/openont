@@ -25,6 +25,10 @@ COMMON="$ROOT/configs/openont.common.config"
 [ -f "$SEED" ] || { echo "missing seed: $SEED" >&2; exit 1; }
 [ -f "$COMMON" ] || { echo "missing common: $COMMON" >&2; exit 1; }
 
+if [ -d "$ROOT/feeds/luci" ]; then
+	"$ROOT/scripts/openont/strip-luci-wireless.sh" "$ROOT/feeds/luci"
+fi
+
 cat "$SEED" "$COMMON" > "$ROOT/.config"
 make defconfig
 

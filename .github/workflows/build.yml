@@ -116,6 +116,8 @@ jobs:
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+          chmod +x scripts/openont/strip-luci-wireless.sh
+          ./scripts/openont/strip-luci-wireless.sh
 
       - name: Configure
         run: |
@@ -172,6 +174,23 @@ jobs:
             # Stock bootstrap theme package should not be present
             if [ -d "$root/www/luci-static/bootstrap" ]; then
               echo "stock bootstrap theme static still in rootfs" >&2
+              return 1
+            fi
+            if [ -f "$root/www/luci-static/resources/view/network/wireless.js" ]; then
+              echo "luci wireless view still in rootfs" >&2
+              return 1
+            fi
+            if find "$root/lib/modules" -type f \( \
+                 -name 'iwlwifi*.ko' -o -name 'rtw88*.ko' -o -name 'rtw89*.ko' \
+                 -o -name 'mt76*.ko' -o -name 'ath1*.ko' -o -name 'ath2*.ko' \
+                 -o -name 'ath9k*.ko' -o -name 'mac80211.ko' -o -name 'cfg80211.ko' \
+                 -o -name 'brcmfmac.ko' -o -name 'mwifiex*.ko' \
+               \) 2>/dev/null | grep -q .; then
+              echo "wireless NIC kernel modules still in rootfs" >&2
+              find "$root/lib/modules" -type f \( \
+                 -name 'iwlwifi*.ko' -o -name 'rtw88*.ko' -o -name 'rtw89*.ko' \
+                 -o -name 'mt76*.ko' -o -name 'mac80211.ko' -o -name 'cfg80211.ko' \
+               \) 2>/dev/null || true
               return 1
             fi
           }
