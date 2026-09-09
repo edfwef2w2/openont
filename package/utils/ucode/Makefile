@@ -27,7 +27,8 @@ include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 CMAKE_OPTIONS += \
-	-DSOVERSION=$(PKG_ABI_VERSION)
+	-DSOVERSION=$(PKG_ABI_VERSION) \
+	-DNL80211_SUPPORT=OFF
 
 CMAKE_HOST_OPTIONS += \
 	-DCMAKE_SKIP_RPATH=FALSE \
@@ -148,10 +149,6 @@ $(eval $(call UcodeModule, \
 $(eval $(call UcodeModule, \
 	math, MATH_SUPPORT, , \
 	The math plugin provides access to various <math.h> procedures.))
-
-$(eval $(call UcodeModule, \
-	nl80211, NL80211_SUPPORT, +libnl-tiny +libubox, \
-	The nl80211 plugin provides access to the Linux wireless 802.11 netlink API.))
 
 $(eval $(call UcodeModule, \
 	resolv, RESOLV_SUPPORT, , \

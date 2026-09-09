@@ -10,12 +10,26 @@ openont_is_role() {
 	echo "$1" | grep -qE '^(lan|wan)[0-9]+$'
 }
 
+openont_is_wireless_netdev() {
+	local dev="$1"
+	case "$dev" in
+		wlan*|phy*|wifi*|ra[0-9]*|rai*|rax*|apcli*|wds*|p2p*|awdl*|anpi*)
+			return 0
+			;;
+	esac
+	[ -d "/sys/class/net/$dev/wireless" ] && return 0
+	[ -d "/sys/class/net/$dev/phy80211" ] && return 0
+	[ -L "/sys/class/net/$dev/phy80211" ] && return 0
+	return 1
+}
+
 openont_is_physical_netdev() {
 	local dev="$1"
 	[ -n "$dev" ] || return 1
 	[ -d "/sys/class/net/$dev" ] || return 1
+	openont_is_wireless_netdev "$dev" && return 1
 	case "$dev" in
-		lo|br-*|wlan*|phy*|ifb*|teql*|gre*|gretap*|erspan*|sit*|tun*|tap*|veth*|docker*|virbr*|wg*|pppoe-*|pppoa-*)
+		lo|br-*|ifb*|teql*|gre*|gretap*|erspan*|sit*|tun*|tap*|veth*|docker*|virbr*|wg*|pppoe-*|pppoa-*)
 			return 1
 			;;
 	esac

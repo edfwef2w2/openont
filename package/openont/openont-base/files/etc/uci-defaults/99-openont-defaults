@@ -53,6 +53,10 @@ if [ ! -f /etc/openont/.ports_initialized ]; then
 	touch /etc/openont/.ports_initialized
 fi
 
+# OpenONT has no wireless NIC stack; drop leftover wireless UCI.
+uci -q delete wireless
+rm -f /etc/config/wireless
+
 # Force OpenONT as the only registered LuCI theme
 uci -q set luci.themes.OpenONT=/luci-static/openont
 uci -q set luci.main.mediaurlbase=/luci-static/openont

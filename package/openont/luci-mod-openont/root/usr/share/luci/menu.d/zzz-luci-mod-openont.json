@@ -94,5 +94,11 @@
 			"type": "view",
 			"path": "openont/portmap"
 		}
+	},
+	"admin/network/wireless": {
+		"enabled": false
+	},
+	"admin/status/realtime/wireless": {
+		"enabled": false
 	}
 }

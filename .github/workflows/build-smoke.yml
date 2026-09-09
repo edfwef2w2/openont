@@ -198,6 +198,21 @@ jobs:
             || { echo "common config should not select luci meta package" >&2; exit 1; }
           grep -q 'CONFIG_PACKAGE_luci-light is not set' configs/openont.common.config \
             || { echo "common config should not select luci-light meta package" >&2; exit 1; }
+          # Wireless NIC stack must stay out of OpenONT images
+          test ! -d package/kernel/mac80211 \
+            || { echo "package/kernel/mac80211 must be removed" >&2; exit 1; }
+          test ! -d package/network/config/wifi-scripts \
+            || { echo "package/network/config/wifi-scripts must be removed" >&2; exit 1; }
+          test ! -d package/network/services/hostapd \
+            || { echo "package/network/services/hostapd must be removed" >&2; exit 1; }
+          for pkg in wifi-scripts wpad hostapd kmod-cfg80211 kmod-mac80211 kmod-iwlwifi kmod-rtw88; do
+            grep -q "CONFIG_PACKAGE_${pkg} is not set" configs/openont.common.config \
+              || { echo "common config must disable ${pkg}" >&2; exit 1; }
+          done
+          grep -q '"admin/network/wireless"' package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json \
+            || { echo "menu must disable admin/network/wireless" >&2; exit 1; }
+          grep -q 'openont_is_wireless_netdev' package/openont/openont-core/files/usr/lib/openont/port.sh \
+            || { echo "port.sh must reject wireless netdevs" >&2; exit 1; }
           echo "config selection ok"
 
       - name: Theme and overview sources
