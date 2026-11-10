@@ -2,6 +2,7 @@
 #include "sni.h"
 
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 

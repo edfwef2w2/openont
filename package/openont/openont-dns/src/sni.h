@@ -2,6 +2,8 @@
 #ifndef OPENONT_SNI_H
 #define OPENONT_SNI_H
 
+#include <stdint.h>
+
 struct client_hello_info {
 	char sni[256];
 	char alpn[8][32];
