@@ -1,0 +1,58 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+. /usr/lib/openont/dns.sh
+
+usage() {
+	cat <<EOF
+Usage: openont-dns <command> [args]
+
+  status
+  set <enabled> <port> <cache> <min_ttl> <max_ttl> <serve_expired> <prefetch> <response_mode> <speed_check> <ip_pref> <block_mode> <log_size> <bogus...>
+  upstream-list | upstream-set | upstream-del
+  domain-list | domain-set | domain-del
+  rewrite-list | rewrite-set | rewrite-del
+  filter-list | filter-set | filter-del
+  blocklist-list | blocklist-set | blocklist-del
+  client-list | client-set | client-del
+  accel-list | accel-set | accel-del
+  accel-cfg <enabled> <sni> <sni_name>
+  log [limit] [all|block|accel]
+  ca-export
+  apply
+EOF
+}
+
+cmd="${1:-}"
+[ -n "$cmd" ] && shift
+
+case "$cmd" in
+	status) openont_dns_status_json ;;
+	set) openont_dns_set "$@" ;;
+	upstream-list) openont_dns_upstream_list_json ;;
+	upstream-set) openont_dns_upstream_set "$@" ;;
+	upstream-del) openont_dns_section_del "$1" ;;
+	domain-list) openont_dns_domain_list_json ;;
+	domain-set) openont_dns_domain_set "$@" ;;
+	domain-del) openont_dns_section_del "$1" ;;
+	rewrite-list) openont_dns_rewrite_list_json ;;
+	rewrite-set) openont_dns_rewrite_set "$@" ;;
+	rewrite-del) openont_dns_section_del "$1" ;;
+	filter-list) openont_dns_filter_list_json ;;
+	filter-set) openont_dns_filter_set "$@" ;;
+	filter-del) openont_dns_section_del "$1" ;;
+	blocklist-list) openont_dns_blocklist_list_json ;;
+	blocklist-set) openont_dns_blocklist_set "$@" ;;
+	blocklist-del) openont_dns_section_del "$1" ;;
+	client-list) openont_dns_client_list_json ;;
+	client-set) openont_dns_client_set "$@" ;;
+	client-del) openont_dns_section_del "$1" ;;
+	accel-list) openont_dns_accel_list_json ;;
+	accel-set) openont_dns_accel_set "$@" ;;
+	accel-del) openont_dns_section_del "$1" ;;
+	accel-cfg) openont_dns_accel_cfg "$@" ;;
+	log) openont_dns_log_json "${1:-200}" "${2:-all}" ;;
+	ca-export) openont_dns_ca_json ;;
+	apply) openont_dns_apply; openont_ok applied ;;
+	-h|--help|help|"") usage; [ -n "$cmd" ] || exit 1 ;;
+	*) echo "unknown: $cmd" >&2; usage; exit 1 ;;
+esac

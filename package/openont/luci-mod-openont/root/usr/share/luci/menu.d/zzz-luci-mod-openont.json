@@ -54,6 +54,71 @@
 			"acl": [ "luci-mod-openont" ]
 		}
 	},
+	"admin/network/openont-dns": {
+		"title": "DNS",
+		"order": 8,
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/network/openont-dns/general": {
+		"title": "General",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "openont/dns-general"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/network/openont-dns/upstreams": {
+		"title": "Upstreams",
+		"order": 2,
+		"action": {
+			"type": "view",
+			"path": "openont/dns-upstreams"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/network/openont-dns/filter": {
+		"title": "Filtering",
+		"order": 3,
+		"action": {
+			"type": "view",
+			"path": "openont/dns-filter"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/network/openont-dns/accel": {
+		"title": "Web Acceleration",
+		"order": 4,
+		"action": {
+			"type": "view",
+			"path": "openont/dns-accel"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
+	"admin/network/openont-dns/log": {
+		"title": "Query Log",
+		"order": 5,
+		"action": {
+			"type": "view",
+			"path": "openont/dns-log"
+		},
+		"depends": {
+			"acl": [ "luci-mod-openont" ]
+		}
+	},
 	"admin/network/openont-portmap": {
 		"title": "Port Mapping",
 		"order": 60,

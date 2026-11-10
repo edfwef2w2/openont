@@ -583,3 +583,330 @@ msgstr "请设置角色并至少选择一块网卡"
 
 msgid "No network adapters found."
 msgstr "未发现网卡。"
+
+msgid "DNS"
+msgstr "DNS"
+
+msgid "General"
+msgstr "常规"
+
+msgid "Upstreams"
+msgstr "上游"
+
+msgid "Filtering"
+msgstr "拦截"
+
+msgid "Web Acceleration"
+msgstr "网页加速"
+
+msgid "Query Log"
+msgstr "查询日志"
+
+msgid "First response"
+msgstr "最先应答"
+
+msgid "Fastest response"
+msgstr "最快应答"
+
+msgid "Fastest IP"
+msgstr "最快 IP"
+
+msgid "ICMP"
+msgstr "ICMP"
+
+msgid "TCP 443"
+msgstr "TCP 443"
+
+msgid "Dual stack"
+msgstr "双栈"
+
+msgid "Prefer IPv4"
+msgstr "优先 IPv4"
+
+msgid "Prefer IPv6"
+msgstr "优先 IPv6"
+
+msgid "NXDOMAIN"
+msgstr "NXDOMAIN"
+
+msgid "REFUSED"
+msgstr "REFUSED"
+
+msgid "Zero address"
+msgstr "空地址"
+
+msgid "Forward LAN DNS through upstream groups. DHCP keeps using the existing server, which stops listening on port 53 while this service is enabled."
+msgstr "由上游分组转发局域网 DNS。DHCP 仍由原服务提供；本服务开启后，原服务不再监听 53 端口。"
+
+msgid "Running"
+msgstr "运行中"
+
+msgid "Listening"
+msgstr "正在监听"
+
+msgid "DHCP DNS handed over"
+msgstr "DHCP 已改用本服务"
+
+msgid "LAN address"
+msgstr "局域网地址"
+
+msgid "Response mode"
+msgstr "应答模式"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Listen port"
+msgstr "监听端口"
+
+msgid "Cache size"
+msgstr "缓存条数"
+
+msgid "Minimum TTL"
+msgstr "最小 TTL"
+
+msgid "Maximum TTL"
+msgstr "最大 TTL"
+
+msgid "Serve expired replies"
+msgstr "过期仍应答"
+
+msgid "Prefetch"
+msgstr "预取"
+
+msgid "Speed check"
+msgstr "测速"
+
+msgid "Address preference"
+msgstr "地址偏好"
+
+msgid "Block answer"
+msgstr "拦截应答"
+
+msgid "Query log size"
+msgstr "查询日志条数"
+
+msgid "Bogus prefixes"
+msgstr "丢弃网段"
+
+msgid "One CIDR per line. Answers inside these prefixes are dropped before an address is chosen."
+msgstr "每行一个 CIDR。落在这些网段内的地址会在选出结果前被丢弃。"
+
+msgid "Save & Apply"
+msgstr "保存并应用"
+
+msgid "DNS servers are queried by group. DoT and DoH addresses must be numeric; the TLS hostname is used for the certificate name."
+msgstr "按分组查询 DNS 服务器。DoT 和 DoH 的地址须为数字 IP，TLS 主机名用于校验证书。"
+
+msgid "Servers"
+msgstr "服务器"
+
+msgid "No upstream servers."
+msgstr "没有上游服务器。"
+
+msgid "Group"
+msgstr "分组"
+
+msgid "Address"
+msgstr "地址"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "TLS hostname"
+msgstr "TLS 主机名"
+
+msgid "DoH path"
+msgstr "DoH 路径"
+
+msgid "Edit upstream"
+msgstr "编辑上游"
+
+msgid "Add upstream"
+msgstr "添加上游"
+
+msgid "Delete upstream %s?"
+msgstr "删除上游 %s？"
+
+msgid "Domain rules"
+msgstr "域名规则"
+
+msgid "Longest suffix wins. The nft set is created in the named table and filled with resolved IPv4 addresses."
+msgstr "最长后缀优先。nft 集合会建在指定表中，并写入解析到的 IPv4 地址。"
+
+msgid "Rules"
+msgstr "规则"
+
+msgid "No domain rules. Unmatched names use the default group."
+msgstr "没有域名规则。未命中的名字使用 default 分组。"
+
+msgid "Domain"
+msgstr "域名"
+
+msgid "Match"
+msgstr "匹配"
+
+msgid "nft set"
+msgstr "nft 集合"
+
+msgid "Domain and subdomains"
+msgstr "域名及子域"
+
+msgid "Exact name"
+msgstr "精确名称"
+
+msgid "Edit domain rule"
+msgstr "编辑域名规则"
+
+msgid "Add domain rule"
+msgstr "添加域名规则"
+
+msgid "Whitelist rules win over an equal or broader block. Supported syntax: ||domain^ (with subdomains), |domain^ (exact), @@ exceptions, 0.0.0.0 host, /regex/, and a plain domain."
+msgstr "白名单优先于相同或更宽的拦截。支持 ||domain^（含子域）、|domain^（精确）、@@ 例外、0.0.0.0 host、/regex/ 以及纯域名。"
+
+msgid "No manual rules."
+msgstr "没有手工规则。"
+
+msgid "Rule"
+msgstr "规则"
+
+msgid "Client"
+msgstr "客户端"
+
+msgid "Optional IP"
+msgstr "可选 IP"
+
+msgid "Edit rule"
+msgstr "编辑规则"
+
+msgid "Add rule"
+msgstr "添加规则"
+
+msgid "Blocklists"
+msgstr "订阅列表"
+
+msgid "Downloaded lists use the same rule syntax. A failed download keeps the previous copy."
+msgstr "下载的列表使用同一套规则语法。下载失败时保留上一份成功的结果。"
+
+msgid "Subscriptions"
+msgstr "订阅"
+
+msgid "No blocklists."
+msgstr "没有订阅列表。"
+
+msgid "URL"
+msgstr "URL"
+
+msgid "Edit blocklist"
+msgstr "编辑订阅"
+
+msgid "Add blocklist"
+msgstr "添加订阅"
+
+msgid "Rewrites"
+msgstr "重写"
+
+msgid "A matching rewrite is answered locally and is not filtered."
+msgstr "命中的重写在本地应答，不再进入拦截。"
+
+msgid "Records"
+msgstr "记录"
+
+msgid "No rewrites."
+msgstr "没有重写。"
+
+msgid "Type"
+msgstr "类型"
+
+msgid "Value"
+msgstr "值"
+
+msgid "Edit rewrite"
+msgstr "编辑重写"
+
+msgid "Add rewrite"
+msgstr "添加重写"
+
+msgid "Filtering bypass"
+msgstr "跳过拦截"
+
+msgid "These clients still use rewrites, acceleration and upstream groups, but skip block and allow rules."
+msgstr "这些客户端仍使用重写、加速和上游分组，但跳过拦截与白名单。"
+
+msgid "Clients"
+msgstr "客户端"
+
+msgid "No bypass clients."
+msgstr "没有跳过拦截的客户端。"
+
+msgid "Edit client"
+msgstr "编辑客户端"
+
+msgid "Add client"
+msgstr "添加客户端"
+
+msgid "Keep original SNI"
+msgstr "保留原始 SNI"
+
+msgid "Omit SNI"
+msgstr "不发送 SNI"
+
+msgid "Replace SNI"
+msgstr "替换 SNI"
+
+msgid "Accelerated names"
+msgstr "加速域名"
+
+msgid "Listed names resolve to this gateway. TLS for those names is terminated here and opened again toward the real address."
+msgstr "名单中的域名会解析到本网关。这些名字的 TLS 在本机终结，再向真实地址重新建立连接。"
+
+msgid "Names"
+msgstr "名称"
+
+msgid "No accelerated names."
+msgstr "没有加速域名。"
+
+msgid "Edit domain"
+msgstr "编辑域名"
+
+msgid "Add domain"
+msgstr "添加域名"
+
+msgid "Acceleration answers listed names with this gateway LAN address and terminates TLS on the gateway. Only listed names are intercepted. Each client must trust the gateway certificate. The management HTTPS listener moves to a local port while acceleration is on."
+msgstr "加速时，名单中的域名应答为本网关的局域网地址，并在网关上终结 TLS。只处理名单内的名字。每台客户端都需要信任网关证书。加速开启后，管理页的 HTTPS 会改到本机端口。"
+
+msgid "SNI policy"
+msgstr "SNI 策略"
+
+msgid "Replacement SNI"
+msgstr "替换用 SNI"
+
+msgid "Keep checks the server name. Omit and Replace still require a public certificate chain, and do not require that name to match the original site."
+msgstr "保留模式会校验服务器名称。不发送和替换模式仍要求公共证书链，但不要求证书名称等于原站点。"
+
+msgid "Certificate is not ready. Enable acceleration first."
+msgstr "证书尚未生成。请先开启加速。"
+
+msgid "Download CA"
+msgstr "下载 CA"
+
+msgid "Blocked"
+msgstr "已拦截"
+
+msgid "Accelerated"
+msgstr "已加速"
+
+msgid "No queries yet."
+msgstr "还没有查询。"
+
+msgid "Recent decisions from the DNS service. Blocked and accelerated names are not written into the application class map."
+msgstr "DNS 服务最近的处理结果。被拦截和被加速的名字不会写入应用分类表。"
+
+msgid "Time"
+msgstr "时间"
+
+msgid "Action"
+msgstr "动作"
+
+msgid "Detail"
+msgstr "详情"

@@ -68,6 +68,23 @@ openont-offload status
 
 First boot applies the recommended mode once.
 
+## DNS
+
+Web: **Network → DNS** (tabs: General, Upstreams, Filtering, Web Acceleration, Query Log).
+
+The service is off until enabled. While it is on, dnsmasq keeps DHCP and stops answering on port 53. LAN clients receive this gateway as their DNS server.
+
+```sh
+openont-dns status
+openont-dns set 1 53 4096 0 3600 1 1 fastest-ip tcp443 dual nxdomain 500 "0.0.0.0/8 127.0.0.0/8"
+openont-dns upstream-list
+openont-dns filter-set '' '||ads.example^' ''
+openont-dns accel-cfg 0 omit ''
+openont-dns log 50 all
+```
+
+Filtering uses a small rule syntax (`||domain^`, `|domain^`, `@@` exceptions, hosts lines, `/regex/`) plus optional list URLs. Upstreams can be grouped, raced, and limited by domain. Web acceleration resolves listed names to the gateway and terminates TLS for those names only; clients must install the CA from that tab.
+
 ## Application traffic classification
 
 Overview pie chart buckets come from **remote IP → class** (`/tmp/openont-stats/ip_class.map`):

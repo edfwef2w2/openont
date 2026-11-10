@@ -1,0 +1,45 @@
+config server 'main'
+	option enabled '0'
+	option port '53'
+	option cache_size '4096'
+	option min_ttl '0'
+	option max_ttl '3600'
+	option serve_expired '1'
+	option prefetch '1'
+	option response_mode 'fastest-ip'
+	option speed_check 'tcp443'
+	option ip_pref 'dual'
+	option block_mode 'nxdomain'
+	option log_size '500'
+	option accel_enabled '0'
+	option accel_sni 'omit'
+	option accel_sni_name ''
+
+config upstream
+	option name 'ali'
+	option group 'default'
+	option proto 'udp'
+	option address '223.5.5.5'
+	option port '53'
+	option tls_host ''
+	option doh_path '/dns-query'
+	option enabled '1'
+
+config upstream
+	option name 'dnspod'
+	option group 'default'
+	option proto 'udp'
+	option address '119.29.29.29'
+	option port '53'
+	option tls_host ''
+	option doh_path '/dns-query'
+	option enabled '1'
+
+config bogus
+	option cidr '0.0.0.0/8'
+
+config bogus
+	option cidr '127.0.0.0/8'
+
+config bogus
+	option cidr '240.0.0.0/4'

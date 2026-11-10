@@ -581,3 +581,330 @@ msgstr ""
 
 msgid "No network adapters found."
 msgstr ""
+
+msgid "DNS"
+msgstr ""
+
+msgid "General"
+msgstr ""
+
+msgid "Upstreams"
+msgstr ""
+
+msgid "Filtering"
+msgstr ""
+
+msgid "Web Acceleration"
+msgstr ""
+
+msgid "Query Log"
+msgstr ""
+
+msgid "First response"
+msgstr ""
+
+msgid "Fastest response"
+msgstr ""
+
+msgid "Fastest IP"
+msgstr ""
+
+msgid "ICMP"
+msgstr ""
+
+msgid "TCP 443"
+msgstr ""
+
+msgid "Dual stack"
+msgstr ""
+
+msgid "Prefer IPv4"
+msgstr ""
+
+msgid "Prefer IPv6"
+msgstr ""
+
+msgid "NXDOMAIN"
+msgstr ""
+
+msgid "REFUSED"
+msgstr ""
+
+msgid "Zero address"
+msgstr ""
+
+msgid "Forward LAN DNS through upstream groups. DHCP keeps using the existing server, which stops listening on port 53 while this service is enabled."
+msgstr ""
+
+msgid "Running"
+msgstr ""
+
+msgid "Listening"
+msgstr ""
+
+msgid "DHCP DNS handed over"
+msgstr ""
+
+msgid "LAN address"
+msgstr ""
+
+msgid "Response mode"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Listen port"
+msgstr ""
+
+msgid "Cache size"
+msgstr ""
+
+msgid "Minimum TTL"
+msgstr ""
+
+msgid "Maximum TTL"
+msgstr ""
+
+msgid "Serve expired replies"
+msgstr ""
+
+msgid "Prefetch"
+msgstr ""
+
+msgid "Speed check"
+msgstr ""
+
+msgid "Address preference"
+msgstr ""
+
+msgid "Block answer"
+msgstr ""
+
+msgid "Query log size"
+msgstr ""
+
+msgid "Bogus prefixes"
+msgstr ""
+
+msgid "One CIDR per line. Answers inside these prefixes are dropped before an address is chosen."
+msgstr ""
+
+msgid "Save & Apply"
+msgstr ""
+
+msgid "DNS servers are queried by group. DoT and DoH addresses must be numeric; the TLS hostname is used for the certificate name."
+msgstr ""
+
+msgid "Servers"
+msgstr ""
+
+msgid "No upstream servers."
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "Address"
+msgstr ""
+
+msgid "Port"
+msgstr ""
+
+msgid "TLS hostname"
+msgstr ""
+
+msgid "DoH path"
+msgstr ""
+
+msgid "Edit upstream"
+msgstr ""
+
+msgid "Add upstream"
+msgstr ""
+
+msgid "Delete upstream %s?"
+msgstr ""
+
+msgid "Domain rules"
+msgstr ""
+
+msgid "Longest suffix wins. The nft set is created in the named table and filled with resolved IPv4 addresses."
+msgstr ""
+
+msgid "Rules"
+msgstr ""
+
+msgid "No domain rules. Unmatched names use the default group."
+msgstr ""
+
+msgid "Domain"
+msgstr ""
+
+msgid "Match"
+msgstr ""
+
+msgid "nft set"
+msgstr ""
+
+msgid "Domain and subdomains"
+msgstr ""
+
+msgid "Exact name"
+msgstr ""
+
+msgid "Edit domain rule"
+msgstr ""
+
+msgid "Add domain rule"
+msgstr ""
+
+msgid "Whitelist rules win over an equal or broader block. Supported syntax: ||domain^ (with subdomains), |domain^ (exact), @@ exceptions, 0.0.0.0 host, /regex/, and a plain domain."
+msgstr ""
+
+msgid "No manual rules."
+msgstr ""
+
+msgid "Rule"
+msgstr ""
+
+msgid "Client"
+msgstr ""
+
+msgid "Optional IP"
+msgstr ""
+
+msgid "Edit rule"
+msgstr ""
+
+msgid "Add rule"
+msgstr ""
+
+msgid "Blocklists"
+msgstr ""
+
+msgid "Downloaded lists use the same rule syntax. A failed download keeps the previous copy."
+msgstr ""
+
+msgid "Subscriptions"
+msgstr ""
+
+msgid "No blocklists."
+msgstr ""
+
+msgid "URL"
+msgstr ""
+
+msgid "Edit blocklist"
+msgstr ""
+
+msgid "Add blocklist"
+msgstr ""
+
+msgid "Rewrites"
+msgstr ""
+
+msgid "A matching rewrite is answered locally and is not filtered."
+msgstr ""
+
+msgid "Records"
+msgstr ""
+
+msgid "No rewrites."
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Value"
+msgstr ""
+
+msgid "Edit rewrite"
+msgstr ""
+
+msgid "Add rewrite"
+msgstr ""
+
+msgid "Filtering bypass"
+msgstr ""
+
+msgid "These clients still use rewrites, acceleration and upstream groups, but skip block and allow rules."
+msgstr ""
+
+msgid "Clients"
+msgstr ""
+
+msgid "No bypass clients."
+msgstr ""
+
+msgid "Edit client"
+msgstr ""
+
+msgid "Add client"
+msgstr ""
+
+msgid "Keep original SNI"
+msgstr ""
+
+msgid "Omit SNI"
+msgstr ""
+
+msgid "Replace SNI"
+msgstr ""
+
+msgid "Accelerated names"
+msgstr ""
+
+msgid "Listed names resolve to this gateway. TLS for those names is terminated here and opened again toward the real address."
+msgstr ""
+
+msgid "Names"
+msgstr ""
+
+msgid "No accelerated names."
+msgstr ""
+
+msgid "Edit domain"
+msgstr ""
+
+msgid "Add domain"
+msgstr ""
+
+msgid "Acceleration answers listed names with this gateway LAN address and terminates TLS on the gateway. Only listed names are intercepted. Each client must trust the gateway certificate. The management HTTPS listener moves to a local port while acceleration is on."
+msgstr ""
+
+msgid "SNI policy"
+msgstr ""
+
+msgid "Replacement SNI"
+msgstr ""
+
+msgid "Keep checks the server name. Omit and Replace still require a public certificate chain, and do not require that name to match the original site."
+msgstr ""
+
+msgid "Certificate is not ready. Enable acceleration first."
+msgstr ""
+
+msgid "Download CA"
+msgstr ""
+
+msgid "Blocked"
+msgstr ""
+
+msgid "Accelerated"
+msgstr ""
+
+msgid "No queries yet."
+msgstr ""
+
+msgid "Recent decisions from the DNS service. Blocked and accelerated names are not written into the application class map."
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Action"
+msgstr ""
+
+msgid "Detail"
+msgstr ""

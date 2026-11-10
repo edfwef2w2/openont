@@ -67,6 +67,20 @@ jobs:
             package/openont/openont-dpi/src/buckets.gen.h
             package/openont/openont-dpi/files/dpi-nft.sh
             package/openont/openont-dpi/files/dpi-buckets.conf
+            package/openont/openont-dns/Makefile
+            package/openont/openont-dns/src/dnsd.c
+            package/openont/openont-dns/src/tlsfront.c
+            package/openont/openont-dns/src/rules.c
+            package/openont/openont-dns/src/test_main.c
+            package/openont/openont-dns/files/usr/lib/openont/dns.sh
+            package/openont/openont-dns/files/usr/sbin/openont-dns
+            package/openont/openont-dns/files/etc/init.d/openont-dns
+            package/openont/openont-dns/files/etc/config/openont-dns
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dns-general.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dns-upstreams.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dns-filter.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dns-accel.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dns-log.js
             package/openont/openont-stats/Makefile
             package/openont/openont-stats/files/usr/sbin/openont-statsd
             package/openont/openont-stats/files/usr/sbin/openont-classify
@@ -147,6 +161,9 @@ jobs:
             package/openont/openont-core/files/usr/sbin/openont-ipgroup
             package/openont/openont-core/files/usr/sbin/openont-offload
             package/openont/openont-core/files/usr/sbin/openont-pppoe
+            package/openont/openont-dns/files/usr/sbin/openont-dns
+            package/openont/openont-dns/files/usr/lib/openont/dns-refresh.sh
+            package/openont/openont-dns/files/etc/init.d/openont-dns
             package/openont/openont-base/files/etc/uci-defaults/99-openont-defaults
             package/openont/openont-base/files/etc/profile.d/openont.sh
             package/openont/luci-theme-openont/root/etc/uci-defaults/30_luci-theme-openont
@@ -171,7 +188,7 @@ jobs:
       - name: Config selects OpenONT packages
         run: |
           set -euo pipefail
-          for pkg in openont-core openont-base openont-dpi openont-stats luci-mod-openont luci-theme-openont; do
+          for pkg in openont-core openont-base openont-dpi openont-stats openont-dns luci-mod-openont luci-theme-openont; do
             grep -q "^CONFIG_PACKAGE_${pkg}=y" configs/openont.common.config \
               || { echo "missing CONFIG_PACKAGE_${pkg}=y in openont.common.config" >&2; exit 1; }
           done
@@ -282,6 +299,10 @@ jobs:
             package/openont/openont-stats/files/etc/init.d/openont-stats \
             package/openont/openont-stats/files/usr/lib/openont/*.sh \
             package/openont/openont-dpi/files/dpi-nft.sh \
+            package/openont/openont-dns/files/usr/lib/openont/dns.sh \
+            package/openont/openont-dns/files/usr/lib/openont/dns-refresh.sh \
+            package/openont/openont-dns/files/usr/sbin/openont-dns \
+            package/openont/openont-dns/files/etc/init.d/openont-dns \
             package/openont/openont-base/files/etc/uci-defaults/* \
             package/openont/luci-theme-openont/root/etc/uci-defaults/* \
             scripts/openont/apply-config.sh \
@@ -315,3 +336,17 @@ jobs:
             -lnetfilter_queue -lnfnetlink -lmnl
           test -x /tmp/openont-dpi-smoke
           echo "dpi C compile ok"
+
+      - name: DNS unit tests
+        run: |
+          set -euo pipefail
+          cc -Wall -Wextra -O2 -o /tmp/openont-dns-test \
+            package/openont/openont-dns/src/test_main.c \
+            package/openont/openont-dns/src/dns_proto.c \
+            package/openont/openont-dns/src/bogus.c \
+            package/openont/openont-dns/src/cache.c \
+            package/openont/openont-dns/src/rules.c \
+            package/openont/openont-dns/src/sni.c
+          /tmp/openont-dns-test
+          python3 -c 'import json; m=json.load(open("package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json")); json.load(open("package/openont/luci-mod-openont/root/usr/share/rpcd/acl.d/luci-mod-openont.json")); d=m["admin/network/openont-dns"]; assert d["order"]==8 and d["action"]["type"]=="firstchild"; assert all("admin/network/openont-dns/"+n in m for n in ("general","upstreams","filter","accel","log"))'
+          echo "dns unit tests ok"

@@ -12,6 +12,7 @@
 
 . /usr/lib/openont/stats-paths.sh 2>/dev/null || true
 . /usr/lib/openont/stats_rpc.sh 2>/dev/null || true
+. /usr/lib/openont/dns.sh 2>/dev/null || true
 
 # --- stats paths (rates for overview/status) ---
 STATS_DIR="${OPENONT_STATS_DIR:-/tmp/openont-stats}"
@@ -161,7 +162,16 @@ case "$1" in
 			portmap_list portmap_add portmap_del portmap_enable portmap_disable \
 			dmz_list dmz_add dmz_del dmz_enable dmz_disable \
 			offload_detect offload_status offload_set \
-			pppoe_status pppoe_dial pppoe_hangup pppoe_redial
+			pppoe_status pppoe_dial pppoe_hangup pppoe_redial \
+			dns_status dns_set \
+			dns_upstream_list dns_upstream_set dns_upstream_del \
+			dns_domain_list dns_domain_set dns_domain_del \
+			dns_filter_list dns_filter_set dns_filter_del \
+			dns_blocklist_set dns_blocklist_del \
+			dns_rewrite_set dns_rewrite_del \
+			dns_client_set dns_client_del \
+			dns_accel_list dns_accel_set dns_accel_del dns_accel_cfg \
+			dns_log dns_ca
 		do
 			json_add_object "$m"
 			json_close_object
@@ -264,6 +274,61 @@ case "$1" in
 				;;
 			pppoe_redial)
 				rpc_call_wrap openont_pppoe_redial "$(get iface)"
+				;;
+			dns_status)
+				openont_dns_status_json
+				;;
+			dns_set)
+				openont_dns_set "$(get enabled)" "$(get port)" "$(get cache_size)" \
+					"$(get min_ttl)" "$(get max_ttl)" "$(get serve_expired)" "$(get prefetch)" \
+					"$(get response_mode)" "$(get speed_check)" "$(get ip_pref)" \
+					"$(get block_mode)" "$(get log_size)" "$(get bogus)"
+				;;
+			dns_upstream_list)
+				openont_dns_upstream_list_json
+				;;
+			dns_upstream_set)
+				openont_dns_upstream_set "$(get id)" "$(get name)" "$(get group)" "$(get proto)" \
+					"$(get address)" "$(get port)" "$(get tls_host)" "$(get doh_path)" "$(get enabled)"
+				;;
+			dns_upstream_del|dns_domain_del|dns_filter_del|dns_blocklist_del|dns_rewrite_del|dns_client_del|dns_accel_del)
+				openont_dns_section_del "$(get id)"
+				;;
+			dns_domain_list)
+				openont_dns_domain_list_json
+				;;
+			dns_domain_set)
+				openont_dns_domain_set "$(get id)" "$(get pattern)" "$(get match)" "$(get group)" "$(get nftset)"
+				;;
+			dns_filter_list)
+				openont_dns_filter_list_json
+				;;
+			dns_filter_set)
+				openont_dns_filter_set "$(get id)" "$(get text)" "$(get client)"
+				;;
+			dns_blocklist_set)
+				openont_dns_blocklist_set "$(get id)" "$(get name)" "$(get url)" "$(get enabled)" "$(get refresh)"
+				;;
+			dns_rewrite_set)
+				openont_dns_rewrite_set "$(get id)" "$(get pattern)" "$(get match)" "$(get type)" "$(get value)"
+				;;
+			dns_client_set)
+				openont_dns_client_set "$(get id)" "$(get address)"
+				;;
+			dns_accel_list)
+				openont_dns_accel_list_json
+				;;
+			dns_accel_set)
+				openont_dns_accel_set "$(get id)" "$(get domain)" "$(get enabled)"
+				;;
+			dns_accel_cfg)
+				openont_dns_accel_cfg "$(get enabled)" "$(get sni)" "$(get sni_name)"
+				;;
+			dns_log)
+				openont_dns_log_json "$(get limit)" "$(get kind)"
+				;;
+			dns_ca)
+				openont_dns_ca_json
 				;;
 			*)
 				echo '{"ok":false,"error":"unknown method"}'

@@ -10,10 +10,19 @@
 					"portmap_list", "portmap_add", "portmap_del", "portmap_enable", "portmap_disable",
 					"dmz_list", "dmz_add", "dmz_del", "dmz_enable", "dmz_disable",
 					"offload_detect", "offload_status", "offload_set",
-					"pppoe_status", "pppoe_dial", "pppoe_hangup", "pppoe_redial"
+					"pppoe_status", "pppoe_dial", "pppoe_hangup", "pppoe_redial",
+					"dns_status", "dns_set",
+					"dns_upstream_list", "dns_upstream_set", "dns_upstream_del",
+					"dns_domain_list", "dns_domain_set", "dns_domain_del",
+					"dns_filter_list", "dns_filter_set", "dns_filter_del",
+					"dns_blocklist_set", "dns_blocklist_del",
+					"dns_rewrite_set", "dns_rewrite_del",
+					"dns_client_set", "dns_client_del",
+					"dns_accel_list", "dns_accel_set", "dns_accel_del", "dns_accel_cfg",
+					"dns_log", "dns_ca"
 				]
 			},
-			"uci": [ "network", "dhcp", "firewall", "system", "openont", "sqm" ]
+			"uci": [ "network", "dhcp", "firewall", "system", "openont", "openont-dns", "sqm" ]
 		},
 		"write": {
 			"ubus": {
@@ -23,10 +32,18 @@
 					"portmap_add", "portmap_del", "portmap_enable", "portmap_disable",
 					"dmz_add", "dmz_del", "dmz_enable", "dmz_disable",
 					"offload_set",
-					"pppoe_dial", "pppoe_hangup", "pppoe_redial"
+					"pppoe_dial", "pppoe_hangup", "pppoe_redial",
+					"dns_set",
+					"dns_upstream_set", "dns_upstream_del",
+					"dns_domain_set", "dns_domain_del",
+					"dns_filter_set", "dns_filter_del",
+					"dns_blocklist_set", "dns_blocklist_del",
+					"dns_rewrite_set", "dns_rewrite_del",
+					"dns_client_set", "dns_client_del",
+					"dns_accel_set", "dns_accel_del", "dns_accel_cfg"
 				]
 			},
-			"uci": [ "network", "dhcp", "firewall", "openont" ]
+			"uci": [ "network", "dhcp", "firewall", "openont", "openont-dns" ]
 		}
 	}
 }
