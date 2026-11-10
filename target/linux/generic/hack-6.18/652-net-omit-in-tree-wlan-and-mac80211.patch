@@ -7,12 +7,13 @@ cannot be built even if the corresponding Kconfig symbols are enabled.
 
 --- a/net/Makefile
 +++ b/net/Makefile
-@@ -46,6 +46,4 @@
+@@ -47,6 +47,4 @@
  obj-$(CONFIG_RDS)		+= rds/
 -obj-$(CONFIG_WIRELESS)		+= wireless/
 -obj-$(CONFIG_MAC80211)		+= mac80211/
  obj-$(CONFIG_TIPC)		+= tipc/
  obj-$(CONFIG_NETLABEL)		+= netlabel/
+ obj-$(CONFIG_IUCV)		+= iucv/
 --- a/drivers/net/Makefile
 +++ b/drivers/net/Makefile
 @@ -74,4 +74,3 @@
