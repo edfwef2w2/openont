@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # PPPoE dial / hangup / redial and status for wan* interfaces.
 
-. /usr/lib/openont/common.sh
+. /usr/lib/openont/role.sh
 
 openont_pppoe_list_ifaces() {
-	local s proto
-	for s in $(uci -q show network 2>/dev/null | sed -n "s/^network\.\([^=]*\)=interface/\1/p"); do
-		proto=$(uci -q get "network.$s.proto")
-		[ "$proto" = "pppoe" ] && echo "$s"
-	done | sort
+	local s
+	for s in $(openont_role_list wan); do
+		[ "$(uci -q get "network.$s.proto")" = "pppoe" ] && echo "$s"
+	done
 }
 
 openont_pppoe_iface_json() {

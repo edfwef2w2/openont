@@ -4,6 +4,9 @@
 
 . /usr/share/libubox/jshn.sh 2>/dev/null || true
 . /usr/lib/openont/common.sh 2>/dev/null || true
+. /usr/lib/openont/role.sh 2>/dev/null || true
+. /usr/lib/openont/address.sh 2>/dev/null || true
+. /usr/lib/openont/dhcp.sh 2>/dev/null || true
 . /usr/lib/openont/port.sh 2>/dev/null || true
 . /usr/lib/openont/nat.sh 2>/dev/null || true
 . /usr/lib/openont/ipgroup.sh 2>/dev/null || true
@@ -47,7 +50,7 @@ read_rates() {
 }
 
 list_role() {
-	uci -q show network 2>/dev/null | sed -n "s/^network\.\($1[0-9]*\)=interface/\1/p" | sort
+	openont_role_list "$1"
 }
 
 rpc_status() {
@@ -76,7 +79,7 @@ rpc_overview() {
 	done
 	[ "$wan_ok" -eq 0 ] && ip route 2>/dev/null | grep -q '^default ' && wan_ok=1
 
-	local hosts conns rem start limit used
+	local hosts conns rem=0 n
 	# grep -c prints 0 but exits 1 on no match; never use "|| echo 0" (doubles the value).
 	hosts=$(grep -c . /tmp/dhcp.leases 2>/dev/null || true)
 	hosts=${hosts:-0}
@@ -86,19 +89,10 @@ rpc_overview() {
 	fi
 	conns=$(cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null || echo 0)
 	conns=${conns:-0}
-	start=100; limit=150
-	for r in $(list_role lan); do
-		s=$(uci -q get "dhcp.$r.start"); l=$(uci -q get "dhcp.$r.limit")
-		[ -n "$s" ] && start=$s
-		[ -n "$l" ] && limit=$l
-		break
+	# Free addresses summed over all LAN pools (disabled pools report 0).
+	for n in $(openont_dhcp_status_json 2>/dev/null | jsonfilter -e '@.pools[*].remaining' 2>/dev/null); do
+		rem=$((rem + n))
 	done
-	used=$(grep -c . /tmp/dhcp.leases 2>/dev/null || true)
-	used=${used:-0}
-	rem=$((limit - used)); [ "$rem" -lt 0 ] && rem=0
-
-	# ports payload from lib
-	ports_json=$(openont_port_status_json 2>/dev/null || echo '{}')
 
 	json_init
 	json_add_string hostname "$(uci -q get system.@system[0].hostname 2>/dev/null || echo OpenONT)"
@@ -114,7 +108,6 @@ rpc_overview() {
 	json_add_int dhcp_remaining "$rem"
 	json_add_int cpu "$(cpu_percent)"
 	json_add_int mem "$(mem_percent)"
-	json_add_string ports_raw "$ports_json"
 	# also structured interfaces from roles
 	json_add_array interfaces
 	for role in $(list_role wan) $(list_role lan); do
@@ -137,6 +130,55 @@ rpc_overview() {
 	json_dump
 }
 
+# Everything the Interfaces page shows: ports, roles with their protocol
+# settings, DHCP summary and runtime state. Passwords are never returned.
+rpc_iface_status() {
+	local role first=1
+	printf '{"physical":'
+	openont_port_physical_json
+	printf ',"next":{"lan":"%s","wan":"%s"},' "$(openont_role_next lan)" "$(openont_role_next wan)"
+	printf '"roles":['
+	for role in $(openont_role_list); do
+		[ "$first" -eq 1 ] || printf ','
+		first=0
+		printf '{"name":"%s","type":"%s","proto":"%s",' \
+			"$role" "$(openont_role_type "$role")" \
+			"$(openont_json_escape "$(uci -q get "network.$role.proto")")"
+		printf '"ipaddr":"%s","gateway":"%s","dns":"%s",' \
+			"$(openont_json_escape "$(openont_role_cidr "$role")")" \
+			"$(openont_json_escape "$(uci -q get "network.$role.gateway")")" \
+			"$(openont_json_escape "$(uci -q get "network.$role.dns" | xargs)")"
+		printf '"username":"%s","has_password":%s,' \
+			"$(openont_json_escape "$(uci -q get "network.$role.username")")" \
+			"$([ -n "$(uci -q get "network.$role.password")" ] && echo true || echo false)"
+		printf '"ports":'
+		openont_port_role_ports_json "$role"
+		printf ','
+		if [ "$(openont_role_type "$role")" = "lan" ]; then
+			printf '"dhcp":'
+			openont_dhcp_pool_json "$role"
+			printf ','
+		fi
+		printf '"state":'
+		openont_pppoe_iface_json "$role"
+		printf '}'
+	done
+	printf '],"stats":'
+	openont_port_stats_json
+	printf '}\n'
+}
+
+# iface_proto: role, proto, ipaddr, gateway, dns[], username, password
+rpc_iface_proto() {
+	local role="$1" proto="$2"
+	case "$proto" in
+		static) openont_address_set "$role" "$3" "$4" $5 ;;
+		dhcp) openont_address_dhcp "$role" ;;
+		pppoe) openont_address_pppoe "$role" "$6" "$7" ;;
+		*) echo "invalid proto: $proto" >&2; return 1 ;;
+	esac
+}
+
 # Generic exec helpers returning CLI text as JSON
 rpc_call_wrap() {
 	local out
@@ -157,12 +199,13 @@ case "$1" in
 	list)
 		json_init
 		for m in status overview history dpi_status \
-			port_status port_set port_add port_del_port port_del \
+			iface_status iface_create iface_ports iface_delete iface_proto \
+			dhcp_status dhcp_leases dhcp_pool_set dhcp_static_set dhcp_static_del \
 			ipgroup_list ipgroup_set ipgroup_del \
 			portmap_list portmap_add portmap_del portmap_enable portmap_disable \
 			dmz_list dmz_add dmz_del dmz_enable dmz_disable \
 			offload_detect offload_status offload_set \
-			pppoe_status pppoe_dial pppoe_hangup pppoe_redial \
+			pppoe_dial pppoe_hangup pppoe_redial \
 			dns_status dns_set \
 			dns_upstream_list dns_upstream_set dns_upstream_del \
 			dns_domain_list dns_domain_set dns_domain_del \
@@ -181,6 +224,13 @@ case "$1" in
 	call)
 		input=$(cat)
 		get() { echo "$input" | jsonfilter -e "@.$1" 2>/dev/null; }
+		# Array argument (or a space-separated string) as words.
+		getlist() {
+			local v
+			v=$(echo "$input" | jsonfilter -e "@.$1[*]" 2>/dev/null)
+			[ -n "$v" ] || v=$(get "$1")
+			echo $v
+		}
 		case "$2" in
 			status) rpc_status ;;
 			overview) rpc_overview ;;
@@ -190,26 +240,39 @@ case "$1" in
 			dpi_status)
 				rpc_dpi_status
 				;;
-			port_status)
-				openont_port_status_json
+			iface_status)
+				rpc_iface_status
 				;;
-			port_set)
-				role=$(get role); ports=$(get ports); proto=$(get proto)
-				# ports may be space-separated string
-				if [ -n "$proto" ]; then
-					rpc_call_wrap openont_port_set "$role" $ports "$proto"
-				else
-					rpc_call_wrap openont_port_set "$role" $ports
-				fi
+			iface_create)
+				rpc_call_wrap openont_port_create "$(get type)" $(getlist ports) $(get proto)
 				;;
-			port_add)
-				rpc_call_wrap openont_port_add "$(get role)" "$(get netdev)"
+			iface_ports)
+				rpc_call_wrap openont_port_set "$(get role)" $(getlist ports)
 				;;
-			port_del_port)
-				rpc_call_wrap openont_port_del_port "$(get role)" "$(get netdev)"
-				;;
-			port_del)
+			iface_delete)
 				rpc_call_wrap openont_port_del "$(get role)"
+				;;
+			iface_proto)
+				rpc_call_wrap rpc_iface_proto "$(get role)" "$(get proto)" \
+					"$(get ipaddr)" "$(get gateway)" "$(getlist dns)" \
+					"$(get username)" "$(get password)"
+				;;
+			dhcp_status)
+				openont_dhcp_status_json
+				;;
+			dhcp_leases)
+				openont_dhcp_leases_json
+				;;
+			dhcp_pool_set)
+				rpc_call_wrap openont_dhcp_pool "$(get role)" "$(get enabled)" \
+					"$(get start)" "$(get limit)" "$(get leasetime)"
+				;;
+			dhcp_static_set)
+				rpc_call_wrap openont_dhcp_static_set "$(get id)" "$(get mac)" \
+					"$(get ip)" "$(get name)"
+				;;
+			dhcp_static_del)
+				rpc_call_wrap openont_dhcp_static_del "$(get id)"
 				;;
 			ipgroup_list)
 				openont_ipgroup_status_json
@@ -262,9 +325,6 @@ case "$1" in
 				;;
 			offload_set)
 				rpc_call_wrap openont_offload_set "$(get mode)"
-				;;
-			pppoe_status)
-				openont_pppoe_status_json "$(get iface)"
 				;;
 			pppoe_dial)
 				rpc_call_wrap openont_pppoe_dial "$(get iface)"

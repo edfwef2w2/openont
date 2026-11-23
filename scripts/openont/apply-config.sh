@@ -27,6 +27,7 @@ COMMON="$ROOT/configs/openont.common.config"
 
 if [ -d "$ROOT/feeds/luci" ]; then
 	"$ROOT/scripts/openont/strip-luci-wireless.sh" "$ROOT/feeds/luci"
+	"$ROOT/scripts/openont/strip-luci-network.sh" "$ROOT/feeds/luci"
 fi
 
 cat "$SEED" "$COMMON" > "$ROOT/.config"

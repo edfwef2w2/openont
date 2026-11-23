@@ -1,0 +1,33 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+. /usr/lib/openont/dhcp.sh
+
+usage() {
+	cat <<USAGE
+Usage: openont-dhcp <command> [args]
+
+  list|show
+  pool <lanN> <on|off> [start] [limit] [leasetime]
+      openont-dhcp pool lan1 on 100 150 12h
+  static-add <mac> <ip> [hostname]
+  static-set <id> <mac> <ip> [hostname]
+  static-del <id>
+  leases                       active leases (JSON)
+  status-json
+USAGE
+}
+
+cmd="${1:-}"
+[ -n "$cmd" ] && shift
+
+case "$cmd" in
+	list|show) openont_dhcp_list ;;
+	pool) openont_dhcp_pool "$@" ;;
+	static-add) openont_dhcp_static_set "" "$@" ;;
+	static-set) openont_dhcp_static_set "$@" ;;
+	static-del) openont_dhcp_static_del "$@" ;;
+	leases) openont_dhcp_leases_json ;;
+	status-json) openont_dhcp_status_json ;;
+	-h|--help|help|"") usage; [ -n "$cmd" ] || exit 1 ;;
+	*) echo "unknown: $cmd" >&2; usage; exit 1 ;;
+esac

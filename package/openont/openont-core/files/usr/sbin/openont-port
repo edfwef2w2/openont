@@ -3,48 +3,33 @@
 . /usr/lib/openont/port.sh
 
 usage() {
-	cat <<EOF
+	cat <<USAGE
 Usage: openont-port <command> [args]
+
+Roles are lanN (bridge of one or more ports) and wanN (exactly one port).
+Changing ports keeps the role's address/protocol and DHCP pool.
 
 Commands:
   list|show
-  set <lanN|wanN> <eth...> [proto]
-      lan:  openont-port set lan1 eth0 eth1
-      wan:  openont-port set wan1 eth2 [dhcp|pppoe|static]
+  create <lan|wan> <eth...> [dhcp|pppoe|static]   next free lanN / wanN
+  set <lanN|wanN> <eth...> [dhcp|pppoe|static]    create or rebind
+      openont-port set lan1 eth0 eth1
+      openont-port set wan1 eth2 pppoe
   add <lanN> <eth>
   del-port <lanN> <eth>
   del <lanN|wanN>
   status-json
-EOF
+
+Address/protocol: openont-address.  DHCP pools: openont-dhcp.
+USAGE
 }
 
 cmd="${1:-}"
 [ -n "$cmd" ] && shift
 
 case "$cmd" in
-	list|show)
-		openont_port_status_json | if command -v jsonfilter >/dev/null 2>&1; then
-			# human summary
-			. /usr/lib/openont/port.sh
-			printf "%-10s %-12s %s\n" "NETDEV" "ROLE" "LINK"
-			for d in $(openont_list_physical); do
-				role=$(openont_netdev_owner "$d" || true)
-				case "$role" in br-*) role=${role#br-} ;; esac
-				link=down
-				[ -f "/sys/class/net/$d/operstate" ] && grep -qx up "/sys/class/net/$d/operstate" && link=up
-				printf "%-10s %-12s %s\n" "$d" "${role:--}" "$link"
-			done
-			echo
-			echo "Roles:"
-			for role in $(uci -q show network 2>/dev/null | sed -n "s/^network\.\(\(lan\|wan\)[0-9]*\)=interface/\1/p" | sort); do
-				ports=$(openont_role_ports "$role")
-				proto=$(uci -q get "network.$role.proto")
-				printf "  %s proto=%s ports=%s\n" "$role" "$proto" "$ports"
-			done
-		else
-			openont_port_status_json
-		fi
-		;;
+	list|show) openont_port_list ;;
+	create) openont_port_create "$@" ;;
 	set) openont_port_set "$@" ;;
 	add) openont_port_add "$@" ;;
 	del-port) openont_port_del_port "$@" ;;

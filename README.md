@@ -14,32 +14,53 @@ Repository: https://github.com/edfwef2w2/openont
 - Custom OpenONT theme; **Status → Overview** is the OpenONT dashboard (replaces stock LuCI status overview)
 - No wireless NIC / Wi-Fi stack in source (no mac80211, hostapd, or in-tree PCIe Wi-Fi drivers); no package-manager / theme switcher in UI
 
-## Port binding (CLI ≡ Web)
+## Interfaces (CLI ≡ Web)
 
-Web: **Network → Port Binding**
+Web: **Network → Interfaces** (replaces the stock LuCI Interfaces page, which
+the build strips with `scripts/openont/strip-luci-network.sh`).
+
+Each setting has exactly one owner:
+
+| Tool | Owns |
+|---|---|
+| `openont-port` | which ports belong to `lanN` / `wanN` (LAN = bridge, WAN = one port), firewall zone |
+| `openont-address` | protocol and its parameters: static / dhcp / pppoe |
+| `openont-dhcp` | LAN DHCP pools and static leases |
+
+Changing ports never resets an interface's address, protocol or DHCP pool.
 
 ```sh
 openont-port list
-openont-port set lan1 eth0 eth1          # multi-eth LAN bridge
+openont-port create lan eth0 eth1        # next free lanN, multi-port bridge
+openont-port set lan1 eth0 eth1          # create or rebind
 openont-port add lan1 eth2
 openont-port del-port lan1 eth1
-openont-port set wan1 eth3               # dhcp
-openont-port set wan1 eth3 pppoe
-openont-port del lan1
-```
+openont-port set wan1 eth3               # new WAN defaults to dhcp
+openont-port del lan1                    # also drops its DHCP pool / static leases
 
-Default LAN address after bind: `192.168.1.1/24`.
-
-## Address (CLI)
-
-One-shot IPv4 on an existing `lanN` / `wanN` (bind ports first with `openont-port`).
-
-```sh
 openont-address list
 openont-address set lan1 192.168.50.1/24
 openont-address set wan1 10.0.0.2/24 10.0.0.1 8.8.8.8
-openont-address dhcp wan1              # WAN back to DHCP
-openont-address status-json
+openont-address dhcp wan1
+openont-address pppoe wan1 user pass     # empty user/pass keeps the stored value
+```
+
+A new `lanN` gets `192.168.N.1/24` (the next free /24 if taken) and a DHCP
+pool. A DHCP or static WAN gets an IPv6 companion `wanN_6`; PPPoE brings up
+its own dynamic `wanN_6`.
+
+## DHCP (CLI ≡ Web)
+
+Web: **Network → DHCP** (replaces the stock DHCP and DNS page; DNS is
+**Network → DNS**).
+
+```sh
+openont-dhcp list
+openont-dhcp pool lan1 on 100 150 12h    # start offset, pool size, lease time
+openont-dhcp pool lan1 off
+openont-dhcp static-add aa:bb:cc:dd:ee:ff 192.168.1.50 nas
+openont-dhcp static-del <id>
+openont-dhcp leases
 ```
 
 ## Port map / DMZ / IP groups
@@ -98,10 +119,10 @@ Categories match historical names: `http` `video` `game` `download` `file` `im` 
 
 ## PPPoE dial / redial
 
-Web: **Network → PPPoE Dial**
+Web: Connect / Disconnect / Reconnect buttons on the WAN card in **Network → Interfaces**
 
 ```sh
-openont-port set wan1 eth0 pppoe   # configure first
+openont-address pppoe wan1 user pass   # configure first
 openont-pppoe status
 openont-pppoe dial wan1
 openont-pppoe hangup wan1

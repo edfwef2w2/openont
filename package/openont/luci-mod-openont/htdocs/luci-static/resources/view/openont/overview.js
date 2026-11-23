@@ -234,7 +234,7 @@ return view.extend({
 		if (!list.length) {
 			ul.appendChild(E('li', {}, [
 				E('div', { class: 'name' }, [ _('No binding') ]),
-				E('div', { class: 'meta' }, [ _('Bind interfaces under Network → Port Binding') ])
+				E('div', { class: 'meta' }, [ _('Bind interfaces under Network → Interfaces') ])
 			]));
 			return;
 		}

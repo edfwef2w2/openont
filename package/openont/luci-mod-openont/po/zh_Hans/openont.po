@@ -943,3 +943,201 @@ msgstr "动作"
 
 msgid "Detail"
 msgstr "详情"
+
+msgid "%s – %s · %d in use · %d free"
+msgstr "%s – %s · 已用 %d · 剩余 %d"
+
+msgid "%s – %s, %d free"
+msgstr "%s – %s，剩余 %d"
+
+msgid "A LAN needs at least one port. Delete the interface instead."
+msgstr "LAN 至少需要一个网口，如需移除请删除该接口。"
+
+msgid "Active leases"
+msgstr "当前租约"
+
+msgid "Add port…"
+msgstr "添加网口…"
+
+msgid "Add static lease"
+msgstr "添加静态分配"
+
+msgid "Address pools"
+msgstr "地址池"
+
+msgid "All ports are in use. Remove a port from an interface first."
+msgstr "所有网口都已占用，请先从接口中移除网口。"
+
+msgid "Bind interfaces under Network → Interfaces"
+msgstr "请在 网络 → 接口 中绑定网口"
+
+msgid "Configure"
+msgstr "配置"
+
+msgid "Connect"
+msgstr "连接"
+
+msgid "Create"
+msgstr "创建"
+
+msgid "DHCP"
+msgstr "DHCP"
+
+msgid "DHCP client"
+msgstr "DHCP 客户端"
+
+msgid "DHCP server"
+msgstr "DHCP 服务器"
+
+msgid "DNS servers"
+msgstr "DNS 服务器"
+
+msgid "Delete %s? Its DHCP pool and the static leases in its subnet are removed too."
+msgstr "删除 %s？其 DHCP 地址池以及该网段内的静态分配也会一并删除。"
+
+msgid "Delete static lease %s?"
+msgstr "删除静态分配 %s？"
+
+msgid "Disconnect"
+msgstr "断开"
+
+msgid "Down"
+msgstr "未连接"
+
+msgid "Edit static lease"
+msgstr "编辑静态分配"
+
+msgid "Enable DHCP server"
+msgstr "启用 DHCP 服务器"
+
+msgid "Enter an IPv4 address such as 192.168.1.1/24"
+msgstr "请输入 IPv4 地址，例如 192.168.1.1/24"
+
+msgid "Enter the PPPoE username"
+msgstr "请输入 PPPoE 账号"
+
+msgid "Error"
+msgstr "错误"
+
+msgid "Gateway"
+msgstr "网关"
+
+msgid "Hostname"
+msgstr "主机名"
+
+msgid "IPv4 address"
+msgstr "IPv4 地址"
+
+msgid "Infinite"
+msgstr "永久"
+
+msgid "Interfaces"
+msgstr "接口"
+
+msgid "Interfaces (lanN / wanN)"
+msgstr "接口 (lanN / wanN)"
+
+msgid "LAN (bridge, one or more ports)"
+msgstr "LAN（网桥，可含多个网口）"
+
+msgid "Lease time"
+msgstr "租期"
+
+msgid "Make static"
+msgstr "设为静态"
+
+msgid "New interface"
+msgstr "新建接口"
+
+msgid "No LAN interface yet. Create one under Network → Interfaces."
+msgstr "还没有 LAN 接口，请在 网络 → 接口 中创建。"
+
+msgid "No active leases."
+msgstr "暂无租约。"
+
+msgid "No interfaces yet. Create one below."
+msgstr "还没有接口，请在下方创建。"
+
+msgid "No static leases."
+msgstr "暂无静态分配。"
+
+msgid "On"
+msgstr "开启"
+
+msgid "PPPoE password"
+msgstr "PPPoE 密码"
+
+msgid "PPPoE username"
+msgstr "PPPoE 账号"
+
+msgid "Physical ports"
+msgstr "物理网口"
+
+msgid "Pool size"
+msgstr "地址数量"
+
+msgid "Ports"
+msgstr "网口"
+
+msgid "Reconnect"
+msgstr "重新连接"
+
+msgid "Remaining"
+msgstr "剩余时间"
+
+msgid "Same as console openont-dhcp"
+msgstr "与控制台 openont-dhcp 一致"
+
+msgid "Same as console openont-port / openont-address"
+msgstr "与控制台 openont-port / openont-address 一致"
+
+msgid "Saved. Reconnecting to %s…"
+msgstr "已保存，正在跳转到 %s…"
+
+msgid "Select at least one port"
+msgstr "请至少选择一个网口"
+
+msgid "Start offset"
+msgstr "起始偏移"
+
+msgid "Static"
+msgstr "静态"
+
+msgid "Static address"
+msgstr "静态地址"
+
+msgid "Static leases"
+msgstr "静态分配"
+
+msgid "This page is served from %s. After saving, the router moves to %s and this page will reload there."
+msgstr "当前页面通过 %s 访问。保存后路由器地址将变为 %s，页面会跳转到新地址。"
+
+msgid "Up"
+msgstr "已连接"
+
+msgid "WAN (one port)"
+msgstr "WAN（单个网口）"
+
+msgid "Will be created as %s"
+msgstr "将创建为 %s"
+
+msgid "address/prefix"
+msgstr "地址/前缀"
+
+msgid "e.g. 30m, 12h, 7d, infinite"
+msgstr "例如 30m、12h、7d、infinite"
+
+msgid "first address = network + offset"
+msgstr "首个地址 = 网络地址 + 偏移"
+
+msgid "no address"
+msgstr "无地址"
+
+msgid "optional"
+msgstr "可选"
+
+msgid "optional, space separated"
+msgstr "可选，空格分隔"
+
+msgid "unchanged"
+msgstr "不修改"

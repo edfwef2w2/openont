@@ -941,3 +941,201 @@ msgstr ""
 
 msgid "Detail"
 msgstr ""
+
+msgid "%s – %s · %d in use · %d free"
+msgstr ""
+
+msgid "%s – %s, %d free"
+msgstr ""
+
+msgid "A LAN needs at least one port. Delete the interface instead."
+msgstr ""
+
+msgid "Active leases"
+msgstr ""
+
+msgid "Add port…"
+msgstr ""
+
+msgid "Add static lease"
+msgstr ""
+
+msgid "Address pools"
+msgstr ""
+
+msgid "All ports are in use. Remove a port from an interface first."
+msgstr ""
+
+msgid "Bind interfaces under Network → Interfaces"
+msgstr ""
+
+msgid "Configure"
+msgstr ""
+
+msgid "Connect"
+msgstr ""
+
+msgid "Create"
+msgstr ""
+
+msgid "DHCP"
+msgstr ""
+
+msgid "DHCP client"
+msgstr ""
+
+msgid "DHCP server"
+msgstr ""
+
+msgid "DNS servers"
+msgstr ""
+
+msgid "Delete %s? Its DHCP pool and the static leases in its subnet are removed too."
+msgstr ""
+
+msgid "Delete static lease %s?"
+msgstr ""
+
+msgid "Disconnect"
+msgstr ""
+
+msgid "Down"
+msgstr ""
+
+msgid "Edit static lease"
+msgstr ""
+
+msgid "Enable DHCP server"
+msgstr ""
+
+msgid "Enter an IPv4 address such as 192.168.1.1/24"
+msgstr ""
+
+msgid "Enter the PPPoE username"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "Gateway"
+msgstr ""
+
+msgid "Hostname"
+msgstr ""
+
+msgid "IPv4 address"
+msgstr ""
+
+msgid "Infinite"
+msgstr ""
+
+msgid "Interfaces"
+msgstr ""
+
+msgid "Interfaces (lanN / wanN)"
+msgstr ""
+
+msgid "LAN (bridge, one or more ports)"
+msgstr ""
+
+msgid "Lease time"
+msgstr ""
+
+msgid "Make static"
+msgstr ""
+
+msgid "New interface"
+msgstr ""
+
+msgid "No LAN interface yet. Create one under Network → Interfaces."
+msgstr ""
+
+msgid "No active leases."
+msgstr ""
+
+msgid "No interfaces yet. Create one below."
+msgstr ""
+
+msgid "No static leases."
+msgstr ""
+
+msgid "On"
+msgstr ""
+
+msgid "PPPoE password"
+msgstr ""
+
+msgid "PPPoE username"
+msgstr ""
+
+msgid "Physical ports"
+msgstr ""
+
+msgid "Pool size"
+msgstr ""
+
+msgid "Ports"
+msgstr ""
+
+msgid "Reconnect"
+msgstr ""
+
+msgid "Remaining"
+msgstr ""
+
+msgid "Same as console openont-dhcp"
+msgstr ""
+
+msgid "Same as console openont-port / openont-address"
+msgstr ""
+
+msgid "Saved. Reconnecting to %s…"
+msgstr ""
+
+msgid "Select at least one port"
+msgstr ""
+
+msgid "Start offset"
+msgstr ""
+
+msgid "Static"
+msgstr ""
+
+msgid "Static address"
+msgstr ""
+
+msgid "Static leases"
+msgstr ""
+
+msgid "This page is served from %s. After saving, the router moves to %s and this page will reload there."
+msgstr ""
+
+msgid "Up"
+msgstr ""
+
+msgid "WAN (one port)"
+msgstr ""
+
+msgid "Will be created as %s"
+msgstr ""
+
+msgid "address/prefix"
+msgstr ""
+
+msgid "e.g. 30m, 12h, 7d, infinite"
+msgstr ""
+
+msgid "first address = network + offset"
+msgstr ""
+
+msgid "no address"
+msgstr ""
+
+msgid "optional"
+msgstr ""
+
+msgid "optional, space separated"
+msgstr ""
+
+msgid "unchanged"
+msgstr ""

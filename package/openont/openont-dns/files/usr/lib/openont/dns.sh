@@ -5,6 +5,7 @@
 OPENONT_DNS_LOADED=1
 
 . /usr/lib/openont/common.sh 2>/dev/null || true
+. /usr/lib/openont/dhcp.sh 2>/dev/null || true
 . /lib/functions.sh 2>/dev/null || true
 . /usr/share/libubox/jshn.sh 2>/dev/null || true
 
@@ -47,16 +48,14 @@ openont_dns_sections() {
 }
 
 openont_dns_lan_ips() {
-	local role ip
-	for role in $(uci show network 2>/dev/null | sed -n 's/^network\.\(lan[0-9]*\)=interface/\1/p'); do
-		ip=$(uci -q get "network.$role.ipaddr")
-		ip=${ip%%/*}
-		[ -n "$ip" ] && echo "$ip"
+	local role cidr
+	for role in $(openont_role_list lan); do
+		cidr=$(openont_role_cidr "$role") && echo "${cidr%/*}"
 	done
 }
 
 openont_dns_claim_dnsmasq() {
-	local role ip opt saved
+	local role saved
 	[ -x /etc/init.d/dnsmasq ] || return 0
 	mkdir -p /etc/openont
 	if [ ! -f "$DNS_STAMP" ]; then
@@ -64,14 +63,9 @@ openont_dns_claim_dnsmasq() {
 		printf '%s\n' "${saved:-__unset__}" > "$DNS_STAMP"
 		uci -q set dhcp.@dnsmasq[0].port='0'
 		: > "$DNS_OPT6"
-		for role in $(uci show network 2>/dev/null | sed -n 's/^network\.\(lan[0-9]*\)=interface/\1/p'); do
-			ip=$(uci -q get "network.$role.ipaddr")
-			ip=${ip%%/*}
-			[ -n "$ip" ] || continue
-			uci -q get "dhcp.$role" >/dev/null 2>&1 || continue
-			opt="6,$ip"
-			uci -q add_list "dhcp.$role.dhcp_option=$opt"
-			echo "$role $opt" >> "$DNS_OPT6"
+		# dhcp.sh keeps these "6,<lan ip>" options in sync from now on.
+		for role in $(openont_role_list lan); do
+			openont_dhcp_dns_opt_refresh "$role"
 		done
 		uci commit dhcp
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1 || true

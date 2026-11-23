@@ -5,6 +5,7 @@
 # flow.class is not used for byte accounting (5-tuple breaks on source-port churn).
 
 . /usr/lib/openont/stats-paths.sh 2>/dev/null || true
+. /usr/lib/openont/role.sh
 . /usr/share/openont/buckets.sh 2>/dev/null || true
 
 STATS_DIR="${OPENONT_STATS_DIR:-/tmp/openont-stats}"
@@ -58,7 +59,7 @@ load_game_udp() {
 
 list_wan_devs() {
 	local s dev
-	for s in $(uci -q show network 2>/dev/null | sed -n "s/^network\.\(wan[0-9]*\)=interface/\1/p"); do
+	for s in $(openont_role_list wan); do
 		dev=$(uci -q get "network.$s.device")
 		[ -n "$dev" ] && echo "$dev"
 		dev=$(ifstatus "$s" 2>/dev/null | jsonfilter -e '@.l3_device' 2>/dev/null)

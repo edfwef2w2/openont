@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openont-stats
 PKG_VERSION:=1.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_LICENSE:=Apache-2.0
 
@@ -17,7 +17,7 @@ define Package/openont-stats
   SECTION:=net
   CATEGORY:=Network
   TITLE:=OpenONT traffic stats daemon and RPC helpers
-  DEPENDS:=+openont-dpi +jshn +jsonfilter +dnsmasq
+  DEPENDS:=+openont-core +openont-dpi +jshn +jsonfilter +dnsmasq
   PKGARCH:=all
 endef
 

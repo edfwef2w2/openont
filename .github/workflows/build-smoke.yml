@@ -26,7 +26,9 @@ jobs:
           set -euo pipefail
           files=(
             package/openont/openont-core/Makefile
+            package/openont/openont-core/files/usr/lib/openont/role.sh
             package/openont/openont-core/files/usr/lib/openont/port.sh
+            package/openont/openont-core/files/usr/lib/openont/dhcp.sh
             package/openont/openont-core/files/usr/lib/openont/address.sh
             package/openont/openont-core/files/usr/lib/openont/nat.sh
             package/openont/openont-core/files/usr/lib/openont/ipgroup.sh
@@ -34,6 +36,7 @@ jobs:
             package/openont/openont-core/files/usr/lib/openont/pppoe.sh
             package/openont/openont-core/files/usr/sbin/openont-port
             package/openont/openont-core/files/usr/sbin/openont-address
+            package/openont/openont-core/files/usr/sbin/openont-dhcp
             package/openont/openont-core/files/usr/sbin/openont-nat
             package/openont/openont-core/files/usr/sbin/openont-ipgroup
             package/openont/openont-core/files/usr/sbin/openont-offload
@@ -43,12 +46,12 @@ jobs:
             package/openont/luci-mod-openont/root/usr/share/rpcd/acl.d/luci-mod-openont.json
             package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/overview.js
-            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ports.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/network.js
+            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dhcp.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/portmap.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/dmz.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/ipgroup.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/offload.js
-            package/openont/luci-mod-openont/htdocs/luci-static/resources/view/openont/pppoe.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/rpc-helper.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/crud-table.js
             package/openont/luci-mod-openont/htdocs/luci-static/resources/openont/chart-common.js
@@ -101,6 +104,7 @@ jobs:
             configs/openont-armsr_armv8.config
             scripts/openont/apply-config.sh
             scripts/openont/strip-luci-wireless.sh
+            scripts/openont/strip-luci-network.sh
             scripts/openont/gen-buckets.py
             target/linux/generic/hack-6.18/652-net-omit-in-tree-wlan-and-mac80211.patch
             target/linux/generic/hack-6.12/652-net-omit-in-tree-wlan-and-mac80211.patch
@@ -158,6 +162,7 @@ jobs:
             package/openont/openont-dpi/files/dpi-nft.sh
             package/openont/openont-core/files/usr/sbin/openont-port
             package/openont/openont-core/files/usr/sbin/openont-address
+            package/openont/openont-core/files/usr/sbin/openont-dhcp
             package/openont/openont-core/files/usr/sbin/openont-nat
             package/openont/openont-core/files/usr/sbin/openont-ipgroup
             package/openont/openont-core/files/usr/sbin/openont-offload
@@ -170,6 +175,7 @@ jobs:
             package/openont/luci-theme-openont/root/etc/uci-defaults/30_luci-theme-openont
             scripts/openont/apply-config.sh
             scripts/openont/strip-luci-wireless.sh
+            scripts/openont/strip-luci-network.sh
           )
           fail=0
           for f in "${exec_files[@]}"; do
@@ -254,10 +260,17 @@ jobs:
             echo "do not disable wireless via seed config; packages must be gone" >&2
             exit 1
           fi
-          grep -q 'openont_is_wireless_netdev' package/openont/openont-core/files/usr/lib/openont/port.sh \
-            || { echo "port.sh must reject wireless netdevs" >&2; exit 1; }
+          grep -q 'openont_is_wireless_netdev' package/openont/openont-core/files/usr/lib/openont/role.sh \
+            || { echo "role.sh must reject wireless netdevs" >&2; exit 1; }
           grep -q 'strip-luci-wireless' scripts/openont/apply-config.sh \
             || { echo "apply-config must strip luci wireless sources" >&2; exit 1; }
+          grep -q 'strip-luci-network' scripts/openont/apply-config.sh \
+            || { echo "apply-config must strip stock interface/DHCP pages" >&2; exit 1; }
+          # OpenONT owns these menu paths; stock luci-mod-network pages are stripped.
+          for k in admin/network/network admin/network/dhcp; do
+            grep -q "\"$k\"" package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json \
+              || { echo "menu must map $k to an OpenONT view" >&2; exit 1; }
+          done
           echo "config selection ok"
 
       - name: Theme and overview sources
@@ -318,7 +331,8 @@ jobs:
             package/openont/openont-base/files/etc/uci-defaults/* \
             package/openont/luci-theme-openont/root/etc/uci-defaults/* \
             scripts/openont/apply-config.sh \
-            scripts/openont/strip-luci-wireless.sh
+            scripts/openont/strip-luci-wireless.sh \
+            scripts/openont/strip-luci-network.sh
           do
             sh -n "$f"
           done

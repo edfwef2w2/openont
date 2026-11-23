@@ -21,23 +21,23 @@
 			"acl": [ "luci-mod-openont" ]
 		}
 	},
-	"admin/network/openont-ports": {
-		"title": "Port Binding",
+	"admin/network/network": {
+		"title": "Interfaces",
 		"order": 5,
 		"action": {
 			"type": "view",
-			"path": "openont/ports"
+			"path": "openont/network"
 		},
 		"depends": {
 			"acl": [ "luci-mod-openont" ]
 		}
 	},
-	"admin/network/openont-pppoe": {
-		"title": "PPPoE Dial",
+	"admin/network/dhcp": {
+		"title": "DHCP",
 		"order": 6,
 		"action": {
 			"type": "view",
-			"path": "openont/pppoe"
+			"path": "openont/dhcp"
 		},
 		"depends": {
 			"acl": [ "luci-mod-openont" ]

@@ -118,6 +118,8 @@ jobs:
           ./scripts/feeds install -a
           chmod +x scripts/openont/strip-luci-wireless.sh
           ./scripts/openont/strip-luci-wireless.sh
+          chmod +x scripts/openont/strip-luci-network.sh
+          ./scripts/openont/strip-luci-network.sh
 
       - name: Configure
         run: |
@@ -161,8 +163,15 @@ jobs:
             check_exec "$root/usr/sbin/openont-port"
             [ -f "$root/usr/share/rpcd/acl.d/luci-mod-openont.json" ] \
               || { echo "missing ACL under $root" >&2; return 1; }
-            [ -f "$root/www/luci-static/resources/view/openont/ports.js" ] \
-              || { echo "missing ports.js under $root" >&2; return 1; }
+            [ -f "$root/www/luci-static/resources/view/openont/network.js" ] \
+              || { echo "missing network.js under $root" >&2; return 1; }
+            [ -f "$root/www/luci-static/resources/view/openont/dhcp.js" ] \
+              || { echo "missing dhcp.js under $root" >&2; return 1; }
+            check_exec "$root/usr/sbin/openont-dhcp"
+            for v in network dhcp; do
+              [ ! -f "$root/www/luci-static/resources/view/network/$v.js" ] \
+                || { echo "stock view/network/$v.js still installed under $root" >&2; return 1; }
+            done
             [ -f "$root/www/luci-static/openont/cascade.css" ] \
               || { echo "missing openont theme CSS under $root" >&2; return 1; }
             [ -f "$root/usr/share/ucode/luci/template/themes/openont/header.ut" ] \

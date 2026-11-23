@@ -13,45 +13,39 @@ EOF
 # Users bind NICs via openont-port on the console.
 if [ ! -f /etc/openont/.ports_initialized ]; then
 	mkdir -p /etc/openont
-	for s in $(uci -q show network 2>/dev/null | sed -n "s/^network\.\([^=]*\)=interface/\1/p"); do
-		case "$s" in
-			loopback) continue ;;
-			lan|wan|wan6|lan6|*_dev) uci -q delete "network.$s" ;;
-			lan[0-9]*|wan[0-9]*) ;;
-			*)
-				# Drop legacy single lan/wan style and unnamed leftovers from board.d
-				proto=$(uci -q get "network.$s.proto")
-				dev=$(uci -q get "network.$s.device")
-				case "$s" in
-					lan|wan) uci -q delete "network.$s" ;;
-				esac
-				;;
-		esac
+	for s in lan wan wan6 lan6 $(uci -q show network 2>/dev/null | sed -n 's/^network\.\([^.=]*_dev\)=interface$/\1/p'); do
+		uci -q delete "network.$s"
 	done
-
-	# Explicitly remove classic defaults if present
-	uci -q delete network.lan
-	uci -q delete network.wan
-	uci -q delete network.wan6
-
-	# Drop bridge devices created for lan
-	i=0
-	while uci -q get "network.@device[$i]" >/dev/null 2>&1; do
-		name=$(uci -q get "network.@device[$i].name")
-		case "$name" in
-			br-lan)
-				uci -q delete "network.@device[$i]"
-				# indices shift; restart scan
-				i=0
-				continue
-				;;
-		esac
-		i=$((i + 1))
+	# Drop the board's br-lan device (section ids stay valid across deletes)
+	for sid in $(uci -q -X show network 2>/dev/null | sed -n "s/^network\.\([^.]*\)\.name='br-lan'$/\1/p"); do
+		uci -q delete "network.$sid"
 	done
-
 	uci -q commit network
 	touch /etc/openont/.ports_initialized
 fi
+
+# Rename legacy WAN IPv6 companions wanN6 -> wanN_6 (wanN6 collided with the
+# role names, e.g. wan16 for wan1) and put them in their WAN's zone.
+fw_zones() {
+	uci -q -X show firewall 2>/dev/null | sed -n 's/^firewall\.\([^.=]*\)=zone$/\1/p'
+}
+zone_has() {
+	uci -q get "firewall.$1.network" | tr ' ' '\n' | grep -qx "$2"
+}
+for s in $(uci -q show network 2>/dev/null | sed -n 's/^network\.\(wan[0-9]*6\)=interface$/\1/p'); do
+	dev=$(uci -q get "network.$s.device")
+	role=${dev#@}
+	[ "$dev" = "@$role" ] && [ "$s" = "${role}6" ] || continue
+	uci -q rename "network.$s=${role}_6"
+	for z in $(fw_zones); do
+		zone_has "$z" "$s" && uci -q del_list "firewall.$z.network=$s"
+		if zone_has "$z" "$role" && ! zone_has "$z" "${role}_6"; then
+			uci -q add_list "firewall.$z.network=${role}_6"
+		fi
+	done
+done
+uci -q commit network
+uci -q commit firewall
 
 # OpenONT has no wireless NIC stack; drop leftover wireless UCI.
 uci -q delete wireless
