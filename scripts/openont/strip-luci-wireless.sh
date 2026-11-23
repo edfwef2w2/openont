@@ -68,4 +68,50 @@ for dirpath, _, files in os.walk(root):
                 fh.write("\n")
 PY
 
+# luci-bwc (luci-mod-status) still includes iwinfo.h for its radio
+# statistics, which no longer builds without the iwinfo package. Replace the
+# iwinfo include and helpers with stubs; interface and connection statistics
+# are unaffected. Fail loudly if upstream changed shape.
+"$PY" - "$LUCI/modules/luci-mod-status/src/luci-bwc.c" <<'PY'
+import os, re, sys
+path = sys.argv[1]
+if not os.path.isfile(path):
+    sys.exit(0)
+src = open(path, encoding="utf-8").read()
+if "#include <iwinfo.h>" not in src:
+    sys.exit(0)
+start = src.find("static void * iw_open(void)")
+end = src.find("static int update_ifstat(")
+if start < 0 or end < start:
+    sys.exit("strip-luci-wireless: luci-bwc.c layout changed; update the iwinfo stub")
+stub = """/* OpenONT: no wireless stack, so no radio statistics. */
+static void * iw_open(void)
+{
+	return NULL;
+}
+
+static int iw_update(
+	void *iw, const char *ifname, uint16_t *rate, uint8_t *rssi, uint8_t *noise
+) {
+	(void)iw; (void)ifname; (void)rate; (void)rssi; (void)noise;
+	return 0;
+}
+
+static void iw_close(void *iw)
+{
+	(void)iw;
+}
+
+
+"""
+src = src[:start] + stub + src[end:]
+src = src.replace("#include <iwinfo.h>\n", "")
+src = re.sub(r"^static struct iwinfo_ops \*backend = NULL;\n", "", src, flags=re.M)
+if "iwinfo_" in src or "iwinfo.h" in src:
+    sys.exit("strip-luci-wireless: luci-bwc.c still references iwinfo")
+with open(path, "w", encoding="utf-8", newline="\n") as fh:
+    fh.write(src)
+print("strip-luci-wireless: stubbed iwinfo in luci-bwc.c")
+PY
+
 echo "strip-luci-wireless: removed wireless sources under $LUCI"

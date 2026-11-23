@@ -361,3 +361,22 @@ jobs:
           /tmp/openont-dns-test
           python3 -c 'import json; m=json.load(open("package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json")); json.load(open("package/openont/luci-mod-openont/root/usr/share/rpcd/acl.d/luci-mod-openont.json")); d=m["admin/network/openont-dns"]; assert d["order"]==8 and d["action"]["type"]=="firstchild"; assert all("admin/network/openont-dns/"+n in m for n in ("general","upstreams","filter","accel","log"))'
           echo "dns unit tests ok"
+
+      - name: luci-bwc builds without iwinfo
+        run: |
+          set -euo pipefail
+          # The image build runs strip-luci-wireless.sh on the luci feed; check
+          # that it still turns upstream luci-bwc.c into a file that compiles
+          # without iwinfo.h.
+          tmp=$(mktemp -d)
+          src="$tmp/modules/luci-mod-status/src/luci-bwc.c"
+          mkdir -p "$(dirname "$src")"
+          curl -fsSL -o "$src" \
+            https://raw.githubusercontent.com/openwrt/luci/master/modules/luci-mod-status/src/luci-bwc.c
+          ./scripts/openont/strip-luci-wireless.sh "$tmp"
+          if grep -nE 'iwinfo\.h|iwinfo_' "$src"; then
+            echo "luci-bwc.c still references iwinfo after strip-luci-wireless.sh" >&2
+            exit 1
+          fi
+          cc -Wall -c -o "$tmp/luci-bwc.o" "$src"
+          echo "luci-bwc ok"
