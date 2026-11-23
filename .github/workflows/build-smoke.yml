@@ -228,6 +228,17 @@ jobs:
             || { echo "package/network/services/hostapd must be removed" >&2; exit 1; }
           test ! -d package/network/utils/iwinfo \
             || { echo "package/network/utils/iwinfo must be removed" >&2; exit 1; }
+          # Core rpcd-mod-luci shadows the luci feed copy, which needs iwinfo.h
+          test -f package/openont/rpcd-mod-luci/Makefile \
+            || { echo "package/openont/rpcd-mod-luci must exist (feed copy needs iwinfo)" >&2; exit 1; }
+          if grep -nE 'iwinfo|IWINFO|dlopen|dlsym' package/openont/rpcd-mod-luci/src/luci.c; then
+            echo "rpcd-mod-luci must not reference iwinfo" >&2
+            exit 1
+          fi
+          if grep -n 'iwinfo' package/openont/rpcd-mod-luci/Makefile | grep -v '^[0-9]*:#'; then
+            echo "rpcd-mod-luci Makefile must not depend on iwinfo" >&2
+            exit 1
+          fi
           grep -q 'obj-$(CONFIG_WLAN) += wireless/' \
             target/linux/generic/hack-6.18/652-net-omit-in-tree-wlan-and-mac80211.patch \
             || { echo "kernel hack must omit drivers/net/wireless" >&2; exit 1; }
