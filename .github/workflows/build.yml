@@ -112,6 +112,17 @@ jobs:
             openont-dl-${{ matrix.name }}-
             openont-dl-
 
+      # Compiler cache: toolchain, host tools, kernel and packages all go through
+      # ccache (CONFIG_CCACHE=y), so unchanged sources are not recompiled.
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: openont-ccache-${{ matrix.name }}-${{ hashFiles('feeds.conf.default', 'configs/**') }}-${{ github.sha }}
+          restore-keys: |
+            openont-ccache-${{ matrix.name }}-${{ hashFiles('feeds.conf.default', 'configs/**') }}-
+            openont-ccache-${{ matrix.name }}-
+
       - name: Feeds
         run: |
           ./scripts/feeds update -a
@@ -142,6 +153,10 @@ jobs:
 
       - name: Build
         run: make -j"$(nproc)" world V=s
+
+      - name: ccache stats
+        if: always()
+        run: ccache -s -d .ccache || true
 
       - name: Verify OpenONT packaged into rootfs
         run: |
