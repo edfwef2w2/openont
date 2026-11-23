@@ -306,8 +306,10 @@ jobs:
   # Build matrix of {target,file,artifact} so each download link unpacks to exactly one file.
   publish-matrix:
     name: Publish matrix
-    needs: build
-    if: always() && !cancelled()
+    needs: [prepare, build]
+    # always() lets partial matrix failures still publish, but only when prepare
+    # actually ran; a failed Smoke skips prepare/build and must not reach here.
+    if: always() && !cancelled() && needs.prepare.result == 'success'
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
