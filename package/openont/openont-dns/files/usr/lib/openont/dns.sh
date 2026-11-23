@@ -13,7 +13,10 @@ DNS_OPT6="/etc/openont/dns-dhcp-opt6"
 DNS_HTTPS="/etc/openont/dns-uhttpd.https"
 DNS_RUN="/tmp/openont-dns"
 DNS_CONF="$DNS_RUN/dnsd.conf"
-DNS_TLS="$DNS_RUN/tlsfront.conf"
+DNS_DESYNC="$DNS_RUN/desync.conf"
+DNS_DESYNC_STATUS="$DNS_RUN/desync.json"
+DNS_DESYNC_QUEUE=11
+DNS_DESYNC_TABLE="inet openont_desync"
 
 openont_dns_fail() {
 	openont_err "$1" || true
@@ -97,19 +100,8 @@ openont_dns_release_dnsmasq() {
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1 || true
 }
 
-openont_dns_claim_https() {
-	local line
-	[ -f "$DNS_HTTPS" ] && return 0
-	mkdir -p /etc/openont
-	uci show uhttpd.main.listen_https 2>/dev/null | sed -n "s/.*='\\(.*\\)'/\\1/p" > "$DNS_HTTPS"
-	uci -q delete uhttpd.main.listen_https
-	uci -q add_list uhttpd.main.listen_https='127.0.0.1:8443'
-	uci -q add_list uhttpd.main.listen_https='[::1]:8443'
-	uci commit uhttpd 2>/dev/null || true
-	[ -x /etc/init.d/uhttpd ] && /etc/init.d/uhttpd restart >/dev/null 2>&1 || true
-	return 0
-}
-
+# Gives 443 back to uhttpd on gateways that ran the old TLS-terminating
+# acceleration.
 openont_dns_restore_https() {
 	[ -f "$DNS_HTTPS" ] || return 0
 	uci -q delete uhttpd.main.listen_https
@@ -124,6 +116,59 @@ openont_dns_restore_https() {
 	rm -f "$DNS_HTTPS"
 	uci commit uhttpd 2>/dev/null || true
 	[ -x /etc/init.d/uhttpd ] && /etc/init.d/uhttpd restart >/dev/null 2>&1 || true
+}
+
+# Cleanup after the old certificate-based acceleration.
+openont_dns_drop_legacy_accel() {
+	openont_dns_restore_https
+	rm -f /etc/openont/dns/ca.key /etc/openont/dns/ca.crt
+	rm -rf "$DNS_RUN/certs" "$DNS_RUN/tlsfront.conf"
+}
+
+# Address sets filled by openont-dnsd, and the forward hook that hands the
+# first packets of TCP/443 flows towards them to openont-desync.
+# "bypass" keeps traffic flowing when the daemon is not running.
+# Only the chain is rebuilt here: the sets keep their addresses across
+# restarts, since dnsd skips addresses it added a few minutes ago.
+# Packets 2-6 of the original direction cover the handshake ACK and the
+# ClientHello; openont-desync answers them with NF_STOP so flow offload in
+# the later forward chain does not take the flow before its ClientHello.
+openont_dns_desync_up() {
+	local q="$DNS_DESYNC_QUEUE"
+	command -v nft >/dev/null 2>&1 || return 0
+	# "ct ... packets" needs per-connection counters
+	sysctl -q -w net.netfilter.nf_conntrack_acct=1 >/dev/null 2>&1 || \
+		echo 1 > /proc/sys/net/netfilter/nf_conntrack_acct 2>/dev/null || true
+	nft -f - <<EOF
+table $DNS_DESYNC_TABLE {
+	set accel4 {
+		type ipv4_addr
+		flags timeout
+	}
+	set accel6 {
+		type ipv6_addr
+		flags timeout
+	}
+	chain forward {
+		type filter hook forward priority -10; policy accept;
+	}
+}
+flush chain $DNS_DESYNC_TABLE forward
+table $DNS_DESYNC_TABLE {
+	chain forward {
+		meta l4proto tcp tcp dport 443 ct state established ct direction original ct original packets 2-6 ip daddr @accel4 queue num $q bypass
+		meta l4proto tcp tcp dport 443 ct state established ct direction original ct original packets 2-6 ip6 daddr @accel6 queue num $q bypass
+		meta l4proto tcp tcp sport 443 tcp flags & (syn | ack) == syn | ack ct reply packets 1 ip saddr @accel4 queue num $q bypass
+		meta l4proto tcp tcp sport 443 tcp flags & (syn | ack) == syn | ack ct reply packets 1 ip6 saddr @accel6 queue num $q bypass
+	}
+}
+EOF
+}
+
+openont_dns_desync_down() {
+	rm -f "$DNS_DESYNC_STATUS"
+	command -v nft >/dev/null 2>&1 || return 0
+	nft delete table $DNS_DESYNC_TABLE >/dev/null 2>&1 || true
 }
 
 openont_dns_ensure_sets() {
@@ -207,7 +252,6 @@ _dns_emit_accel() {
 	config_get domain "$id" domain
 	[ -n "$domain" ] || return 0
 	echo "accel suffix $domain" >> "$DNS_CONF.new"
-	echo "accel $domain" >> "$DNS_TLS.new"
 }
 
 _dns_emit_client() {
@@ -231,7 +275,8 @@ _dns_emit_list() {
 }
 
 openont_dns_write_conf() {
-	local port cache min max serve prefetch mode speed pref block logsz accel sni sniname ip
+	local port cache min max serve prefetch mode speed pref block logsz accel ip
+	local fooling ttlmode ttl delta repeat fakesni
 	mkdir -p "$DNS_RUN" /var/lib/openont-dns/lists /etc/openont/dns /tmp/openont-stats
 	port=$(uci -q get openont-dns.main.port); port=${port:-53}
 	cache=$(uci -q get openont-dns.main.cache_size); cache=${cache:-4096}
@@ -245,8 +290,12 @@ openont_dns_write_conf() {
 	block=$(uci -q get openont-dns.main.block_mode); block=${block:-nxdomain}
 	logsz=$(uci -q get openont-dns.main.log_size); logsz=${logsz:-500}
 	accel=$(uci -q get openont-dns.main.accel_enabled); accel=${accel:-0}
-	sni=$(uci -q get openont-dns.main.accel_sni); sni=${sni:-omit}
-	sniname=$(uci -q get openont-dns.main.accel_sni_name)
+	fooling=$(uci -q get openont-dns.main.accel_fooling); fooling=${fooling:-ttl}
+	ttlmode=$(uci -q get openont-dns.main.accel_ttl_mode); ttlmode=${ttlmode:-auto}
+	ttl=$(uci -q get openont-dns.main.accel_ttl); ttl=${ttl:-5}
+	delta=$(uci -q get openont-dns.main.accel_ttl_delta); delta=${delta:-1}
+	repeat=$(uci -q get openont-dns.main.accel_repeat); repeat=${repeat:-1}
+	fakesni=$(uci -q get openont-dns.main.accel_fake_sni); fakesni=${fakesni:-www.baidu.com}
 	DNS_ACCEL_ON="$accel"
 	{
 		echo "port $port"
@@ -269,20 +318,15 @@ openont_dns_write_conf() {
 		done
 	} > "$DNS_CONF.new"
 	{
-		echo "ca_key /etc/openont/dns/ca.key"
-		echo "ca_crt /etc/openont/dns/ca.crt"
-		echo "cert_dir $DNS_RUN/certs"
-		echo "backend_host 127.0.0.1"
-		echo "backend_port 8443"
-		echo "sni_mode $sni"
-		if [ -n "$sniname" ]; then
-			echo "sni_name $sniname"
-		else
-			echo "sni_name -"
-		fi
-		echo "trust_file /etc/ssl/certs/ca-certificates.crt"
-		echo "listen_port 443"
-	} > "$DNS_TLS.new"
+		echo "queue $DNS_DESYNC_QUEUE"
+		echo "fooling $fooling"
+		echo "ttl_mode $ttlmode"
+		echo "ttl $ttl"
+		echo "ttl_delta $delta"
+		echo "repeat $repeat"
+		echo "fake_sni $fakesni"
+		echo "status $DNS_DESYNC_STATUS"
+	} > "$DNS_DESYNC.new"
 	config_load openont-dns
 	config_foreach _dns_emit_up upstream
 	config_foreach _dns_emit_bogus bogus
@@ -293,7 +337,7 @@ openont_dns_write_conf() {
 	config_foreach _dns_emit_client client
 	config_foreach _dns_emit_list blocklist
 	mv -f "$DNS_CONF.new" "$DNS_CONF"
-	mv -f "$DNS_TLS.new" "$DNS_TLS"
+	mv -f "$DNS_DESYNC.new" "$DNS_DESYNC"
 }
 
 openont_dns_apply() {
@@ -382,18 +426,39 @@ openont_dns_set() {
 	openont_dns_commit
 }
 
+openont_dns_num_in() {
+	case "$1" in
+		''|*[!0-9]*) return 1 ;;
+	esac
+	[ "$1" -ge "$2" ] && [ "$1" -le "$3" ]
+}
+
 openont_dns_accel_cfg() {
-	local enabled sni name
-	enabled=$(openont_dns_bool "$1")
-	sni="$2"
-	name="$3"
-	case "$sni" in
-		keep|omit|replace) ;;
-		*) openont_dns_fail "invalid SNI mode"; return 0 ;;
+	local enabled="$1" fooling="$2" ttlmode="$3" ttl="$4" delta="$5" repeat="$6" fakesni="$7"
+	enabled=$(openont_dns_bool "$enabled")
+	case "$fooling" in
+		ttl|badsum|both) ;;
+		*) openont_dns_fail "invalid decoy mode"; return 0 ;;
+	esac
+	case "$ttlmode" in
+		auto|manual) ;;
+		*) openont_dns_fail "invalid TTL mode"; return 0 ;;
+	esac
+	openont_dns_num_in "$ttl" 1 64 || { openont_dns_fail "TTL must be 1-64"; return 0; }
+	openont_dns_num_in "$delta" 0 10 || { openont_dns_fail "TTL margin must be 0-10"; return 0; }
+	openont_dns_num_in "$repeat" 1 5 || { openont_dns_fail "repeat count must be 1-5"; return 0; }
+	case "$fakesni" in
+		''|*[!A-Za-z0-9.-]*) openont_dns_fail "invalid decoy name"; return 0 ;;
 	esac
 	uci -q set openont-dns.main.accel_enabled="$enabled"
-	uci -q set openont-dns.main.accel_sni="$sni"
-	uci -q set openont-dns.main.accel_sni_name="$name"
+	uci -q set openont-dns.main.accel_fooling="$fooling"
+	uci -q set openont-dns.main.accel_ttl_mode="$ttlmode"
+	uci -q set openont-dns.main.accel_ttl="$ttl"
+	uci -q set openont-dns.main.accel_ttl_delta="$delta"
+	uci -q set openont-dns.main.accel_repeat="$repeat"
+	uci -q set openont-dns.main.accel_fake_sni="$fakesni"
+	uci -q delete openont-dns.main.accel_sni
+	uci -q delete openont-dns.main.accel_sni_name
 	openont_dns_commit
 }
 
@@ -666,16 +731,42 @@ openont_dns_client_list_json() {
 	openont_dns_filter_list_json
 }
 
+openont_dns_desync_stat() {
+	local v
+	[ -s "$DNS_DESYNC_STATUS" ] || { echo 0; return 0; }
+	v=$(jsonfilter -i "$DNS_DESYNC_STATUS" -e "@.$1" 2>/dev/null)
+	case "$v" in
+		''|*[!0-9]*) echo 0 ;;
+		*) echo "$v" ;;
+	esac
+}
+
 openont_dns_accel_list_json() {
-	local en sni name
+	local en fooling ttlmode ttl delta repeat fakesni running
 	en=$(uci -q get openont-dns.main.accel_enabled); en=${en:-0}
-	sni=$(uci -q get openont-dns.main.accel_sni); sni=${sni:-omit}
-	name=$(uci -q get openont-dns.main.accel_sni_name)
+	fooling=$(uci -q get openont-dns.main.accel_fooling); fooling=${fooling:-ttl}
+	ttlmode=$(uci -q get openont-dns.main.accel_ttl_mode); ttlmode=${ttlmode:-auto}
+	ttl=$(uci -q get openont-dns.main.accel_ttl); ttl=${ttl:-5}
+	delta=$(uci -q get openont-dns.main.accel_ttl_delta); delta=${delta:-1}
+	repeat=$(uci -q get openont-dns.main.accel_repeat); repeat=${repeat:-1}
+	fakesni=$(uci -q get openont-dns.main.accel_fake_sni); fakesni=${fakesni:-www.baidu.com}
+	if pidof openont-desync >/dev/null 2>&1; then running=1; else running=0; fi
 	json_init
 	json_add_boolean accel_enabled "$en"
-	json_add_string accel_sni "$sni"
-	json_add_string accel_sni_name "$name"
-	json_add_boolean ca_ready "$([ -s /etc/openont/dns/ca.crt ] && echo 1 || echo 0)"
+	json_add_string accel_fooling "$fooling"
+	json_add_string accel_ttl_mode "$ttlmode"
+	json_add_int accel_ttl "$ttl"
+	json_add_int accel_ttl_delta "$delta"
+	json_add_int accel_repeat "$repeat"
+	json_add_string accel_fake_sni "$fakesni"
+	json_add_object desync
+	json_add_boolean running "$running"
+	json_add_int hellos "$(openont_dns_desync_stat hellos)"
+	json_add_int fakes "$(openont_dns_desync_stat fakes)"
+	json_add_int auto_ttl "$(openont_dns_desync_stat auto_ttl)"
+	json_add_int fixed_ttl "$(openont_dns_desync_stat fixed_ttl)"
+	json_add_int errors "$(openont_dns_desync_stat errors)"
+	json_close_object
 	json_add_array domains
 	config_load openont-dns
 	config_foreach _dns_json_accel accel
@@ -694,7 +785,7 @@ openont_dns_listen_ok() {
 
 openont_dns_status_json() {
 	local en port cache min max serve prefetch mode speed pref block logsz
-	local accel sni name running listen yielded ip bogus
+	local accel running listen yielded ip bogus
 	en=$(uci -q get openont-dns.main.enabled); en=${en:-0}
 	port=$(uci -q get openont-dns.main.port); port=${port:-53}
 	cache=$(uci -q get openont-dns.main.cache_size); cache=${cache:-4096}
@@ -708,8 +799,6 @@ openont_dns_status_json() {
 	block=$(uci -q get openont-dns.main.block_mode); block=${block:-nxdomain}
 	logsz=$(uci -q get openont-dns.main.log_size); logsz=${logsz:-500}
 	accel=$(uci -q get openont-dns.main.accel_enabled); accel=${accel:-0}
-	sni=$(uci -q get openont-dns.main.accel_sni); sni=${sni:-omit}
-	name=$(uci -q get openont-dns.main.accel_sni_name)
 	if pidof openont-dnsd >/dev/null 2>&1; then running=1; else running=0; fi
 	if openont_dns_listen_ok; then listen=1; else listen=0; fi
 	if [ -f "$DNS_STAMP" ]; then yielded=1; else yielded=0; fi
@@ -728,8 +817,6 @@ openont_dns_status_json() {
 	json_add_string block_mode "$block"
 	json_add_int log_size "$logsz"
 	json_add_boolean accel_enabled "$accel"
-	json_add_string accel_sni "$sni"
-	json_add_string accel_sni_name "$name"
 	json_add_boolean running "$running"
 	json_add_boolean listen_ok "$listen"
 	json_add_boolean dnsmasq_yielded "$yielded"
@@ -766,16 +853,6 @@ openont_dns_log_json() {
 	fi
 	json_close_array
 	json_dump
-}
-
-openont_dns_ca_json() {
-	local crt="/etc/openont/dns/ca.crt" pem
-	if [ ! -s "$crt" ]; then
-		printf '%s\n' '{"ok":false,"available":false,"error":"certificate not created"}'
-		return 0
-	fi
-	pem=$(awk 'BEGIN{ORS="\\n"} {gsub(/\\/,"\\\\"); gsub(/"/,"\\\""); print}' "$crt")
-	printf '{"ok":true,"available":true,"pem":"%s"}\n' "$pem"
 }
 
 _dns_refresh_one() {

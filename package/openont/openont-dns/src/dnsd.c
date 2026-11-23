@@ -218,6 +218,89 @@ static void note_answers(const char *name, const char *nftset, const uint8_t *pk
 	}
 }
 
+/*
+ * Web acceleration: the real A/AAAA answers for listed names go into the
+ * desync table's address sets, where openont-desync picks up TLS handshakes.
+ * Elements carry a timeout; an address seen again is re-added (delete + add
+ * in one transaction) once its entry is older than ACCEL_REFRESH so the
+ * timeout keeps moving while clients keep resolving the name.
+ */
+#define ACCEL_SLOTS 512
+#define ACCEL_TIMEOUT "2h"
+#define ACCEL_REFRESH 600
+
+struct accel_seen {
+	char ip[64];
+	time_t ts;
+};
+
+static struct accel_seen g_accel_seen[ACCEL_SLOTS];
+
+static int accel_need(const char *ip, time_t now)
+{
+	int i;
+	int victim = 0;
+	for (i = 0; i < ACCEL_SLOTS; i++) {
+		if (!strcmp(g_accel_seen[i].ip, ip)) {
+			if (now - g_accel_seen[i].ts < ACCEL_REFRESH)
+				return 0;
+			g_accel_seen[i].ts = now;
+			return 1;
+		}
+		if (g_accel_seen[i].ts < g_accel_seen[victim].ts)
+			victim = i;
+	}
+	snprintf(g_accel_seen[victim].ip, sizeof(g_accel_seen[0].ip), "%s", ip);
+	g_accel_seen[victim].ts = now;
+	return 1;
+}
+
+static void accel_note(const uint8_t *pkt, int len)
+{
+	struct dns_rr rr[DNS_MAX_RR];
+	char script[DNS_MAX_RR * 400];
+	int off = 0;
+	int n;
+	int i;
+	int any = 0;
+	time_t now = time(NULL);
+	FILE *fp;
+
+	n = dns_parse_answers(pkt, len, rr, DNS_MAX_RR);
+	for (i = 0; i < n; i++) {
+		uint8_t addr[16];
+		char ip[INET6_ADDRSTRLEN];
+		const char *set;
+		/* print the parsed address back so only a clean literal reaches nft */
+		if (rr[i].type == DNS_T_A && dns_parse_ipv4(rr[i].text, addr) == 0 &&
+		    inet_ntop(AF_INET, addr, ip, sizeof(ip)))
+			set = "accel4";
+		else if (rr[i].type == DNS_T_AAAA && dns_parse_ipv6(rr[i].text, addr) == 0 &&
+			 inet_ntop(AF_INET6, addr, ip, sizeof(ip)))
+			set = "accel6";
+		else
+			continue;
+		if (is_self(ip) || !accel_need(ip, now))
+			continue;
+		if ((int)sizeof(script) - off < 400)
+			break;
+		/* add first so the delete cannot fail, then re-add with a fresh timeout */
+		off += snprintf(script + off, sizeof(script) - (size_t)off,
+				"add element inet openont_desync %s { %s }\n"
+				"delete element inet openont_desync %s { %s }\n"
+				"add element inet openont_desync %s { %s timeout " ACCEL_TIMEOUT " }\n",
+				set, ip, set, ip, set, ip);
+		any = 1;
+	}
+	if (!any)
+		return;
+	fp = popen("nft -f - >/dev/null 2>&1", "w");
+	if (!fp)
+		return;
+	fputs(script, fp);
+	pclose(fp);
+}
+
 static int send_out(int udp_fd, int tcp_fd, struct sockaddr *peer, socklen_t peerlen,
 		    const uint8_t *pkt, int len)
 {
@@ -421,11 +504,12 @@ static void store_packet(const char *name, uint16_t qtype, const uint8_t *pkt, i
 }
 
 static int resolve_query(const uint8_t *q, int qlen, const char *client, int bypass,
-			 const char *lan_ip, int depth, uint8_t *out, int outmax, int *from_cache)
+			 int depth, uint8_t *out, int outmax, int *from_cache)
 {
 	struct dns_question qq;
 	struct rules_hit hit;
 	int skip;
+	int accel;
 	char group[64];
 
 	if (from_cache)
@@ -453,7 +537,7 @@ static int resolve_query(const uint8_t *q, int qlen, const char *client, int byp
 			slen = dns_build_query(subq, sizeof(subq), dns_header_id(q, qlen),
 					       hit.rewrite_value, qq.qtype);
 			if (slen > 0) {
-				sublen = resolve_query(subq, slen, client, bypass, lan_ip, depth + 1,
+				sublen = resolve_query(subq, slen, client, bypass, depth + 1,
 						       sub, sizeof(sub), NULL);
 				if (sublen > 0) {
 					ne = dns_parse_answers(sub, sublen, extra, DNS_MAX_RR);
@@ -488,17 +572,8 @@ static int resolve_query(const uint8_t *q, int qlen, const char *client, int byp
 		}
 	}
 after_rewrite:
-	if (g_accel && hit.accel && !bypass) {
-		struct dns_rr rr;
-		uint8_t addr[4];
-		const char *lip = (lan_ip && lan_ip[0]) ? lan_ip : (g_nself ? g_self[0] : NULL);
-		qlog_add(client, qq.name, qq.qtype, "accel", lip ? lip : "-");
-		if (qq.qtype == DNS_T_A && lip && dns_parse_ipv4(lip, addr) == 0) {
-			dns_make_a(&rr, qq.name, 30, addr);
-			return dns_build_response(out, outmax, q, qlen, DNS_R_NOERROR, &rr, 1);
-		}
-		return build_empty(q, qlen, DNS_R_NOERROR, out, outmax);
-	}
+	/* Accelerated names resolve normally; only the answer addresses are noted. */
+	accel = g_accel && hit.accel && !bypass;
 	if (!skip && hit.block) {
 		qlog_add(client, qq.name, qq.qtype, "block",
 			 g_block_mode == 1 ? "refused" : (g_block_mode == 2 ? "zero" : "nxdomain"));
@@ -518,7 +593,13 @@ after_rewrite:
 			if (from_cache)
 				*from_cache = 1;
 			if (!(refresh && (st == CACHE_STALE || g_prefetch))) {
-				qlog_add(client, qq.name, qq.qtype, "cache", st == CACHE_STALE ? "stale" : "hit");
+				if (accel) {
+					accel_note(out, plen);
+					qlog_add(client, qq.name, qq.qtype, "accel", "cache");
+				} else {
+					qlog_add(client, qq.name, qq.qtype, "cache",
+						 st == CACHE_STALE ? "stale" : "hit");
+				}
 				return plen;
 			}
 			/* Stale or prefetch: fall through and replace. A stale hit still
@@ -531,18 +612,23 @@ after_rewrite:
 		if (n > 0) {
 			store_packet(qq.name, qq.qtype, out, n);
 			note_answers(qq.name, hit.nftset, out, n);
-			qlog_add(client, qq.name, qq.qtype, "forward", group);
+			if (accel) {
+				accel_note(out, n);
+				qlog_add(client, qq.name, qq.qtype, "accel", group);
+			} else {
+				qlog_add(client, qq.name, qq.qtype, "forward", group);
+			}
 		}
 		return n;
 	}
 }
 
 static void handle_packet(const uint8_t *q, int qlen, const char *client, int bypass,
-			  const char *lan_ip, int udp_fd, int tcp_fd,
+			  int udp_fd, int tcp_fd,
 			  struct sockaddr *peer, socklen_t peerlen)
 {
 	uint8_t out[DNS_MAX_PACKET];
-	int n = resolve_query(q, qlen, client, bypass, lan_ip, 0, out, sizeof(out), NULL);
+	int n = resolve_query(q, qlen, client, bypass, 0, out, sizeof(out), NULL);
 	if (n > 0)
 		send_out(udp_fd, tcp_fd, peer, peerlen, out, n);
 }
@@ -625,7 +711,7 @@ static void load_conf(const char *path)
 				g_prefetch = atoi(tok[1]);
 			else if (n >= 2 && !strcmp(tok[0], "log_size"))
 				g_log_size = atoi(tok[1]);
-			else if (n >= 2 && !strcmp(tok[0], "accel"))
+			else if (n == 2 && !strcmp(tok[0], "accel"))
 				g_accel = atoi(tok[1]);
 			else if (n >= 2 && !strcmp(tok[0], "response_mode")) {
 				if (!strcmp(tok[1], "first-response"))
@@ -835,7 +921,7 @@ static void read_udp(int fd)
 	}
 	client_str((struct sockaddr *)&peer, client, sizeof(client));
 	bypass = is_loopback(client) || is_loopback(lan);
-	handle_packet(buf, n, client, bypass, lan, fd, -1, (struct sockaddr *)&peer, msg.msg_namelen);
+	handle_packet(buf, n, client, bypass, fd, -1, (struct sockaddr *)&peer, msg.msg_namelen);
 }
 
 static int read_n(int fd, uint8_t *buf, int len)
@@ -878,7 +964,7 @@ static void read_tcp(int lfd)
 		close(fd);
 		return;
 	}
-	handle_packet(buf, body, client, is_loopback(client), NULL, -1, fd,
+	handle_packet(buf, body, client, is_loopback(client), -1, fd,
 		      (struct sockaddr *)&peer, plen);
 	close(fd);
 }

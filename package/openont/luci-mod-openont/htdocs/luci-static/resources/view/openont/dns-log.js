@@ -63,7 +63,7 @@ return view.extend({
 		return E('div', { class: 'cbi-map' }, [
 			E('h2', { name: 'content' }, [ _('Query Log') ]),
 			E('div', { class: 'cbi-map-descr' }, [
-				_('Recent decisions from the DNS service. Blocked and accelerated names are not written into the application class map.')
+				_('Recent decisions from the DNS service. Blocked names are not written into the application class map.')
 			]),
 			E('div', { class: 'cbi-section' }, [
 				E('div', { class: 'cbi-section-actions' }, [

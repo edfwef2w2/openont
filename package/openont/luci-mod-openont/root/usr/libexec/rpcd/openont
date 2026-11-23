@@ -171,7 +171,7 @@ case "$1" in
 			dns_rewrite_set dns_rewrite_del \
 			dns_client_set dns_client_del \
 			dns_accel_list dns_accel_set dns_accel_del dns_accel_cfg \
-			dns_log dns_ca
+			dns_log
 		do
 			json_add_object "$m"
 			json_close_object
@@ -322,13 +322,11 @@ case "$1" in
 				openont_dns_accel_set "$(get id)" "$(get domain)" "$(get enabled)"
 				;;
 			dns_accel_cfg)
-				openont_dns_accel_cfg "$(get enabled)" "$(get sni)" "$(get sni_name)"
+				openont_dns_accel_cfg "$(get enabled)" "$(get fooling)" "$(get ttl_mode)" \
+					"$(get ttl)" "$(get ttl_delta)" "$(get repeat)" "$(get fake_sni)"
 				;;
 			dns_log)
 				openont_dns_log_json "$(get limit)" "$(get kind)"
-				;;
-			dns_ca)
-				openont_dns_ca_json
 				;;
 			*)
 				echo '{"ok":false,"error":"unknown method"}'

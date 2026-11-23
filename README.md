@@ -79,11 +79,11 @@ openont-dns status
 openont-dns set 1 53 4096 0 3600 1 1 fastest-ip tcp443 dual nxdomain 500 "0.0.0.0/8 127.0.0.0/8"
 openont-dns upstream-list
 openont-dns filter-set '' '||ads.example^' ''
-openont-dns accel-cfg 0 omit ''
+openont-dns accel-cfg 1 ttl auto 5 1 1 www.baidu.com
 openont-dns log 50 all
 ```
 
-Filtering uses a small rule syntax (`||domain^`, `|domain^`, `@@` exceptions, hosts lines, `/regex/`) plus optional list URLs. Upstreams can be grouped, raced, and limited by domain. Web acceleration resolves listed names to the gateway and terminates TLS for those names only; clients must install the CA from that tab.
+Filtering uses a small rule syntax (`||domain^`, `|domain^`, `@@` exceptions, hosts lines, `/regex/`) plus optional list URLs. Upstreams can be grouped, raced, and limited by domain. Web acceleration leaves DNS answers unchanged. It records the addresses of listed names, and `openont-desync` (NFQUEUE) sends a decoy ClientHello ahead of the client's real one on new HTTPS connections to them. The decoy is dropped before the server by a low TTL (automatic from the server's hop count, or fixed), a bad TCP checksum, or both. Clients need no certificate, and if the daemon stops, traffic passes unchanged.
 
 ## Application traffic classification
 

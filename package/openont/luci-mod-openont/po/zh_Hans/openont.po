@@ -845,20 +845,71 @@ msgstr "编辑客户端"
 msgid "Add client"
 msgstr "添加客户端"
 
-msgid "Keep original SNI"
-msgstr "保留原始 SNI"
-
-msgid "Omit SNI"
-msgstr "不发送 SNI"
-
-msgid "Replace SNI"
-msgstr "替换 SNI"
-
 msgid "Accelerated names"
 msgstr "加速域名"
 
-msgid "Listed names resolve to this gateway. TLS for those names is terminated here and opened again toward the real address."
-msgstr "名单中的域名会解析到本网关。这些名字的 TLS 在本机终结，再向真实地址重新建立连接。"
+msgid "Low TTL"
+msgstr "低 TTL"
+
+msgid "Bad TCP checksum"
+msgstr "错误 TCP 校验和"
+
+msgid "Low TTL and bad TCP checksum"
+msgstr "低 TTL + 错误 TCP 校验和"
+
+msgid "Automatic"
+msgstr "自动"
+
+msgid "Manual"
+msgstr "手动"
+
+msgid "TTL mode"
+msgstr "TTL 方式"
+
+msgid "TTL"
+msgstr "TTL"
+
+msgid "TTL margin"
+msgstr "TTL 余量"
+
+msgid "Automatic reads the hop count from the server reply and sets the decoy to expire that many hops short of the server. Manual always uses the TTL below."
+msgstr "自动：根据服务器回包推算跳数，让伪造包在到达服务器前若干跳失效。手动：始终使用下面的 TTL。"
+
+msgid "Manual value, and the fallback when the hop count is unknown."
+msgstr "手动模式使用的值；自动模式推算不出跳数时也用它。"
+
+msgid "Automatic mode: how many hops before the server the decoy expires."
+msgstr "自动模式下，伪造包在距服务器几跳处失效。"
+
+msgid "Running. Handshakes: %d, decoys sent: %d (automatic TTL %d, fixed TTL %d), errors: %d"
+msgstr "运行中。握手 %d 次，已发伪造包 %d 个（自动 TTL %d 个，固定 TTL %d 个），错误 %d 次"
+
+msgid "Not running. Traffic passes unchanged."
+msgstr "未运行，流量原样放行。"
+
+msgid "Addresses returned for these names (and their subdomains) are tracked. New HTTPS connections to those addresses get a decoy handshake first."
+msgstr "这些域名（含子域名）解析出的地址会被记录。新建到这些地址的 HTTPS 连接会先发一个伪造握手。"
+
+msgid "Before a client sends its TLS handshake to a listed site, the gateway sends a decoy handshake for another name. The decoy is built to be seen on the way out but dropped before it reaches the server. The real handshake then leaves unchanged. DNS answers are not altered and no certificate is needed on clients."
+msgstr "客户端向名单内站点发出 TLS 握手前，网关先发一个指向其他域名的伪造握手。伪造包能被沿途设备看到，但到不了服务器。真实握手随后原样发出。DNS 应答不做修改，客户端也不用安装证书。"
+
+msgid "Decoy drop method"
+msgstr "伪造包丢弃方式"
+
+msgid "Low TTL lets the decoy expire on the way to the server. A bad checksum makes the server discard it. Using both is safer, but some networks drop bad-checksum packets before inspection."
+msgstr "低 TTL 让伪造包在去往服务器的途中失效；错误校验和让服务器丢弃它。两者同时用更稳妥，但有些网络会在检测之前就丢掉校验和错误的包。"
+
+msgid "Repeat"
+msgstr "重复次数"
+
+msgid "Decoys sent per handshake."
+msgstr "每次握手发送的伪造包数量。"
+
+msgid "Decoy name"
+msgstr "伪造域名"
+
+msgid "Server name carried in the decoy handshake."
+msgstr "伪造握手里携带的服务器名称。"
 
 msgid "Names"
 msgstr "名称"
@@ -872,24 +923,6 @@ msgstr "编辑域名"
 msgid "Add domain"
 msgstr "添加域名"
 
-msgid "Acceleration answers listed names with this gateway LAN address and terminates TLS on the gateway. Only listed names are intercepted. Each client must trust the gateway certificate. The management HTTPS listener moves to a local port while acceleration is on."
-msgstr "加速时，名单中的域名应答为本网关的局域网地址，并在网关上终结 TLS。只处理名单内的名字。每台客户端都需要信任网关证书。加速开启后，管理页的 HTTPS 会改到本机端口。"
-
-msgid "SNI policy"
-msgstr "SNI 策略"
-
-msgid "Replacement SNI"
-msgstr "替换用 SNI"
-
-msgid "Keep checks the server name. Omit and Replace still require a public certificate chain, and do not require that name to match the original site."
-msgstr "保留模式会校验服务器名称。不发送和替换模式仍要求公共证书链，但不要求证书名称等于原站点。"
-
-msgid "Certificate is not ready. Enable acceleration first."
-msgstr "证书尚未生成。请先开启加速。"
-
-msgid "Download CA"
-msgstr "下载 CA"
-
 msgid "Blocked"
 msgstr "已拦截"
 
@@ -899,8 +932,8 @@ msgstr "已加速"
 msgid "No queries yet."
 msgstr "还没有查询。"
 
-msgid "Recent decisions from the DNS service. Blocked and accelerated names are not written into the application class map."
-msgstr "DNS 服务最近的处理结果。被拦截和被加速的名字不会写入应用分类表。"
+msgid "Recent decisions from the DNS service. Blocked names are not written into the application class map."
+msgstr "DNS 服务最近的处理结果。被拦截的名字不会写入应用分类表。"
 
 msgid "Time"
 msgstr "时间"

@@ -69,7 +69,8 @@ jobs:
             package/openont/openont-dpi/files/dpi-buckets.conf
             package/openont/openont-dns/Makefile
             package/openont/openont-dns/src/dnsd.c
-            package/openont/openont-dns/src/tlsfront.c
+            package/openont/openont-dns/src/desync.c
+            package/openont/openont-dns/src/tls_hello.c
             package/openont/openont-dns/src/rules.c
             package/openont/openont-dns/src/test_main.c
             package/openont/openont-dns/files/usr/lib/openont/dns.sh
@@ -357,8 +358,13 @@ jobs:
             package/openont/openont-dns/src/bogus.c \
             package/openont/openont-dns/src/cache.c \
             package/openont/openont-dns/src/rules.c \
-            package/openont/openont-dns/src/sni.c
+            package/openont/openont-dns/src/tls_hello.c
           /tmp/openont-dns-test
+          cc -Wall -Wextra -O2 -o /tmp/openont-desync-smoke \
+            package/openont/openont-dns/src/desync.c \
+            package/openont/openont-dns/src/tls_hello.c \
+            -lnetfilter_queue -lnfnetlink -lmnl
+          test -x /tmp/openont-desync-smoke
           python3 -c 'import json; m=json.load(open("package/openont/luci-mod-openont/root/usr/share/luci/menu.d/zzz-luci-mod-openont.json")); json.load(open("package/openont/luci-mod-openont/root/usr/share/rpcd/acl.d/luci-mod-openont.json")); d=m["admin/network/openont-dns"]; assert d["order"]==8 and d["action"]["type"]=="firstchild"; assert all("admin/network/openont-dns/"+n in m for n in ("general","upstreams","filter","accel","log"))'
           echo "dns unit tests ok"
 

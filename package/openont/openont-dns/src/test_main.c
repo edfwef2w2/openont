@@ -3,7 +3,7 @@
 #include "cache.h"
 #include "dns_proto.h"
 #include "rules.h"
-#include "sni.h"
+#include "tls_hello.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -180,11 +180,10 @@ static void put16(uint8_t *p, int v)
 	p[1] = (uint8_t)v;
 }
 
-static void test_sni(void)
+static void test_tls_hello(void)
 {
 	uint8_t buf[256];
 	int n = 0;
-	struct client_hello_info info;
 	const char *host = "example.com";
 	int hlen = (int)strlen(host);
 	int ext_body;
@@ -239,15 +238,31 @@ static void test_sni(void)
 	rec_len = 4 + hs_len;
 	put16(buf + 3, rec_len);
 
-	expect(sni_parse_client_hello(buf, 4, &info) == 0, "short hello needs more");
-	expect(sni_parse_client_hello(buf, 5 + rec_len, &info) == 1, "parsed hello");
-	expect(strcmp(info.sni, "example.com") == 0, "sni");
-	expect(info.nalpn == 2, "two alpn");
-	expect(strcmp(info.alpn[0], "h2") == 0, "alpn h2");
-	expect(strcmp(info.alpn[1], "http/1.1") == 0, "alpn http");
-	expect(sni_name_matches("WWW.Example.com", "example.com") == 1, "suffix host");
-	expect(sni_name_matches("notexample.com", "example.com") == 0, "not a parent");
-	expect(sni_parse_client_hello((const uint8_t *)"GET /", 5, &info) == -1, "not tls");
+	{
+		uint8_t fake[1500];
+		int off = -1;
+		int len = -1;
+		int flen;
+
+		expect(tls_is_client_hello(buf, 5 + rec_len) == 1, "is hello");
+		expect(tls_is_client_hello((const uint8_t *)"GET / HTTP/1.1", 14) == 0, "not tls");
+		expect(tls_find_sni(buf, 5 + rec_len, &off, &len) == 0, "sni found");
+		expect(len == hlen && memcmp(buf + off, host, (size_t)hlen) == 0, "sni offset");
+		/* host cut off by the end of the segment */
+		expect(tls_find_sni(buf, off + 3, &off, &len) == -1, "sni truncated");
+
+		flen = tls_build_fake(buf, 5 + rec_len, "w3.org", fake, sizeof(fake));
+		expect(flen == 5 + rec_len, "fake same length");
+		expect(tls_find_sni(fake, flen, &off, &len) == 0, "fake sni");
+		expect(len == hlen && memcmp(fake + off + len - 7, ".w3.org", 7) == 0, "fake decoy");
+		expect(memcmp(fake + off, host, (size_t)hlen) != 0, "fake host replaced");
+
+		flen = tls_build_fake(buf, 60, "www.example.org", fake, sizeof(fake));
+		expect(flen > 100 && tls_is_client_hello(fake, flen), "synthetic fake");
+		expect(tls_find_sni(fake, flen, &off, &len) == 0 && len == 15 &&
+		       memcmp(fake + off, "www.example.org", 15) == 0, "synthetic sni");
+		expect(fake[3] * 256 + fake[4] == flen - 5, "synthetic record length");
+	}
 }
 
 int main(void)
@@ -256,7 +271,7 @@ int main(void)
 	test_bogus();
 	test_cache();
 	test_rules();
-	test_sni();
+	test_tls_hello();
 	if (g_fail) {
 		fprintf(stderr, "%d failure(s)\n", g_fail);
 		return 1;

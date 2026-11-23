@@ -19,12 +19,15 @@ define Package/openont-dns
   SECTION:=net
   CATEGORY:=Network
   TITLE:=OpenONT DNS forwarder, filter and web acceleration
-  DEPENDS:=+openont-core +libmbedtls +ca-bundle +nftables-json +uclient-fetch
+  DEPENDS:=+openont-core +libmbedtls +ca-bundle +nftables-json +uclient-fetch \
+	+libnetfilter-queue +libnfnetlink +libmnl +kmod-nfnetlink-queue +kmod-nft-queue
 endef
 
 define Package/openont-dns/description
   LAN DNS forwarder with rule filtering, upstream groups and
-  optional HTTPS acceleration for listed names.
+  optional HTTPS acceleration for listed names. Acceleration sends a
+  decoy ClientHello ahead of the real one (openont-desync, NFQUEUE);
+  no certificate is installed on clients.
 endef
 
 define Build/Prepare
@@ -44,17 +47,16 @@ define Build/Compile
 		$(PKG_BUILD_DIR)/upstream_tls.c \
 		$(TARGET_LDFLAGS) -lmbedtls -lmbedx509 -lmbedcrypto -lpthread
 	$(TARGET_CC) $(TARGET_CFLAGS) -Wall -Wextra -O2 \
-		-o $(PKG_BUILD_DIR)/openont-tlsfront \
-		$(PKG_BUILD_DIR)/tlsfront.c \
-		$(PKG_BUILD_DIR)/sni.c \
-		$(PKG_BUILD_DIR)/dns_proto.c \
-		$(TARGET_LDFLAGS) -lmbedtls -lmbedx509 -lmbedcrypto -lpthread
+		-o $(PKG_BUILD_DIR)/openont-desync \
+		$(PKG_BUILD_DIR)/desync.c \
+		$(PKG_BUILD_DIR)/tls_hello.c \
+		$(TARGET_LDFLAGS) -lnetfilter_queue -lnfnetlink -lmnl
 endef
 
 define Package/openont-dns/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openont-dnsd $(1)/usr/sbin/openont-dnsd
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openont-tlsfront $(1)/usr/sbin/openont-tlsfront
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openont-desync $(1)/usr/sbin/openont-desync
 	$(INSTALL_BIN) ./files/usr/sbin/openont-dns $(1)/usr/sbin/openont-dns
 	$(INSTALL_DIR) $(1)/usr/lib/openont
 	$(INSTALL_DATA) ./files/usr/lib/openont/dns.sh $(1)/usr/lib/openont/dns.sh
@@ -68,7 +70,7 @@ endef
 define Package/openont-dns/postinst
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] && exit 0
-chmod 0755 /usr/sbin/openont-dns /usr/sbin/openont-dnsd /usr/sbin/openont-tlsfront \
+chmod 0755 /usr/sbin/openont-dns /usr/sbin/openont-dnsd /usr/sbin/openont-desync \
 	/usr/lib/openont/dns-refresh.sh /etc/init.d/openont-dns 2>/dev/null || true
 /etc/init.d/openont-dns enable 2>/dev/null || true
 exit 0

@@ -843,19 +843,70 @@ msgstr ""
 msgid "Add client"
 msgstr ""
 
-msgid "Keep original SNI"
-msgstr ""
-
-msgid "Omit SNI"
-msgstr ""
-
-msgid "Replace SNI"
-msgstr ""
-
 msgid "Accelerated names"
 msgstr ""
 
-msgid "Listed names resolve to this gateway. TLS for those names is terminated here and opened again toward the real address."
+msgid "Low TTL"
+msgstr ""
+
+msgid "Bad TCP checksum"
+msgstr ""
+
+msgid "Low TTL and bad TCP checksum"
+msgstr ""
+
+msgid "Automatic"
+msgstr ""
+
+msgid "Manual"
+msgstr ""
+
+msgid "TTL mode"
+msgstr ""
+
+msgid "TTL"
+msgstr ""
+
+msgid "TTL margin"
+msgstr ""
+
+msgid "Automatic reads the hop count from the server reply and sets the decoy to expire that many hops short of the server. Manual always uses the TTL below."
+msgstr ""
+
+msgid "Manual value, and the fallback when the hop count is unknown."
+msgstr ""
+
+msgid "Automatic mode: how many hops before the server the decoy expires."
+msgstr ""
+
+msgid "Running. Handshakes: %d, decoys sent: %d (automatic TTL %d, fixed TTL %d), errors: %d"
+msgstr ""
+
+msgid "Not running. Traffic passes unchanged."
+msgstr ""
+
+msgid "Addresses returned for these names (and their subdomains) are tracked. New HTTPS connections to those addresses get a decoy handshake first."
+msgstr ""
+
+msgid "Before a client sends its TLS handshake to a listed site, the gateway sends a decoy handshake for another name. The decoy is built to be seen on the way out but dropped before it reaches the server. The real handshake then leaves unchanged. DNS answers are not altered and no certificate is needed on clients."
+msgstr ""
+
+msgid "Decoy drop method"
+msgstr ""
+
+msgid "Low TTL lets the decoy expire on the way to the server. A bad checksum makes the server discard it. Using both is safer, but some networks drop bad-checksum packets before inspection."
+msgstr ""
+
+msgid "Repeat"
+msgstr ""
+
+msgid "Decoys sent per handshake."
+msgstr ""
+
+msgid "Decoy name"
+msgstr ""
+
+msgid "Server name carried in the decoy handshake."
 msgstr ""
 
 msgid "Names"
@@ -870,24 +921,6 @@ msgstr ""
 msgid "Add domain"
 msgstr ""
 
-msgid "Acceleration answers listed names with this gateway LAN address and terminates TLS on the gateway. Only listed names are intercepted. Each client must trust the gateway certificate. The management HTTPS listener moves to a local port while acceleration is on."
-msgstr ""
-
-msgid "SNI policy"
-msgstr ""
-
-msgid "Replacement SNI"
-msgstr ""
-
-msgid "Keep checks the server name. Omit and Replace still require a public certificate chain, and do not require that name to match the original site."
-msgstr ""
-
-msgid "Certificate is not ready. Enable acceleration first."
-msgstr ""
-
-msgid "Download CA"
-msgstr ""
-
 msgid "Blocked"
 msgstr ""
 
@@ -897,7 +930,7 @@ msgstr ""
 msgid "No queries yet."
 msgstr ""
 
-msgid "Recent decisions from the DNS service. Blocked and accelerated names are not written into the application class map."
+msgid "Recent decisions from the DNS service. Blocked names are not written into the application class map."
 msgstr ""
 
 msgid "Time"

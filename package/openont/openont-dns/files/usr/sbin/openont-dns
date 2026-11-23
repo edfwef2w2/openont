@@ -15,9 +15,8 @@ Usage: openont-dns <command> [args]
   blocklist-list | blocklist-set | blocklist-del
   client-list | client-set | client-del
   accel-list | accel-set | accel-del
-  accel-cfg <enabled> <sni> <sni_name>
+  accel-cfg <enabled> <ttl|badsum|both> <auto|manual> <ttl> <ttl_margin> <repeat> <decoy_name>
   log [limit] [all|block|accel]
-  ca-export
   apply
 EOF
 }
@@ -51,7 +50,6 @@ case "$cmd" in
 	accel-del) openont_dns_section_del "$1" ;;
 	accel-cfg) openont_dns_accel_cfg "$@" ;;
 	log) openont_dns_log_json "${1:-200}" "${2:-all}" ;;
-	ca-export) openont_dns_ca_json ;;
 	apply) openont_dns_apply; openont_ok applied ;;
 	-h|--help|help|"") usage; [ -n "$cmd" ] || exit 1 ;;
 	*) echo "unknown: $cmd" >&2; usage; exit 1 ;;

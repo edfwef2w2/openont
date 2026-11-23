@@ -19,7 +19,7 @@
 					"dns_rewrite_set", "dns_rewrite_del",
 					"dns_client_set", "dns_client_del",
 					"dns_accel_list", "dns_accel_set", "dns_accel_del", "dns_accel_cfg",
-					"dns_log", "dns_ca"
+					"dns_log"
 				]
 			},
 			"uci": [ "network", "dhcp", "firewall", "system", "openont", "openont-dns", "sqm" ]
