@@ -228,7 +228,8 @@ return view.extend({
 	},
 
 	_renderIfaces: function (list) {
-		var ul = document.getElementById('o-if-list');
+		var ul = (this._overviewRoot && this._overviewRoot.querySelector('#o-if-list')) ||
+			document.getElementById('o-if-list');
 		if (!ul) return;
 		ul.innerHTML = '';
 		if (!list.length) {

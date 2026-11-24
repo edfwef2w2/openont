@@ -6,14 +6,14 @@
 function moveTipsToBody(root) {
 	var tips = [];
 	if (root && root.querySelectorAll)
-		tips = root.querySelectorAll('.o-chart-tip');
+		tips = Array.prototype.slice.call(root.querySelectorAll('.o-chart-tip'));
 	if (!tips.length) {
 		['o-pie-tip', 'o-rate-tip-up', 'o-rate-tip-down'].forEach(function (id) {
 			var el = document.getElementById(id);
-			if (el) tips = Array.prototype.concat.call(tips, [el]);
+			if (el) tips.push(el);
 		});
 	}
-	Array.prototype.forEach.call(tips, function (el) {
+	tips.forEach(function (el) {
 		cc.ensureTipHost(el);
 	});
 }

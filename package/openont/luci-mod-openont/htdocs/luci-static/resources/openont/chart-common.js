@@ -106,7 +106,7 @@ function rateAxisTicks(maxV) {
 }
 
 function ensureTipHost(tip) {
-	if (!tip || !document.body)
+	if (!tip || !tip.nodeType || !document.body)
 		return tip;
 	if (tip.parentNode !== document.body)
 		document.body.appendChild(tip);
